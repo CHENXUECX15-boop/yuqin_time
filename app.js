@@ -12,6 +12,14 @@ const priorityClass = {
   "低": "low"
 };
 
+const moodLabels = {
+  1: "非常不高兴",
+  2: "不太高兴",
+  3: "一般",
+  4: "挺高兴",
+  5: "非常高兴"
+};
+
 let state = loadState();
 let activeSection = "home";
 let dashboardRange = 7;
@@ -126,12 +134,13 @@ function createDefaultState() {
         id: uid(),
         day: yesterday,
         wins: "完成客户问题清单整理，推动验收口径进入确认。",
-        risks: "新增需求仍需排期判断。",
-        tomorrow: "先确认验收标准，再写周报。",
-        score: 4,
-        createdAt: iso(addDays(now, -1))
-      }
-    ]
+      risks: "新增需求仍需排期判断。",
+      tomorrow: "先确认验收标准，再写周报。",
+      score: 4,
+      moodReason: "",
+      createdAt: iso(addDays(now, -1))
+    }
+  ]
   };
 }
 
@@ -276,6 +285,7 @@ function bindForms() {
       risks: $("#reviewRisks").value.trim(),
       tomorrow: $("#reviewTomorrow").value.trim(),
       score: Number($("#reviewScore").value),
+      moodReason: shouldCollectMoodReason(Number($("#reviewScore").value)) ? $("#reviewMoodReason").value.trim() : "",
       createdAt: iso(new Date())
     };
     if (existing) Object.assign(existing, payload);
@@ -296,6 +306,9 @@ function bindActions() {
   $("#btnFocusPause").addEventListener("click", pauseFocus);
   $("#btnFocusFinish").addEventListener("click", finishFocus);
   $("#btnFocusReset").addEventListener("click", resetFocus);
+  $$(".mood-btn").forEach((button) => {
+    button.addEventListener("click", () => setReviewMood(Number(button.dataset.reviewScore)));
+  });
 
   $("#btnAddObjective").addEventListener("click", addObjective);
   $("#btnAddProject").addEventListener("click", addProject);
@@ -335,11 +348,9 @@ function bindActions() {
 function bindRanges() {
   const energy = $("#energyRange");
   const load = $("#loadRange");
-  const review = $("#reviewScore");
 
   energy.addEventListener("input", () => $("#energyValue").textContent = energy.value);
   load.addEventListener("input", () => $("#loadValue").textContent = load.value);
-  review.addEventListener("input", () => $("#reviewScoreValue").textContent = review.value);
 }
 
 function showSection(id) {
@@ -417,6 +428,32 @@ function resetFocus() {
   state.focusTimer = { title: "", running: false, startedAt: null, elapsedMs: 0 };
   $("#focusTitle").value = "";
   saveAndRender("专注计时已重置");
+}
+
+function setReviewMood(score, reason = null) {
+  const safeScore = Math.max(1, Math.min(5, Number(score) || 3));
+  $("#reviewScore").value = safeScore;
+  $$(".mood-btn").forEach((button) => {
+    button.classList.toggle("is-selected", Number(button.dataset.reviewScore) === safeScore);
+  });
+
+  const reasonWrap = $("#reviewMoodReasonWrap");
+  const reasonInput = $("#reviewMoodReason");
+  const reasonLabel = $("#reviewMoodReasonLabel");
+  const needsReason = shouldCollectMoodReason(safeScore);
+  reasonWrap.hidden = !needsReason;
+
+  if (needsReason) {
+    reasonLabel.textContent = safeScore === 5 ? "为什么今天特别高兴？" : "为什么今天特别不高兴？";
+    reasonInput.placeholder = safeScore === 5 ? "记录让你很开心的触发点" : "记录让你不舒服的触发点";
+    if (reason !== null) reasonInput.value = reason;
+  } else {
+    reasonInput.value = "";
+  }
+}
+
+function shouldCollectMoodReason(score) {
+  return Number(score) === 1 || Number(score) === 5;
 }
 
 function addTask(title, priority = "中", project = "", due = "") {
@@ -907,8 +944,9 @@ function renderReview() {
     $("#reviewWins").value = today.wins;
     $("#reviewRisks").value = today.risks;
     $("#reviewTomorrow").value = today.tomorrow;
-    $("#reviewScore").value = today.score;
-    $("#reviewScoreValue").textContent = today.score;
+    setReviewMood(today.score, today.moodReason || "");
+  } else {
+    setReviewMood(Number($("#reviewScore").value || 4), $("#reviewMoodReason").value);
   }
 
   $("#reviewList").innerHTML = state.reviews
@@ -919,13 +957,14 @@ function renderReview() {
         <div class="stack-item-head">
           <div>
             <h3>${escapeHtml(review.day)}</h3>
-            <div class="item-meta"><span class="tag low">满意度 ${review.score}/5</span></div>
+            <div class="item-meta"><span class="tag low">${escapeHtml(moodLabels[review.score] || "满意度")} · ${review.score}/5</span></div>
           </div>
           <button class="icon-btn" data-delete-id="${review.id}" aria-label="删除复盘" title="删除复盘"><i data-lucide="trash-2"></i></button>
         </div>
         <p><strong>成果：</strong>${escapeHtml(review.wins || "暂无")}</p>
         <p><strong>风险：</strong>${escapeHtml(review.risks || "暂无")}</p>
         <p><strong>明日：</strong>${escapeHtml(review.tomorrow || "暂无")}</p>
+        ${review.moodReason ? `<p><strong>原因：</strong>${escapeHtml(review.moodReason)}</p>` : ""}
       </div>
     `).join("") || empty("暂无复盘记录");
 }
@@ -941,7 +980,7 @@ function renderSettings() {
       meetings: ["_id", "ownerId", "title", "type", "when", "decision", "actions"],
       resourceNotes: ["_id", "ownerId", "topic", "progress", "risk", "ask", "createdAt"],
       healthLogs: ["_id", "ownerId", "day", "energy", "load", "boundaryDone", "note"],
-      reviews: ["_id", "ownerId", "day", "wins", "risks", "tomorrow", "score"]
+      reviews: ["_id", "ownerId", "day", "wins", "risks", "tomorrow", "score", "moodReason"]
     },
     migrationNotes: [
       "localStorage -> wx.cloud.database",

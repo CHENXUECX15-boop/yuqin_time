@@ -864,6 +864,71 @@ input[type="range"] {
   color: var(--ink);
 }
 
+.mood-picker {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mood-btn {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  min-height: 96px;
+  padding: 12px 8px;
+  color: var(--muted);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.mood-btn svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 2.4;
+}
+
+.mood-btn span {
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.mood-btn.is-selected {
+  background: var(--surface-soft);
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+.mood-1,
+.mood-2 {
+  color: var(--danger);
+}
+
+.mood-3 {
+  color: var(--amber);
+}
+
+.mood-4,
+.mood-5 {
+  color: var(--green);
+}
+
+.mood-reason {
+  display: grid;
+  gap: 8px;
+}
+
+.mood-reason[hidden] {
+  display: none;
+}
+
+.mood-reason label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
 .data-table {
   display: grid;
   gap: 8px;
@@ -1073,6 +1138,7 @@ canvas {
   .task-form,
   .two-col,
   .mini-metrics.four,
+  .mood-picker,
   .module-grid,
   .button-grid,
   .table-row {
