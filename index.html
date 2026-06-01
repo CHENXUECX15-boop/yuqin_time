@@ -60,41 +60,6 @@
                 <button class="ghost-btn" data-jump="review"><i data-lucide="square-pen"></i><span>写复盘</span></button>
               </div>
             </div>
-            <div class="intro-widget" aria-label="今日推进概览">
-              <div class="intro-widget-head">
-                <div>
-                  <div class="eyebrow">今日推进</div>
-                  <h2>实时工作卡</h2>
-                </div>
-                <span id="heroTodaySignal" class="status-pill neutral">待启动</span>
-              </div>
-              <div class="hero-live-list">
-                <button class="hero-live-item" data-jump="tasks">
-                  <span>重点任务</span>
-                  <strong id="heroTopTask">暂无重点任务</strong>
-                  <small id="heroTopTaskMeta">从任务看板添加</small>
-                </button>
-                <button class="hero-live-item" data-jump="meetings">
-                  <span>下一会议</span>
-                  <strong id="heroNextMeeting">暂无会议</strong>
-                  <small id="heroMeetingMeta">会议协作中记录</small>
-                </button>
-              </div>
-              <div class="hero-score-row">
-                <button data-jump="okr">
-                  <span>OKR 均值</span>
-                  <strong id="heroOkrAvg">0%</strong>
-                </button>
-                <button data-jump="wellbeing">
-                  <span>能量状态</span>
-                  <strong id="heroEnergyState">未记录</strong>
-                </button>
-              </div>
-              <div class="hero-widget-actions">
-                <button class="ghost-btn" data-jump="meetings"><i data-lucide="calendar-plus"></i><span>记会议</span></button>
-                <button class="ghost-btn" data-jump="manager"><i data-lucide="send"></i><span>同步资源</span></button>
-              </div>
-            </div>
           </article>
 
           <article class="panel check-panel">
@@ -152,22 +117,6 @@
             <div id="todayTimeline" class="timeline"></div>
           </article>
 
-          <article class="panel span-two">
-            <div class="panel-head">
-              <div>
-                <h2>主题速览</h2>
-                <p>面向自我经营日常的核心模块</p>
-              </div>
-            </div>
-            <div class="module-grid">
-              <button data-jump="tasks"><i data-lucide="kanban"></i><span>任务流</span><strong id="moduleTask">0</strong></button>
-              <button data-jump="okr"><i data-lucide="goal"></i><span>OKR</span><strong id="moduleOkr">0%</strong></button>
-              <button data-jump="meetings"><i data-lucide="calendar-days"></i><span>会议</span><strong id="moduleMeetings">0</strong></button>
-              <button data-jump="manager"><i data-lucide="send"></i><span>资源同步</span><strong id="moduleManager">0</strong></button>
-              <button data-jump="wellbeing"><i data-lucide="activity"></i><span>健康</span><strong id="moduleEnergy">-</strong></button>
-              <button data-jump="review"><i data-lucide="book-open-check"></i><span>复盘</span><strong id="moduleReview">0</strong></button>
-            </div>
-          </article>
         </div>
       </section>
 
@@ -556,6 +505,26 @@
         </div>
 
         <div class="dashboard-grid">
+          <article class="panel span-two">
+            <div class="panel-head">
+              <div>
+                <h2>主题外观</h2>
+                <p>当前主题：<span id="currentThemeName">简约黑色</span></p>
+              </div>
+            </div>
+            <div id="themeChoiceList" class="theme-grid" role="radiogroup" aria-label="主题选择"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>语言设置</h2>
+                <p>当前语言：<span id="currentLanguageName">中文</span></p>
+              </div>
+            </div>
+            <div id="languageChoiceList" class="language-grid" role="radiogroup" aria-label="语言选择"></div>
+          </article>
+
           <article class="panel">
             <div class="panel-head">
               <div>

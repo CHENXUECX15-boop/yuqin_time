@@ -20,6 +20,275 @@ const moodLabels = {
   5: "非常高兴"
 };
 
+const DEFAULT_THEME = "mono-black";
+
+const themeOptions = [
+  { id: "mono-black", name: "简约黑色", nameEn: "Minimal Black", note: "默认", noteEn: "Default", colors: ["#111111", "#f7f7f4", "#d6d6d0"] },
+  { id: "colored-cat", name: "彩色猫猫", nameEn: "Colorful Cat", note: "当前风格", noteEn: "Current style", colors: ["#0b7c77", "#ef6f61", "#eff6f5"] },
+  { id: "line-cat", name: "线条猫猫", nameEn: "Line Cat", note: "黑白线稿", noteEn: "Line-art", colors: ["#1b1b1b", "#ffffff", "#e7e7e2"] },
+  { id: "dopamine", name: "多巴胺配色", nameEn: "Dopamine", note: "夏日高饱和", noteEn: "Bright palette", colors: ["#42bfdf", "#bbdefa", "#fec2dc", "#9ce9e4"] },
+  { id: "mono-red", name: "单色红色", nameEn: "Mono Red", note: "清晰醒目", noteEn: "Bold", colors: ["#c53b31", "#fff5f3", "#f7d8d3"] },
+  { id: "mono-yellow", name: "单色黄色", nameEn: "Mono Yellow", note: "明亮轻快", noteEn: "Bright", colors: ["#c3841d", "#fff9e6", "#f4d982"] },
+  { id: "mono-green", name: "单色绿色", nameEn: "Mono Green", note: "稳定舒展", noteEn: "Calm", colors: ["#2f7d5b", "#f0f7f2", "#cfe8d8"] }
+];
+
+const validThemeIds = new Set(themeOptions.map((theme) => theme.id));
+const DEFAULT_LANGUAGE = "zh";
+const languageOptions = [
+  { id: "zh", name: "中文", nameEn: "Chinese", note: "简体中文", noteEn: "Simplified Chinese" },
+  { id: "en", name: "English", nameEn: "English", note: "英文界面", noteEn: "English UI" }
+];
+const validLanguageIds = new Set(languageOptions.map((language) => language.id));
+const i18nTextMemory = new WeakMap();
+
+const zhToEn = {
+  "主导航": "Main navigation",
+  "早日成为富婆": "Early Rich Woman",
+  "今日总览": "Today",
+  "工作节奏": "Rhythm",
+  "任务看板": "Tasks",
+  "OKR 与项目": "OKR & Projects",
+  "会议协作": "Meetings",
+  "资源协同": "Resources",
+  "健康边界": "Wellbeing",
+  "每日复盘": "Review",
+  "数据看板": "Analytics",
+  "数据管理": "Data",
+  "今日快照": "Snapshot",
+  "专注": "Focus",
+  "任务": "Tasks",
+  "会议": "Meetings",
+  "能量": "Energy",
+  "未记录": "Not recorded",
+  "个人主理人版 · 首屏工作台": "Owner Mode · Workspace",
+  "把今天的推进、协作和边界放在同一屏": "Put progress, collaboration, and boundaries on one screen",
+  "适合把自己当老板的人、项目主理人和自由职业者，在一天内完成开工、专注、任务、会议、复盘与数据沉淀。": "For self-directed owners, project leads, and freelancers who want work sessions, focus, tasks, meetings, reviews, and data in one place.",
+  "开始工作": "Start Work",
+  "新增任务": "New Task",
+  "写复盘": "Write Review",
+  "今日推进": "Today",
+  "实时工作卡": "Live Work Card",
+  "待启动": "Not started",
+  "重点任务": "Key Task",
+  "暂无重点任务": "No key task",
+  "从任务看板添加": "Add from task board",
+  "下一会议": "Next Meeting",
+  "暂无会议": "No meetings",
+  "会议协作中记录": "Record in meetings",
+  "OKR 均值": "OKR Avg",
+  "能量状态": "Energy",
+  "记会议": "Log Meeting",
+  "同步资源": "Sync Resources",
+  "今日状态": "Status",
+  "尚未开始工作": "Work not started",
+  "待开工": "Ready",
+  "开工": "Start",
+  "收工": "End",
+  "主动休息": "Active Rest",
+  "身体恢复": "Recovery",
+  "节奏调整": "Rhythm Reset",
+  "外出事务": "Out of Office",
+  "休整": "Rest",
+  "工作时长": "Work Time",
+  "专注时长": "Focus Time",
+  "完成任务": "Done Tasks",
+  "会议记录": "Meeting Logs",
+  "今日执行": "Execution",
+  "优先级、进行中和到期任务": "Priorities, active work, and due tasks",
+  "打开任务看板": "Open tasks",
+  "临时任务，例如：补齐周报风险项": "Quick task, e.g. add weekly report risks",
+  "加入": "Add",
+  "日程时间块": "Timeline",
+  "工作段、会议与专注片段": "Work sessions, meetings, and focus blocks",
+  "打开工作节奏": "Open rhythm",
+  "主题速览": "Overview",
+  "面向自我经营日常的核心模块": "Core modules for self-directed work",
+  "任务流": "Task Flow",
+  "复盘": "Review",
+  "资源同步": "Resource Sync",
+  "健康": "Health",
+  "关闭未结束工作段": "Close Open Work",
+  "清空今日休整": "Clear Rest",
+  "专注计时": "Focus Timer",
+  "与任务、工作段一起进入数据看板": "Flows into analytics with tasks and work sessions",
+  "未开始": "Not started",
+  "专注主题，例如：整理客户问题清单": "Focus topic, e.g. organize customer issues",
+  "目标分钟": "Target Minutes",
+  "达成奖励": "Reward",
+  "例如：喝一杯喜欢的咖啡": "E.g. have a favorite coffee",
+  "目标 25 分钟": "Target 25 min",
+  "达成后给自己一个奖励": "Reward yourself after completion",
+  "开始": "Start",
+  "暂停": "Pause",
+  "完成": "Complete",
+  "重置": "Reset",
+  "专注历史": "Focus History",
+  "按日期记录每次完成的专注": "Completed focus sessions by date",
+  "行动记录": "Activity Log",
+  "开工、收工、休整和外出": "Start, end, rest, and outings",
+  "近 7 天节奏": "Last 7 Days",
+  "工作时长、专注时长与健康负荷": "Work time, focus time, and load",
+  "0 个任务": "0 tasks",
+  "任务名称": "Task name",
+  "高优先级": "High priority",
+  "中优先级": "Medium priority",
+  "低优先级": "Low priority",
+  "关联项目": "Project",
+  "新增目标": "New Objective",
+  "个人 OKR": "Personal OKR",
+  "目标、关键结果与推进率": "Objectives, key results, and progress",
+  "项目组合": "Project Portfolio",
+  "职责、风险和下一步": "Role, risk, and next step",
+  "新增项目": "New Project",
+  "会议记录": "Meeting Notes",
+  "结论、行动项和负责人": "Decisions, action items, and owners",
+  "会议主题": "Meeting topic",
+  "项目会": "Project",
+  "客户会": "Client",
+  "周会": "Weekly",
+  "常用联系人，例如：客户张总 / 产品小李": "Frequent contacts, e.g. Alex / Product Lee",
+  "加入常用": "Add Contact",
+  "常用会议联系人": "Frequent meeting contacts",
+  "关键结论": "Key decisions",
+  "行动项，用逗号分隔": "Action items, comma-separated",
+  "保存会议": "Save Meeting",
+  "协作记录": "Collaboration Log",
+  "最近会议与待跟进项": "Recent meetings and follow-ups",
+  "同步卡片": "Resource Card",
+  "进展、风险、需要的支持": "Progress, risks, and support needed",
+  "同步主题": "Topic",
+  "本周进展": "Progress this week",
+  "风险或阻塞": "Risks or blockers",
+  "需要的支持或资源": "Support or resources needed",
+  "保存同步": "Save Resource Note",
+  "同步历史": "Resource History",
+  "用于周报、1:1 和绩效沟通": "For weekly reports, 1:1s, and performance talks",
+  "今日准点下线": "End On Time",
+  "能量登记": "Energy Check-in",
+  "工作负荷、恢复感与备注": "Load, recovery, and notes",
+  "能量值": "Energy",
+  "压力值": "Stress",
+  "今天需要照顾的身体或情绪信号": "Physical or emotional signals to care for today",
+  "保存状态": "Save Status",
+  "边界记录": "Boundary Log",
+  "能量、压力和下线状态": "Energy, stress, and boundary status",
+  "今天的闭环": "Today's Closure",
+  "成果、风险、明日优先级": "Wins, risks, and tomorrow's priorities",
+  "今天完成了什么": "What did you complete today?",
+  "哪些事情需要预警": "What needs attention?",
+  "明天最重要的 1-3 件事": "Top 1-3 things tomorrow",
+  "今日满意度": "Today's mood",
+  "非常不高兴": "Very Unhappy",
+  "不太高兴": "Unhappy",
+  "一般": "Neutral",
+  "挺高兴": "Happy",
+  "非常高兴": "Very Happy",
+  "原因": "Reason",
+  "写下原因，方便以后回看触发点": "Write the reason so you can review the trigger later",
+  "保存复盘": "Save Review",
+  "复盘记录": "Review Log",
+  "保留每日可回看的工作轨迹": "Keep a daily work trail you can revisit",
+  "数据周期": "Data range",
+  "7 天": "7 days",
+  "14 天": "14 days",
+  "30 天": "30 days",
+  "工作趋势": "Work Trend",
+  "工作分钟、专注分钟、完成任务": "Work minutes, focus minutes, and completed tasks",
+  "任务分布": "Task Distribution",
+  "待办、进行中、已完成": "To do, in progress, and done",
+  "自我体感": "Self Check",
+  "能量与压力的相对变化": "Energy and stress over time",
+  "主题外观": "Theme",
+  "当前主题：": "Current theme: ",
+  "语言设置": "Language",
+  "当前语言：": "Current language: ",
+  "语言选择": "Language selection",
+  "本地数据": "Local Data",
+  "导出、导入和重置": "Export, import, and reset",
+  "导出 JSON": "Export JSON",
+  "导入 JSON": "Import JSON",
+  "重置演示数据": "Reset Demo Data",
+  "导出内容会显示在这里": "Exported content appears here",
+  "小程序迁移模型": "Mini Program Model",
+  "后续可映射到云开发集合": "Can later map to cloud collections",
+  "暂无任务": "No tasks",
+  "暂无 OKR": "No OKRs",
+  "暂无会议记录": "No meeting records",
+  "暂无同步记录": "No resource notes",
+  "暂无健康记录": "No wellbeing records",
+  "暂无复盘记录": "No review records",
+  "暂无行动记录": "No activity records",
+  "今天还没有重点任务": "No key tasks today",
+  "今天还没有时间块": "No timeline blocks today",
+  "完成一次专注后会出现在这里": "Completed focus sessions will appear here",
+  "待办": "To Do",
+  "进行中": "In Progress",
+  "已完成": "Done",
+  "已暂停": "Paused",
+  "绿": "Green",
+  "黄": "Yellow",
+  "蓝": "Blue",
+  "满意度": "Mood",
+  "工作": "Work",
+  "压力": "Stress",
+  "任务总数": "Total tasks",
+  "未命名专注": "Untitled focus",
+  "未设置目标": "No target",
+  "前一列": "Previous",
+  "后一列": "Next",
+  "删除": "Delete",
+  "删除专注记录": "Delete focus record",
+  "删除行动记录": "Delete activity record",
+  "工作记录": "Work record",
+  "休整 / 外出记录": "Rest / out-of-office",
+  "自动关闭": "Auto close",
+  "自动收工": "Auto end",
+  "请先填写会议主题": "Please enter a meeting topic",
+  "会议已保存": "Meeting saved",
+  "请先填写同步主题": "Please enter a resource topic",
+  "同步卡片已保存": "Resource note saved",
+  "复盘已保存": "Review saved",
+  "已记录开工": "Start recorded",
+  "已记录收工": "End recorded",
+  "休整记录已添加": "Rest record added",
+  "今天没有未结束工作段": "No open work session today",
+  "已关闭未结束工作段": "Open work session closed",
+  "今日休整记录已清空": "Today's rest records cleared",
+  "专注计时已在进行": "Focus timer is already running",
+  "专注开始": "Focus started",
+  "当前没有运行中的专注": "No active focus session",
+  "专注已暂停": "Focus paused",
+  "专注时间太短，暂不记录": "Focus was too short to record",
+  "专注已完成": "Focus completed",
+  "专注计时已重置": "Focus timer reset",
+  "请先输入联系人": "Please enter a contact",
+  "这个联系人已经在常用名单里": "This contact already exists",
+  "联系人已加入常用": "Contact added",
+  "常用联系人已删除": "Frequent contact deleted",
+  "请先填写任务名称": "Please enter a task name",
+  "任务已新增": "Task added",
+  "任务已删除": "Task deleted",
+  "任务状态已更新": "Task status updated",
+  "OKR 已新增": "OKR added",
+  "OKR 已删除": "OKR deleted",
+  "项目已新增": "Project added",
+  "项目已删除": "Project deleted",
+  "行动记录已删除": "Activity deleted",
+  "专注记录已删除": "Focus record deleted",
+  "会议已删除": "Meeting deleted",
+  "同步记录已删除": "Resource note deleted",
+  "复盘已删除": "Review deleted",
+  "健康记录已删除": "Wellbeing record deleted",
+  "健康状态已保存": "Wellbeing saved",
+  "JSON 已导出": "JSON exported",
+  "数据已导入": "Data imported",
+  "导入失败，请检查 JSON 文件": "Import failed. Check the JSON file",
+  "已重置为演示数据": "Demo data reset",
+  "语言已切换为中文": "Language switched to Chinese"
+};
+
+const enToZh = Object.fromEntries(Object.entries(zhToEn).map(([zh, en]) => [en, zh]));
+
 let state = loadState();
 let activeSection = "home";
 let dashboardRange = 7;
@@ -33,6 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindForms();
   bindActions();
   bindRanges();
+  applyTheme();
   tickClock();
   setInterval(tickClock, 1000);
   timerTick = setInterval(renderFocusTimer, 500);
@@ -119,6 +389,10 @@ function createDefaultState() {
       }
     ],
     meetingContacts: ["客户张总", "产品小李", "设计小周", "财务 Ada"],
+    appearance: {
+      theme: DEFAULT_THEME,
+      language: DEFAULT_LANGUAGE
+    },
     managerNotes: [
       {
         id: uid(),
@@ -164,8 +438,16 @@ function mergeState(base, incoming) {
   return {
     ...base,
     ...incoming,
+    appearance: mergeAppearance(base.appearance, incoming.appearance),
     focusTimer: { ...base.focusTimer, ...(incoming.focusTimer || {}) }
   };
+}
+
+function mergeAppearance(base, incoming = {}) {
+  incoming = incoming || {};
+  const theme = validThemeIds.has(incoming.theme) ? incoming.theme : base.theme || DEFAULT_THEME;
+  const language = validLanguageIds.has(incoming.language) ? incoming.language : base.language || DEFAULT_LANGUAGE;
+  return { ...base, ...incoming, theme, language };
 }
 
 function normalizeLegacyWording(nextState) {
@@ -332,6 +614,10 @@ function bindActions() {
   $("#btnExport").addEventListener("click", exportData);
   $("#importFile").addEventListener("change", importData);
   $("#btnReset").addEventListener("click", resetData);
+  $("#themeChoiceList").addEventListener("click", handleThemeChoice);
+  $("#themeChoiceList").addEventListener("keydown", handleThemeChoiceKey);
+  $("#languageChoiceList").addEventListener("click", handleLanguageChoice);
+  $("#languageChoiceList").addEventListener("keydown", handleLanguageChoiceKey);
 
   $("#kanbanBoard").addEventListener("click", handleTaskAction);
   $("#okrList").addEventListener("input", handleOkrProgress);
@@ -404,7 +690,7 @@ function clearTodayLeaves() {
 function startFocus() {
   const timer = state.focusTimer;
   if (timer.running) return toast("专注计时已在进行");
-  timer.title = $("#focusTitle").value.trim() || timer.title || "未命名专注";
+  timer.title = $("#focusTitle").value.trim() || timer.title || (isEnglish() ? "Untitled focus" : "未命名专注");
   timer.targetMinutes = clampFocusTarget($("#focusTargetMinutes").value);
   timer.reward = $("#focusReward").value.trim();
   timer.startedAt = iso(new Date());
@@ -429,7 +715,7 @@ function finishFocus() {
   const endedAt = new Date();
   state.focusSessions.unshift({
     id: uid(),
-    title: timer.title || $("#focusTitle").value.trim() || "未命名专注",
+    title: timer.title || $("#focusTitle").value.trim() || (isEnglish() ? "Untitled focus" : "未命名专注"),
     minutes,
     targetMinutes: timer.targetMinutes || clampFocusTarget($("#focusTargetMinutes").value),
     reward: timer.reward || $("#focusReward").value.trim(),
@@ -441,11 +727,11 @@ function finishFocus() {
   state.focusTimer = { title: "", running: false, startedAt: null, elapsedMs: 0, targetMinutes: latest.targetMinutes || 25, reward: latest.reward || "" };
   $("#focusTitle").value = "";
   if (latest.rewardEarned && latest.reward) {
-    saveAndRender(`目标达成，奖励自己：${latest.reward}`);
+    saveAndRender(isEnglish() ? `Goal reached. Reward yourself: ${latest.reward}` : `目标达成，奖励自己：${latest.reward}`);
   } else if (latest.rewardEarned) {
-    saveAndRender("目标达成，记得兑现给自己的奖励");
+    saveAndRender(isEnglish() ? "Goal reached. Remember your reward" : "目标达成，记得兑现给自己的奖励");
   } else if (latest.targetMinutes) {
-    saveAndRender(`专注已保存，本次未达成 ${latest.targetMinutes} 分钟目标`);
+    saveAndRender(isEnglish() ? `Focus saved. Target of ${latest.targetMinutes} min was not reached` : `专注已保存，本次未达成 ${latest.targetMinutes} 分钟目标`);
   } else {
     saveAndRender("专注已完成");
   }
@@ -515,8 +801,12 @@ function setReviewMood(score, reason = null) {
   reasonWrap.hidden = !needsReason;
 
   if (needsReason) {
-    reasonLabel.textContent = safeScore === 5 ? "为什么今天特别高兴？" : "为什么今天特别不高兴？";
-    reasonInput.placeholder = safeScore === 5 ? "记录让你很开心的触发点" : "记录让你不舒服的触发点";
+    reasonLabel.textContent = safeScore === 5
+      ? (isEnglish() ? "Why are you especially happy today?" : "为什么今天特别高兴？")
+      : (isEnglish() ? "Why are you especially unhappy today?" : "为什么今天特别不高兴？");
+    reasonInput.placeholder = safeScore === 5
+      ? (isEnglish() ? "Record the trigger that made you happy" : "记录让你很开心的触发点")
+      : (isEnglish() ? "Record the trigger that felt uncomfortable" : "记录让你不舒服的触发点");
     if (reason !== null) reasonInput.value = reason;
   } else {
     reasonInput.value = "";
@@ -569,9 +859,9 @@ function handleTaskAction(event) {
 }
 
 function addObjective() {
-  const title = window.prompt("目标名称");
+  const title = window.prompt(isEnglish() ? "Objective name" : "目标名称");
   if (!title) return;
-  const keyResult = window.prompt("关键结果", "用一个可衡量结果描述完成标准") || "";
+  const keyResult = window.prompt(isEnglish() ? "Key result" : "关键结果", isEnglish() ? "Describe a measurable result" : "用一个可衡量结果描述完成标准") || "";
   state.okrs.unshift({ id: uid(), title: title.trim(), keyResult: keyResult.trim(), progress: 0 });
   saveAndRender("OKR 已新增");
 }
@@ -609,11 +899,11 @@ function handleOkrDelete(event) {
 }
 
 function addProject() {
-  const name = window.prompt("项目名称");
+  const name = window.prompt(isEnglish() ? "Project name" : "项目名称");
   if (!name) return;
-  const role = window.prompt("你的角色", "执行成员") || "执行成员";
-  const risk = window.prompt("当前风险", "暂无") || "暂无";
-  const next = window.prompt("下一步动作", "补充下一步") || "补充下一步";
+  const role = window.prompt(isEnglish() ? "Your role" : "你的角色", isEnglish() ? "Owner" : "主理人") || (isEnglish() ? "Owner" : "主理人");
+  const risk = window.prompt(isEnglish() ? "Current risk" : "当前风险", isEnglish() ? "None" : "暂无") || (isEnglish() ? "None" : "暂无");
+  const next = window.prompt(isEnglish() ? "Next action" : "下一步动作", isEnglish() ? "Add next step" : "补充下一步") || (isEnglish() ? "Add next step" : "补充下一步");
   state.projects.unshift({ id: uid(), name: name.trim(), role: role.trim(), health: "黄", risk: risk.trim(), next: next.trim() });
   saveAndRender("项目已新增");
 }
@@ -664,7 +954,7 @@ function exportData() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `早日成为富婆-${todayKey()}.json`;
+  link.download = `${isEnglish() ? "early-rich-woman" : "早日成为富婆"}-${todayKey()}.json`;
   link.click();
   URL.revokeObjectURL(url);
   toast("JSON 已导出");
@@ -688,13 +978,171 @@ function importData(event) {
 }
 
 function resetData() {
-  const confirmed = window.confirm("确定重置为演示数据吗？当前本地数据会被覆盖。");
+  const confirmed = window.confirm(isEnglish() ? "Reset demo data? Current local data will be overwritten." : "确定重置为演示数据吗？当前本地数据会被覆盖。");
   if (!confirmed) return;
   state = createDefaultState();
   saveAndRender("已重置为演示数据");
 }
 
+function handleThemeChoice(event) {
+  const button = event.target.closest("[data-theme-choice]");
+  if (!button) return;
+  setTheme(button.dataset.themeChoice);
+}
+
+function handleThemeChoiceKey(event) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const button = event.target.closest("[data-theme-choice]");
+  if (!button) return;
+  event.preventDefault();
+  setTheme(button.dataset.themeChoice);
+}
+
+function setTheme(themeId) {
+  if (!validThemeIds.has(themeId)) return;
+  state.appearance = { ...(state.appearance || {}), theme: themeId };
+  applyTheme();
+  saveAndRender(isEnglish() ? `Theme switched to ${themeName(themeId)}` : `主题已切换为${themeName(themeId)}`);
+}
+
+function applyTheme() {
+  const theme = validThemeIds.has(state.appearance?.theme) ? state.appearance.theme : DEFAULT_THEME;
+  state.appearance = { ...(state.appearance || {}), theme };
+  if (document.body) document.body.dataset.theme = theme;
+}
+
+function handleLanguageChoice(event) {
+  const button = event.target.closest("[data-language-choice]");
+  if (!button) return;
+  setLanguage(button.dataset.languageChoice);
+}
+
+function handleLanguageChoiceKey(event) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const button = event.target.closest("[data-language-choice]");
+  if (!button) return;
+  event.preventDefault();
+  setLanguage(button.dataset.languageChoice);
+}
+
+function setLanguage(languageId) {
+  if (!validLanguageIds.has(languageId)) return;
+  state.appearance = { ...(state.appearance || {}), language: languageId };
+  saveAndRender(languageId === "en" ? "Language switched to English" : "语言已切换为中文");
+}
+
+function currentLanguage() {
+  const language = state.appearance?.language;
+  return validLanguageIds.has(language) ? language : DEFAULT_LANGUAGE;
+}
+
+function isEnglish() {
+  return currentLanguage() === "en";
+}
+
+function translateExact(value) {
+  if (value == null) return value;
+  const text = String(value);
+  const trimmed = text.trim();
+  if (!trimmed) return text;
+  const translated = localizeI18nKey(normalizeI18nKey(trimmed));
+  if (!translated) return text;
+  return text.replace(trimmed, translated);
+}
+
+function t(value) {
+  return isEnglish() ? zhToEn[value] || value : enToZh[value] || value;
+}
+
+function normalizeI18nKey(text) {
+  return enToZh[text] || text;
+}
+
+function localizeI18nKey(key) {
+  return isEnglish() ? zhToEn[key] || key : key;
+}
+
+function translateRememberedText(value, memo) {
+  const text = String(value);
+  const trimmed = text.trim();
+  if (!trimmed) return { text, key: memo?.key || "", translated: trimmed };
+  const expected = memo ? localizeI18nKey(memo.key) : "";
+  const key = !memo || (trimmed !== memo.last && trimmed !== expected)
+    ? normalizeI18nKey(trimmed)
+    : memo.key;
+  const translated = localizeI18nKey(key);
+  return {
+    text: text.replace(trimmed, translated),
+    key,
+    translated
+  };
+}
+
+function statusText(status) {
+  const labels = isEnglish()
+    ? { todo: "To Do", doing: "In Progress", done: "Done" }
+    : statusMap;
+  return labels[status] || status;
+}
+
+function priorityText(priority) {
+  if (!isEnglish()) return priority;
+  return { "高": "High", "中": "Medium", "低": "Low" }[priority] || priority;
+}
+
+function priorityLabel(priority) {
+  return isEnglish() ? `${priorityText(priority)} priority` : `${priority}优先级`;
+}
+
+function countLabel(count, zhUnit, enUnit) {
+  return isEnglish() ? `${count} ${enUnit}${Number(count) === 1 ? "" : "s"}` : `${count} ${zhUnit}`;
+}
+
+function applyLanguage() {
+  const language = currentLanguage();
+  document.documentElement.lang = language === "en" ? "en" : "zh-CN";
+  document.title = language === "en" ? "Early Rich Woman | work for tomorrow." : "早日成为富婆 | work for tomorrow.";
+  translateDomText(document.body);
+  translateDomAttributes();
+}
+
+function translateDomText(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parent = node.parentElement;
+      if (!parent || ["SCRIPT", "STYLE", "PRE", "TEXTAREA"].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+      if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach((node) => {
+    const result = translateRememberedText(node.nodeValue, i18nTextMemory.get(node));
+    i18nTextMemory.set(node, { key: result.key, last: result.translated });
+    node.nodeValue = result.text;
+  });
+}
+
+function translateDomAttributes() {
+  ["placeholder", "aria-label", "title"].forEach((attribute) => {
+    $$(`[${attribute}]`).forEach((node) => {
+      const keyAttribute = `data-i18n-${attribute}-key`;
+      const lastAttribute = `data-i18n-${attribute}-last`;
+      const memo = node.hasAttribute(keyAttribute)
+        ? { key: node.getAttribute(keyAttribute), last: node.getAttribute(lastAttribute) || "" }
+        : null;
+      const result = translateRememberedText(node.getAttribute(attribute), memo);
+      node.setAttribute(keyAttribute, result.key);
+      node.setAttribute(lastAttribute, result.translated);
+      node.setAttribute(attribute, result.text);
+    });
+  });
+}
+
 function renderAll() {
+  applyTheme();
+  tickClock();
   renderHome();
   renderRhythm();
   renderTasks();
@@ -706,6 +1154,7 @@ function renderAll() {
   renderSettings();
   renderFocusTimer();
   renderCharts();
+  applyLanguage();
   renderIcons();
 }
 
@@ -720,12 +1169,6 @@ function renderHome() {
   const openCount = openWorkSegmentCount();
   const totalTasks = state.tasks.length;
   const openTasks = state.tasks.filter((task) => task.status !== "done").length;
-  const avgOkr = state.okrs.length ? Math.round(state.okrs.reduce((sum, item) => sum + item.progress, 0) / state.okrs.length) : 0;
-  const topTask = todayTasks.slice().sort(sortTasks).find((task) => task.status !== "done") || todayTasks[0];
-  const todayMeetings = state.meetings
-    .filter((item) => dateKey(new Date(item.when)) === today)
-    .sort((a, b) => new Date(a.when) - new Date(b.when));
-  const nextMeeting = todayMeetings.find((item) => new Date(item.when) >= new Date()) || todayMeetings[0];
 
   $("#todayWorkMinutes").textContent = formatMinutes(workMinutes);
   $("#todayFocusMinutes").textContent = formatMinutes(focus);
@@ -734,23 +1177,9 @@ function renderHome() {
   $("#sideFocus").textContent = formatMinutes(focus);
   $("#sideTasks").textContent = `${totalTasks - openTasks}/${totalTasks}`;
   $("#sideMeetings").textContent = meetings;
-  $("#sideEnergy").textContent = health ? `${health.energy}/5` : "未记录";
-  $("#moduleTask").textContent = openTasks;
-  $("#moduleOkr").textContent = `${avgOkr}%`;
-  $("#moduleMeetings").textContent = meetings;
-  $("#moduleManager").textContent = state.managerNotes.length;
-  $("#moduleEnergy").textContent = health ? `${health.energy}/5` : "-";
-  $("#moduleReview").textContent = state.reviews.length;
-  $("#heroTodaySignal").textContent = openCount > 0 ? `进行中 ${openCount}` : openTasks > 0 ? `待推进 ${openTasks}` : "今日清爽";
-  $("#heroTodaySignal").className = `status-pill ${openCount > 0 ? "good" : openTasks > 0 ? "warn" : "neutral"}`;
-  $("#heroTopTask").textContent = topTask ? topTask.title : "暂无重点任务";
-  $("#heroTopTaskMeta").textContent = topTask ? `${statusMap[topTask.status]} · ${topTask.priority}优先级${topTask.due ? ` · ${topTask.due}` : ""}` : "从任务看板添加";
-  $("#heroNextMeeting").textContent = nextMeeting ? nextMeeting.title : "暂无会议";
-  $("#heroMeetingMeta").textContent = nextMeeting ? `${formatTime(nextMeeting.when)} · ${nextMeeting.type}` : "会议协作中记录";
-  $("#heroOkrAvg").textContent = `${avgOkr}%`;
-  $("#heroEnergyState").textContent = health ? `${health.energy}/5` : "未记录";
-  $("#workStateLabel").textContent = openCount > 0 ? "工作段进行中" : workMinutes > 0 ? "今日已有工作记录" : "尚未开始工作";
-  $("#openLogBadge").textContent = openCount > 0 ? `进行中 ${openCount}` : "待开工";
+  $("#sideEnergy").textContent = health ? `${health.energy}/5` : t("未记录");
+  $("#workStateLabel").textContent = openCount > 0 ? (isEnglish() ? "Work session active" : "工作段进行中") : workMinutes > 0 ? (isEnglish() ? "Work recorded today" : "今日已有工作记录") : t("尚未开始工作");
+  $("#openLogBadge").textContent = openCount > 0 ? `${t("进行中")} ${openCount}` : t("待开工");
   $("#openLogBadge").className = `status-pill ${openCount > 0 ? "good" : "neutral"}`;
 
   $("#homeTaskList").innerHTML = todayTasks.length ? todayTasks
@@ -777,14 +1206,14 @@ function renderRhythm() {
           <div class="stack-item focus-history-item">
             <div class="stack-item-head">
               <div>
-                <h3><i data-lucide="timer"></i> ${escapeHtml(item.title || "未命名专注")}</h3>
+                <h3><i data-lucide="timer"></i> ${escapeHtml(item.title || (isEnglish() ? "Untitled focus" : "未命名专注"))}</h3>
                 <p>${formatTime(item.startedAt)} - ${formatTime(item.endedAt)} · ${formatMinutes(item.minutes)}</p>
                 <div class="item-meta">
-                  ${item.targetMinutes ? `<span class="tag">目标 ${item.targetMinutes} 分钟</span>` : ""}
-                  ${item.reward ? `<span class="tag ${item.rewardEarned ? "low" : "medium"}">${item.rewardEarned ? "奖励已解锁" : "奖励未解锁"}：${escapeHtml(item.reward)}</span>` : ""}
+                  ${item.targetMinutes ? `<span class="tag">${isEnglish() ? `Target ${item.targetMinutes} min` : `目标 ${item.targetMinutes} 分钟`}</span>` : ""}
+                  ${item.reward ? `<span class="tag ${item.rewardEarned ? "low" : "medium"}">${item.rewardEarned ? (isEnglish() ? "Reward unlocked" : "奖励已解锁") : (isEnglish() ? "Reward locked" : "奖励未解锁")}${isEnglish() ? ": " : "："}${escapeHtml(item.reward)}</span>` : ""}
                 </div>
               </div>
-              <button class="icon-btn" data-delete-id="${item.id}" aria-label="删除专注记录" title="删除专注记录"><i data-lucide="trash-2"></i></button>
+              <button class="icon-btn" data-delete-id="${item.id}" aria-label="${t("删除专注记录")}" title="${t("删除专注记录")}"><i data-lucide="trash-2"></i></button>
             </div>
           </div>
         `).join("")}
@@ -796,22 +1225,22 @@ function renderRhythm() {
     <div class="date-group">
       <div class="date-divider">
         <span>${escapeHtml(formatDayTitle(group.day))}</span>
-        <strong>${group.items.length} 条</strong>
+        <strong>${isEnglish() ? countLabel(group.items.length, "条", "item") : `${group.items.length} 条`}</strong>
       </div>
       <div class="stack-list">
         ${group.items.map((item) => {
           const icon = item.type === "in" ? "log-in" : item.type === "out" ? "log-out" : "umbrella";
-          const title = item.type === "leave" ? item.note : item.type === "in" ? "开工" : "收工";
+          const title = item.type === "leave" ? t(item.note) : item.type === "in" ? t("开工") : t("收工");
           return `
             <div class="stack-item attendance-item">
               <div class="stack-item-head">
                 <div>
                   <h3><i data-lucide="${icon}"></i> ${escapeHtml(title)}</h3>
-                  <p>${escapeHtml(item.note || "")}</p>
+                  <p>${escapeHtml(t(item.note || ""))}</p>
                 </div>
                 <div class="attendance-actions">
                   <span class="tag">${formatTime(item.at)}</span>
-                  <button class="icon-btn" data-delete-id="${item.id}" aria-label="删除行动记录" title="删除行动记录"><i data-lucide="trash-2"></i></button>
+                  <button class="icon-btn" data-delete-id="${item.id}" aria-label="${t("删除行动记录")}" title="${t("删除行动记录")}"><i data-lucide="trash-2"></i></button>
                 </div>
               </div>
             </div>
@@ -852,7 +1281,7 @@ function groupedAttendanceByDay() {
 
 function formatDayTitle(day) {
   const date = new Date(`${day}T12:00:00`);
-  const weekday = date.toLocaleDateString("zh-CN", { weekday: "long" });
+  const weekday = date.toLocaleDateString(isEnglish() ? "en-US" : "zh-CN", { weekday: "long" });
   return `${day} ${weekday}`;
 }
 
@@ -868,23 +1297,23 @@ function renderFocusTimer() {
   const targetMinutes = isLocked ? Number(timer.targetMinutes || 0) : clampFocusTarget($("#focusTargetMinutes").value);
   const reward = isLocked ? (timer.reward || "") : $("#focusReward").value.trim();
   const progress = targetMinutes ? Math.min(100, Math.floor((ms / (targetMinutes * 60000)) * 100)) : 0;
-  $("#focusState").textContent = timer.running ? "进行中" : ms > 0 ? "已暂停" : "未开始";
+  $("#focusState").textContent = timer.running ? t("进行中") : ms > 0 ? (isEnglish() ? "Paused" : "已暂停") : t("未开始");
   $("#focusState").className = `status-pill ${timer.running ? "good" : "neutral"}`;
   if (timer.title && !$("#focusTitle").value) $("#focusTitle").value = timer.title;
-  $("#focusGoalLabel").textContent = targetMinutes ? `目标 ${targetMinutes} 分钟` : "未设置目标";
+  $("#focusGoalLabel").textContent = targetMinutes ? (isEnglish() ? `Target ${targetMinutes} min` : `目标 ${targetMinutes} 分钟`) : (isEnglish() ? "No target" : "未设置目标");
   $("#focusGoalProgress").textContent = `${progress}%`;
   $("#focusGoalBar").style.width = `${progress}%`;
-  $("#focusRewardPreview").textContent = reward ? `达成奖励：${reward}` : "达成后给自己一个奖励";
+  $("#focusRewardPreview").textContent = reward ? (isEnglish() ? `Reward: ${reward}` : `达成奖励：${reward}`) : t("达成后给自己一个奖励");
 }
 
 function renderTasks() {
   const columns = [
-    { key: "todo", title: "待办" },
-    { key: "doing", title: "进行中" },
-    { key: "done", title: "已完成" }
+    { key: "todo", title: statusText("todo") },
+    { key: "doing", title: statusText("doing") },
+    { key: "done", title: statusText("done") }
   ];
 
-  $("#taskSummaryPill").textContent = `${state.tasks.length} 个任务`;
+  $("#taskSummaryPill").textContent = countLabel(state.tasks.length, "个任务", "task");
   $("#kanbanBoard").innerHTML = columns.map((column) => {
     const tasks = state.tasks.filter((task) => task.status === column.key).sort(sortTasks);
     return `
@@ -898,7 +1327,7 @@ function renderTasks() {
 
 function taskCard(task) {
   const priority = priorityClass[task.priority] || "medium";
-  const dueLabel = task.due ? `截止 ${task.due}` : "未设截止";
+  const dueLabel = task.due ? (isEnglish() ? `Due ${task.due}` : `截止 ${task.due}`) : (isEnglish() ? "No due date" : "未设截止");
   const canPrev = task.status !== "todo";
   const canNext = task.status !== "done";
   return `
@@ -907,18 +1336,18 @@ function taskCard(task) {
         <div>
           <h3>${escapeHtml(task.title)}</h3>
           <div class="item-meta">
-            <span class="tag ${priority}">${escapeHtml(task.priority)}优先级</span>
-            <span class="tag">${escapeHtml(statusMap[task.status])}</span>
+            <span class="tag ${priority}">${escapeHtml(priorityLabel(task.priority))}</span>
+            <span class="tag">${escapeHtml(statusText(task.status))}</span>
             <span class="tag">${escapeHtml(dueLabel)}</span>
             ${task.project ? `<span class="tag">${escapeHtml(task.project)}</span>` : ""}
           </div>
         </div>
       </div>
       <div class="tiny-actions">
-        ${canPrev ? `<button data-task-action="prev" data-id="${task.id}">前一列</button>` : ""}
-        ${canNext ? `<button data-task-action="next" data-id="${task.id}">后一列</button>` : ""}
-        ${task.status !== "done" ? `<button data-task-action="done" data-id="${task.id}">完成</button>` : ""}
-        <button data-task-action="delete" data-id="${task.id}">删除</button>
+        ${canPrev ? `<button data-task-action="prev" data-id="${task.id}">${isEnglish() ? "Previous" : "前一列"}</button>` : ""}
+        ${canNext ? `<button data-task-action="next" data-id="${task.id}">${isEnglish() ? "Next" : "后一列"}</button>` : ""}
+        ${task.status !== "done" ? `<button data-task-action="done" data-id="${task.id}">${t("完成")}</button>` : ""}
+        <button data-task-action="delete" data-id="${task.id}">${isEnglish() ? "Delete" : "删除"}</button>
       </div>
     </div>
   `;
@@ -932,11 +1361,11 @@ function renderOkr() {
           <h3>${escapeHtml(okr.title)}</h3>
           <p>${escapeHtml(okr.keyResult)}</p>
         </div>
-        <button class="icon-btn" data-okr-delete data-id="${okr.id}" aria-label="删除目标" title="删除目标"><i data-lucide="trash-2"></i></button>
+        <button class="icon-btn" data-okr-delete data-id="${okr.id}" aria-label="${isEnglish() ? "Delete objective" : "删除目标"}" title="${isEnglish() ? "Delete objective" : "删除目标"}"><i data-lucide="trash-2"></i></button>
       </div>
       <div class="progress-wrap">
-        <input type="range" min="0" max="100" value="${okr.progress}" data-okr-progress data-id="${okr.id}" aria-label="${escapeHtml(okr.title)}进度">
-        <label class="progress-number" aria-label="${escapeHtml(okr.title)}进度百分比">
+        <input type="range" min="0" max="100" value="${okr.progress}" data-okr-progress data-id="${okr.id}" aria-label="${escapeHtml(okr.title)} ${isEnglish() ? "progress" : "进度"}">
+        <label class="progress-number" aria-label="${escapeHtml(okr.title)} ${isEnglish() ? "progress percent" : "进度百分比"}">
           <input type="number" min="0" max="100" step="1" inputmode="numeric" value="${okr.progress}" data-okr-number data-id="${okr.id}">
           <span>%</span>
         </label>
@@ -945,14 +1374,14 @@ function renderOkr() {
   `).join("") || empty("暂无 OKR");
 
   $("#projectTable").innerHTML = `
-    <div class="table-row header"><span>项目</span><span>角色</span><span>状态</span><span>下一步</span><span></span></div>
+    <div class="table-row header"><span>${isEnglish() ? "Project" : "项目"}</span><span>${isEnglish() ? "Role" : "角色"}</span><span>${isEnglish() ? "Status" : "状态"}</span><span>${isEnglish() ? "Next" : "下一步"}</span><span></span></div>
     ${state.projects.map((project) => `
       <div class="table-row">
         <strong>${escapeHtml(project.name)}</strong>
         <span>${escapeHtml(project.role)}</span>
-        <span class="tag ${project.health === "绿" ? "low" : project.health === "黄" ? "medium" : ""}">${escapeHtml(project.health)}</span>
+        <span class="tag ${project.health === "绿" ? "low" : project.health === "黄" ? "medium" : ""}">${escapeHtml(t(project.health))}</span>
         <span>${escapeHtml(project.next)}<br><small>${escapeHtml(project.risk)}</small></span>
-        <button class="icon-btn" data-project-delete data-id="${project.id}" aria-label="删除项目" title="删除项目"><i data-lucide="trash-2"></i></button>
+        <button class="icon-btn" data-project-delete data-id="${project.id}" aria-label="${isEnglish() ? "Delete project" : "删除项目"}" title="${isEnglish() ? "Delete project" : "删除项目"}"><i data-lucide="trash-2"></i></button>
       </div>
     `).join("")}
   `;
@@ -966,14 +1395,14 @@ function renderMeetings() {
         <div>
           <h3>${escapeHtml(meeting.title)}</h3>
           <div class="item-meta">
-            <span class="tag">${escapeHtml(meeting.type)}</span>
+            <span class="tag">${escapeHtml(t(meeting.type))}</span>
             <span class="tag">${formatDateTime(meeting.when)}</span>
           </div>
         </div>
-        <button class="icon-btn" data-delete-id="${meeting.id}" aria-label="删除会议" title="删除会议"><i data-lucide="trash-2"></i></button>
+        <button class="icon-btn" data-delete-id="${meeting.id}" aria-label="${isEnglish() ? "Delete meeting" : "删除会议"}" title="${isEnglish() ? "Delete meeting" : "删除会议"}"><i data-lucide="trash-2"></i></button>
       </div>
-      <p>${escapeHtml(meeting.decision || "暂无结论")}</p>
-      ${(meeting.contacts || []).length ? `<div class="item-meta">${meeting.contacts.map((contact) => `<span class="tag">联系人：${escapeHtml(contact)}</span>`).join("")}</div>` : ""}
+      <p>${escapeHtml(meeting.decision || (isEnglish() ? "No decision" : "暂无结论"))}</p>
+      ${(meeting.contacts || []).length ? `<div class="item-meta">${meeting.contacts.map((contact) => `<span class="tag">${isEnglish() ? "Contact: " : "联系人："}${escapeHtml(contact)}</span>`).join("")}</div>` : ""}
       <div class="item-meta">${(meeting.actions || []).map((action) => `<span class="tag">${escapeHtml(action)}</span>`).join("")}</div>
     </div>
   `).join("") || empty("暂无会议记录");
@@ -986,9 +1415,9 @@ function renderMeetingContacts(selected = getSelectedMeetingContacts()) {
     <label class="contact-check">
       <input type="checkbox" value="${escapeHtml(contact)}" data-meeting-contact ${selectedSet.has(contact) ? "checked" : ""}>
       <span>${escapeHtml(contact)}</span>
-      <button type="button" data-contact-delete="${escapeHtml(contact)}" aria-label="删除常用联系人 ${escapeHtml(contact)}" title="删除常用联系人"><i data-lucide="x"></i></button>
+      <button type="button" data-contact-delete="${escapeHtml(contact)}" aria-label="${isEnglish() ? "Delete frequent contact" : "删除常用联系人"} ${escapeHtml(contact)}" title="${isEnglish() ? "Delete frequent contact" : "删除常用联系人"}"><i data-lucide="x"></i></button>
     </label>
-  `).join("") : `<div class="empty compact">添加常用联系人后可直接勾选</div>`;
+  `).join("") : `<div class="empty compact">${isEnglish() ? "Add frequent contacts to select them quickly" : "添加常用联系人后可直接勾选"}</div>`;
 }
 
 function renderManager() {
@@ -999,11 +1428,11 @@ function renderManager() {
           <h3>${escapeHtml(note.topic)}</h3>
           <div class="item-meta"><span class="tag">${formatDateTime(note.createdAt)}</span></div>
         </div>
-        <button class="icon-btn" data-delete-id="${note.id}" aria-label="删除同步" title="删除同步"><i data-lucide="trash-2"></i></button>
+        <button class="icon-btn" data-delete-id="${note.id}" aria-label="${isEnglish() ? "Delete resource note" : "删除同步"}" title="${isEnglish() ? "Delete resource note" : "删除同步"}"><i data-lucide="trash-2"></i></button>
       </div>
-      <p><strong>进展：</strong>${escapeHtml(note.progress || "暂无")}</p>
-      <p><strong>风险：</strong>${escapeHtml(note.risk || "暂无")}</p>
-      <p><strong>支持：</strong>${escapeHtml(note.ask || "暂无")}</p>
+      <p><strong>${isEnglish() ? "Progress: " : "进展："}</strong>${escapeHtml(note.progress || (isEnglish() ? "None" : "暂无"))}</p>
+      <p><strong>${isEnglish() ? "Risk: " : "风险："}</strong>${escapeHtml(note.risk || (isEnglish() ? "None" : "暂无"))}</p>
+      <p><strong>${isEnglish() ? "Support: " : "支持："}</strong>${escapeHtml(note.ask || (isEnglish() ? "None" : "暂无"))}</p>
     </div>
   `).join("") || empty("暂无同步记录");
 }
@@ -1027,14 +1456,14 @@ function renderHealth() {
           <div>
             <h3>${escapeHtml(log.day)}</h3>
             <div class="item-meta">
-              <span class="tag low">能量 ${log.energy}/5</span>
-              <span class="tag ${log.load >= 4 ? "high" : "medium"}">压力 ${log.load}/5</span>
-              <span class="tag">${log.boundaryDone ? "已准点下线" : "未记录下线"}</span>
+              <span class="tag low">${isEnglish() ? "Energy" : "能量"} ${log.energy}/5</span>
+              <span class="tag ${log.load >= 4 ? "high" : "medium"}">${isEnglish() ? "Stress" : "压力"} ${log.load}/5</span>
+              <span class="tag">${log.boundaryDone ? (isEnglish() ? "Ended on time" : "已准点下线") : (isEnglish() ? "No end recorded" : "未记录下线")}</span>
             </div>
           </div>
-          <button class="icon-btn" data-delete-id="${log.id}" aria-label="删除健康记录" title="删除健康记录"><i data-lucide="trash-2"></i></button>
+          <button class="icon-btn" data-delete-id="${log.id}" aria-label="${isEnglish() ? "Delete wellbeing record" : "删除健康记录"}" title="${isEnglish() ? "Delete wellbeing record" : "删除健康记录"}"><i data-lucide="trash-2"></i></button>
         </div>
-        <p>${escapeHtml(log.note || "暂无备注")}</p>
+        <p>${escapeHtml(log.note || (isEnglish() ? "No note" : "暂无备注"))}</p>
       </div>
     `).join("") || empty("暂无健康记录");
 }
@@ -1058,22 +1487,72 @@ function renderReview() {
         <div class="stack-item-head">
           <div>
             <h3>${escapeHtml(review.day)}</h3>
-            <div class="item-meta"><span class="tag low">${escapeHtml(moodLabels[review.score] || "满意度")} · ${review.score}/5</span></div>
+            <div class="item-meta"><span class="tag low">${escapeHtml(moodText(review.score))} · ${review.score}/5</span></div>
           </div>
-          <button class="icon-btn" data-delete-id="${review.id}" aria-label="删除复盘" title="删除复盘"><i data-lucide="trash-2"></i></button>
+          <button class="icon-btn" data-delete-id="${review.id}" aria-label="${isEnglish() ? "Delete review" : "删除复盘"}" title="${isEnglish() ? "Delete review" : "删除复盘"}"><i data-lucide="trash-2"></i></button>
         </div>
-        <p><strong>成果：</strong>${escapeHtml(review.wins || "暂无")}</p>
-        <p><strong>风险：</strong>${escapeHtml(review.risks || "暂无")}</p>
-        <p><strong>明日：</strong>${escapeHtml(review.tomorrow || "暂无")}</p>
-        ${review.moodReason ? `<p><strong>原因：</strong>${escapeHtml(review.moodReason)}</p>` : ""}
+        <p><strong>${isEnglish() ? "Wins: " : "成果："}</strong>${escapeHtml(review.wins || (isEnglish() ? "None" : "暂无"))}</p>
+        <p><strong>${isEnglish() ? "Risks: " : "风险："}</strong>${escapeHtml(review.risks || (isEnglish() ? "None" : "暂无"))}</p>
+        <p><strong>${isEnglish() ? "Tomorrow: " : "明日："}</strong>${escapeHtml(review.tomorrow || (isEnglish() ? "None" : "暂无"))}</p>
+        ${review.moodReason ? `<p><strong>${isEnglish() ? "Reason: " : "原因："}</strong>${escapeHtml(review.moodReason)}</p>` : ""}
       </div>
     `).join("") || empty("暂无复盘记录");
 }
 
+function moodText(score) {
+  const zh = moodLabels[score] || "满意度";
+  return t(zh);
+}
+
+function renderThemeSettings() {
+  const currentTheme = validThemeIds.has(state.appearance?.theme) ? state.appearance.theme : DEFAULT_THEME;
+  $("#currentThemeName").textContent = themeName(currentTheme);
+  $("#themeChoiceList").innerHTML = themeOptions.map((theme) => `
+    <button class="theme-card ${theme.id === currentTheme ? "is-selected" : ""}" type="button" data-theme-choice="${theme.id}" role="radio" aria-checked="${theme.id === currentTheme}">
+      <span class="theme-preview theme-preview-${theme.id}">
+        ${theme.colors.map((color) => `<span style="background:${color}"></span>`).join("")}
+      </span>
+      <span class="theme-copy">
+        <strong>${themeName(theme.id)}</strong>
+        <small>${themeNote(theme.id)}</small>
+      </span>
+      <i data-lucide="${theme.id.includes("cat") ? "cat" : theme.id === "dopamine" ? "sparkles" : "circle"}"></i>
+    </button>
+  `).join("");
+}
+
+function themeName(themeId) {
+  const theme = themeOptions.find((item) => item.id === themeId);
+  if (!theme) return isEnglish() ? "Minimal Black" : "简约黑色";
+  return isEnglish() ? theme.nameEn : theme.name;
+}
+
+function themeNote(themeId) {
+  const theme = themeOptions.find((item) => item.id === themeId);
+  if (!theme) return "";
+  return isEnglish() ? theme.noteEn : theme.note;
+}
+
+function renderLanguageSettings() {
+  const language = currentLanguage();
+  const current = languageOptions.find((item) => item.id === language) || languageOptions[0];
+  $("#currentLanguageName").textContent = isEnglish() ? current.nameEn : current.name;
+  $("#languageChoiceList").innerHTML = languageOptions.map((item) => `
+    <button class="language-card ${item.id === language ? "is-selected" : ""}" type="button" data-language-choice="${item.id}" role="radio" aria-checked="${item.id === language}">
+      <span>${item.id === "zh" ? "中" : "EN"}</span>
+      <strong>${isEnglish() ? item.nameEn : item.name}</strong>
+      <small>${isEnglish() ? item.noteEn : item.note}</small>
+    </button>
+  `).join("");
+}
+
 function renderSettings() {
+  renderThemeSettings();
+  renderLanguageSettings();
   $("#schemaPreview").textContent = JSON.stringify({
     miniProgramCollections: {
       owners: ["_id", "name", "domain", "role", "createdAt"],
+      appearanceProfiles: ["_id", "ownerId", "theme", "language", "updatedAt"],
       rhythmLogs: ["_id", "ownerId", "type", "at", "note"],
       focusSessions: ["_id", "ownerId", "title", "minutes", "targetMinutes", "reward", "rewardEarned", "startedAt", "endedAt"],
       meetingContacts: ["_id", "ownerId", "name", "createdAt"],
@@ -1085,12 +1564,19 @@ function renderSettings() {
       healthLogs: ["_id", "ownerId", "day", "energy", "load", "boundaryDone", "note"],
       reviews: ["_id", "ownerId", "day", "wins", "risks", "tomorrow", "score", "moodReason"]
     },
-    migrationNotes: [
-      "localStorage -> wx.cloud.database",
-      "单页 section -> 小程序 pages",
-      "render 函数 -> setData 与组件拆分",
-      "导出 JSON -> 主理人数据备份"
-    ]
+    migrationNotes: isEnglish()
+      ? [
+        "localStorage -> wx.cloud.database",
+        "single-page sections -> mini program pages",
+        "render functions -> setData and component split",
+        "export JSON -> owner data backup"
+      ]
+      : [
+        "localStorage -> wx.cloud.database",
+        "单页 section -> 小程序 pages",
+        "render 函数 -> setData 与组件拆分",
+        "导出 JSON -> 主理人数据备份"
+      ]
   }, null, 2);
 }
 
@@ -1182,7 +1668,7 @@ function drawTaskDonut(canvas) {
   ctx.fillText(String(state.tasks.length), cx, cy + 6);
   ctx.fillStyle = "#697386";
   ctx.font = "12px Arial";
-  ctx.fillText("任务总数", cx, cy + 26);
+  ctx.fillText(t("任务总数"), cx, cy + 26);
   drawLegend(ctx, [
     ["待办", colors[0]],
     ["进行中", colors[1]],
@@ -1295,20 +1781,22 @@ function drawLine(ctx, points, color) {
 
 function drawLegend(ctx, items, x) {
   items.forEach(([label, color], index) => {
+    const displayLabel = translateExact(label);
     const y = 16 + index * 18;
     ctx.fillStyle = color;
     ctx.fillRect(x, y - 8, 10, 10);
     ctx.fillStyle = "#697386";
     ctx.font = "12px Arial";
     ctx.textAlign = "left";
-    ctx.fillText(label, x + 16, y + 1);
+    ctx.fillText(displayLabel, x + 16, y + 1);
   });
 }
 
 function tickClock() {
   const now = new Date();
-  $("#currentDate").textContent = now.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
-  $("#currentTime").textContent = now.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const locale = isEnglish() ? "en-US" : "zh-CN";
+  $("#currentDate").textContent = now.toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+  $("#currentTime").textContent = now.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
 function buildTimeline(day) {
@@ -1316,17 +1804,17 @@ function buildTimeline(day) {
     .filter((item) => dateKey(new Date(item.at)) === day)
     .map((item) => ({
       at: item.at,
-      title: item.type === "in" ? "开工" : item.type === "out" ? "收工" : item.note,
-      note: item.type === "leave" ? "休整 / 外出记录" : "工作记录"
+      title: item.type === "in" ? t("开工") : item.type === "out" ? t("收工") : t(item.note),
+      note: item.type === "leave" ? t("休整 / 外出记录") : t("工作记录")
     }));
 
   const meetings = state.meetings
     .filter((item) => dateKey(new Date(item.when)) === day)
-    .map((item) => ({ at: item.when, title: item.title, note: item.type }));
+    .map((item) => ({ at: item.when, title: item.title, note: t(item.type) }));
 
   const focus = state.focusSessions
     .filter((item) => dateKey(new Date(item.startedAt)) === day)
-    .map((item) => ({ at: item.startedAt, title: item.title, note: `专注 ${item.minutes} 分钟` }));
+    .map((item) => ({ at: item.startedAt, title: item.title, note: isEnglish() ? `Focus ${item.minutes} min` : `专注 ${item.minutes} 分钟` }));
 
   return [...logs, ...meetings, ...focus].sort((a, b) => new Date(a.at) - new Date(b.at));
 }
@@ -1426,14 +1914,14 @@ function renderIcons() {
 
 function toast(message) {
   const toastEl = $("#toast");
-  toastEl.textContent = message;
+  toastEl.textContent = translateExact(message);
   toastEl.classList.add("is-visible");
   window.clearTimeout(window.__workspaceToast);
   window.__workspaceToast = window.setTimeout(() => toastEl.classList.remove("is-visible"), 2200);
 }
 
 function empty(text) {
-  return `<div class="empty">${escapeHtml(text)}</div>`;
+  return `<div class="empty">${escapeHtml(translateExact(text))}</div>`;
 }
 
 function uid() {
@@ -1467,6 +1955,12 @@ function todayKey() {
 }
 
 function formatMinutes(minutes) {
+  if (isEnglish()) {
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    return rest ? `${hours} hr ${rest} min` : `${hours} hr`;
+  }
   if (minutes < 60) return `${minutes} 分钟`;
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
@@ -1482,12 +1976,13 @@ function formatDuration(ms) {
 }
 
 function formatTime(value) {
-  return new Date(value).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+  return new Date(value).toLocaleTimeString(isEnglish() ? "en-US" : "zh-CN", { hour: "2-digit", minute: "2-digit" });
 }
 
 function formatDateTime(value) {
   const date = new Date(value);
-  return `${date.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })} ${date.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`;
+  const locale = isEnglish() ? "en-US" : "zh-CN";
+  return `${date.toLocaleDateString(locale, { month: "2-digit", day: "2-digit" })} ${date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
 }
 
 function escapeHtml(value) {
