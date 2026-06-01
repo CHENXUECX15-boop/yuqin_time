@@ -1,23 +1,25 @@
 :root {
-  --bg: #f5f7fb;
+  --bg: #f7f9fc;
   --surface: #ffffff;
-  --surface-soft: #f0f4f8;
-  --ink: #202938;
-  --muted: #697386;
-  --line: #d8e0ea;
-  --teal: #08756f;
-  --teal-soft: #e2f3f1;
-  --coral: #d85d50;
-  --coral-soft: #fdebe8;
-  --indigo: #5d55b3;
-  --indigo-soft: #ecebfd;
-  --amber: #b7791f;
-  --amber-soft: #fff3d8;
-  --green: #2f7d4f;
-  --green-soft: #e7f5ec;
-  --danger: #b42318;
-  --danger-soft: #fde8e7;
-  --shadow: 0 18px 45px rgba(26, 34, 51, 0.10);
+  --surface-soft: #eff6f5;
+  --ink: #1f2635;
+  --muted: #667085;
+  --line: #d9e4eb;
+  --teal: #0b7c77;
+  --teal-soft: #e0f4f1;
+  --coral: #ef6f61;
+  --coral-soft: #fde9e5;
+  --indigo: #665ecf;
+  --indigo-soft: #edebff;
+  --amber: #c3841d;
+  --amber-soft: #fff1cf;
+  --green: #3d8b5f;
+  --green-soft: #e5f4eb;
+  --danger: #c53b31;
+  --danger-soft: #fde7e3;
+  --cat-paw: rgba(239, 111, 97, 0.18);
+  --cat-whisker: rgba(11, 124, 119, 0.18);
+  --shadow: 0 18px 45px rgba(31, 38, 53, 0.10);
   --radius: 8px;
 }
 
@@ -36,8 +38,13 @@ body {
   color: var(--ink);
   font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", Arial, sans-serif;
   background:
-    linear-gradient(180deg, rgba(8, 117, 111, 0.06), transparent 360px),
+    radial-gradient(circle at 26px 22px, var(--cat-paw) 0 3px, transparent 4px),
+    radial-gradient(circle at 42px 16px, var(--cat-paw) 0 3px, transparent 4px),
+    radial-gradient(circle at 58px 22px, var(--cat-paw) 0 3px, transparent 4px),
+    radial-gradient(ellipse at 42px 42px, var(--cat-paw) 0 8px, transparent 9px),
+    linear-gradient(180deg, rgba(11, 124, 119, 0.08), transparent 360px),
     var(--bg);
+  background-size: 132px 132px, 132px 132px, 132px 132px, 132px 132px, auto, auto;
 }
 
 button,
@@ -92,13 +99,38 @@ label.upload-btn:focus-visible {
 }
 
 .brand-mark {
+  position: relative;
+  z-index: 0;
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
   color: #fff;
-  background: var(--teal);
+  background: linear-gradient(145deg, var(--teal), var(--coral));
   border-radius: var(--radius);
+  box-shadow: 0 10px 24px rgba(11, 124, 119, 0.20);
+}
+
+.brand-mark::before,
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  width: 16px;
+  height: 16px;
+  background: var(--coral);
+  border-radius: 4px 0 4px 0;
+  transform: rotate(45deg);
+  z-index: 0;
+}
+
+.brand-mark::before {
+  left: 6px;
+}
+
+.brand-mark::after {
+  right: 6px;
+  background: var(--teal);
 }
 
 .brand-mark svg,
@@ -108,6 +140,13 @@ button svg,
   height: 18px;
   stroke-width: 2.2;
   flex: 0 0 auto;
+}
+
+.brand-mark svg {
+  position: relative;
+  z-index: 1;
+  width: 25px;
+  height: 25px;
 }
 
 .brand-name {
@@ -124,10 +163,30 @@ button svg,
 
 .time-card,
 .side-snapshot {
+  position: relative;
+  overflow: hidden;
   padding: 12px;
   background: var(--surface-soft);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+}
+
+.time-card::after,
+.side-snapshot::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  width: 34px;
+  height: 30px;
+  opacity: 0.35;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 68%, var(--cat-paw) 0 8px, transparent 9px),
+    radial-gradient(circle at 18% 28%, var(--cat-paw) 0 4px, transparent 5px),
+    radial-gradient(circle at 42% 18%, var(--cat-paw) 0 4px, transparent 5px),
+    radial-gradient(circle at 66% 20%, var(--cat-paw) 0 4px, transparent 5px),
+    radial-gradient(circle at 84% 34%, var(--cat-paw) 0 4px, transparent 5px);
 }
 
 .time-date {
@@ -149,6 +208,7 @@ button svg,
 }
 
 .nav-btn {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -165,14 +225,16 @@ button svg,
 }
 
 .nav-btn:hover {
-  background: var(--surface-soft);
+  background: #fff;
   border-color: var(--line);
+  box-shadow: inset 4px 0 0 var(--coral-soft);
 }
 
 .nav-btn.is-active {
   color: #fff;
-  background: var(--ink);
-  border-color: var(--ink);
+  background: linear-gradient(135deg, var(--ink), #39445e);
+  border-color: transparent;
+  box-shadow: inset 4px 0 0 var(--coral), 0 10px 24px rgba(31, 38, 53, 0.12);
 }
 
 .side-title {
@@ -225,12 +287,36 @@ button svg,
 }
 
 .panel {
+  position: relative;
+  overflow: hidden;
   min-width: 0;
   padding: 18px;
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: 0 10px 30px rgba(26, 34, 51, 0.07);
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 34px;
+  height: 30px;
+  opacity: 0.13;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 68%, var(--coral) 0 8px, transparent 9px),
+    radial-gradient(circle at 18% 28%, var(--coral) 0 4px, transparent 5px),
+    radial-gradient(circle at 42% 18%, var(--coral) 0 4px, transparent 5px),
+    radial-gradient(circle at 66% 20%, var(--coral) 0 4px, transparent 5px),
+    radial-gradient(circle at 84% 34%, var(--coral) 0 4px, transparent 5px);
+}
+
+.intro-panel::before {
+  opacity: 0.18;
+  transform: scale(1.25);
 }
 
 .span-two {
@@ -424,14 +510,14 @@ h3 {
 
 .primary-btn {
   color: #fff;
-  background: var(--teal);
-  border-color: var(--teal);
+  background: linear-gradient(135deg, var(--teal), #0f958b);
+  border-color: transparent;
 }
 
 .secondary-btn {
   color: #fff;
-  background: var(--indigo);
-  border-color: var(--indigo);
+  background: linear-gradient(135deg, var(--indigo), #7a6be8);
+  border-color: transparent;
 }
 
 .ghost-btn,
@@ -510,6 +596,69 @@ h3 {
 .stack-form {
   display: grid;
   gap: 10px;
+}
+
+.meeting-contact-tools {
+  display: grid;
+  gap: 10px;
+}
+
+.contact-check-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contact-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 8px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.contact-check:has(input:checked) {
+  color: var(--teal);
+  background: var(--teal-soft);
+  border-color: rgba(11, 124, 119, 0.28);
+}
+
+.contact-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--teal);
+}
+
+.contact-check span {
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.contact-check button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+}
+
+.contact-check button:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.contact-check button svg {
+  width: 14px;
+  height: 14px;
 }
 
 .two-col {
@@ -999,6 +1148,68 @@ canvas {
   font-variant-numeric: tabular-nums;
 }
 
+.focus-goal-grid {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.focus-goal-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.focus-goal-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.focus-progress {
+  display: grid;
+  gap: 8px;
+  margin: -2px 0 14px;
+}
+
+.focus-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.focus-progress-meta strong {
+  color: var(--teal);
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-progress-track {
+  height: 9px;
+  overflow: hidden;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.focus-progress-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--teal);
+  border-radius: inherit;
+  transition: width 180ms ease;
+}
+
+.focus-reward-preview {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .focus-history-block {
   display: grid;
   gap: 10px;
@@ -1083,6 +1294,12 @@ canvas {
   text-align: center;
 }
 
+.empty.compact {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
 @media (max-width: 1180px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -1137,6 +1354,7 @@ canvas {
   .inline-form,
   .task-form,
   .two-col,
+  .focus-goal-grid,
   .mini-metrics.four,
   .mood-picker,
   .module-grid,

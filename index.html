@@ -12,7 +12,7 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="主导航">
       <div class="brand">
-        <div class="brand-mark"><i data-lucide="briefcase-business"></i></div>
+        <div class="brand-mark"><i data-lucide="cat"></i></div>
         <div>
           <div class="brand-name">早日成为富婆</div>
           <div class="brand-subtitle">work for tomorrow.</div>
@@ -25,13 +25,13 @@
       </div>
 
       <nav class="nav-list">
-        <button class="nav-btn is-active" data-section="home"><span>今日总览</span><i data-lucide="layout-dashboard"></i></button>
-        <button class="nav-btn" data-section="rhythm"><span>工作节奏</span><i data-lucide="timer"></i></button>
+        <button class="nav-btn is-active" data-section="home"><span>今日总览</span><i data-lucide="cat"></i></button>
+        <button class="nav-btn" data-section="rhythm"><span>工作节奏</span><i data-lucide="paw-print"></i></button>
         <button class="nav-btn" data-section="tasks"><span>任务看板</span><i data-lucide="list-checks"></i></button>
         <button class="nav-btn" data-section="okr"><span>OKR 与项目</span><i data-lucide="target"></i></button>
         <button class="nav-btn" data-section="meetings"><span>会议协作</span><i data-lucide="messages-square"></i></button>
         <button class="nav-btn" data-section="manager"><span>资源协同</span><i data-lucide="user-round-check"></i></button>
-        <button class="nav-btn" data-section="wellbeing"><span>健康边界</span><i data-lucide="heart-pulse"></i></button>
+        <button class="nav-btn" data-section="wellbeing"><span>健康边界</span><i data-lucide="fish"></i></button>
         <button class="nav-btn" data-section="review"><span>每日复盘</span><i data-lucide="notebook-pen"></i></button>
         <button class="nav-btn" data-section="dashboard"><span>数据看板</span><i data-lucide="chart-no-axes-combined"></i></button>
         <button class="nav-btn" data-section="settings"><span>数据管理</span><i data-lucide="database"></i></button>
@@ -193,7 +193,25 @@
               <span id="focusState" class="status-pill neutral">未开始</span>
             </div>
             <input id="focusTitle" class="field full" placeholder="专注主题，例如：整理客户问题清单">
+            <div class="focus-goal-grid">
+              <label>
+                <span>目标分钟</span>
+                <input id="focusTargetMinutes" class="field" type="number" min="1" max="240" step="5" value="25">
+              </label>
+              <label>
+                <span>达成奖励</span>
+                <input id="focusReward" class="field" placeholder="例如：喝一杯喜欢的咖啡">
+              </label>
+            </div>
             <div class="timer-face" id="focusTimer">00:00:00</div>
+            <div class="focus-progress">
+              <div class="focus-progress-meta">
+                <span id="focusGoalLabel">目标 25 分钟</span>
+                <strong id="focusGoalProgress">0%</strong>
+              </div>
+              <div class="focus-progress-track"><span id="focusGoalBar"></span></div>
+              <div id="focusRewardPreview" class="focus-reward-preview">达成后给自己一个奖励</div>
+            </div>
             <div class="button-row">
               <button class="primary-btn" id="btnFocusStart"><i data-lucide="play"></i><span>开始</span></button>
               <button class="secondary-btn" id="btnFocusPause"><i data-lucide="pause"></i><span>暂停</span></button>
@@ -318,6 +336,13 @@
                   <option value="周会">周会</option>
                   <option value="1:1">1:1</option>
                 </select>
+              </div>
+              <div class="meeting-contact-tools">
+                <div class="inline-form">
+                  <input id="meetingContactInput" class="field" placeholder="常用联系人，例如：客户张总 / 产品小李">
+                  <button class="ghost-btn" id="btnAddMeetingContact" type="button"><i data-lucide="user-plus"></i><span>加入常用</span></button>
+                </div>
+                <div id="meetingContactList" class="contact-check-grid" aria-label="常用会议联系人"></div>
               </div>
               <textarea id="meetingDecision" class="field textarea" placeholder="关键结论"></textarea>
               <textarea id="meetingActions" class="field textarea" placeholder="行动项，用逗号分隔"></textarea>

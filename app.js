@@ -85,14 +85,16 @@ function createDefaultState() {
       { id: uid(), type: "out", at: iso(new Date(`${twoDaysAgo}T17:50:00`)), note: "收工" }
     ],
     focusSessions: [
-      { id: uid(), title: "处理客户问题清单", minutes: 72, startedAt: iso(new Date(`${yesterday}T10:00:00`)), endedAt: iso(new Date(`${yesterday}T11:12:00`)) },
-      { id: uid(), title: "周报草稿", minutes: 45, startedAt: iso(new Date(`${twoDaysAgo}T14:00:00`)), endedAt: iso(new Date(`${twoDaysAgo}T14:45:00`)) }
+      { id: uid(), title: "处理客户问题清单", minutes: 72, targetMinutes: 60, reward: "晚间看一集喜欢的节目", rewardEarned: true, startedAt: iso(new Date(`${yesterday}T10:00:00`)), endedAt: iso(new Date(`${yesterday}T11:12:00`)) },
+      { id: uid(), title: "周报草稿", minutes: 45, targetMinutes: 50, reward: "点一杯热饮", rewardEarned: false, startedAt: iso(new Date(`${twoDaysAgo}T14:00:00`)), endedAt: iso(new Date(`${twoDaysAgo}T14:45:00`)) }
     ],
     focusTimer: {
       title: "",
       running: false,
       startedAt: null,
-      elapsedMs: 0
+      elapsedMs: 0,
+      targetMinutes: 25,
+      reward: ""
     },
     okrs: [
       { id: uid(), title: "提升客户交付准时率", keyResult: "本月关键交付节点按期率达到 95%", progress: 62 },
@@ -112,9 +114,11 @@ function createDefaultState() {
         when: iso(new Date(`${today}T15:00:00`)),
         decision: "先锁定验收指标，再评估新增需求排期。",
         actions: ["补齐验收清单", "同步排期变更"],
+        contacts: ["客户张总", "产品小李"],
         createdAt: iso(now)
       }
     ],
+    meetingContacts: ["客户张总", "产品小李", "设计小周", "财务 Ada"],
     managerNotes: [
       {
         id: uid(),
@@ -244,10 +248,17 @@ function bindForms() {
       type: $("#meetingType").value,
       decision: $("#meetingDecision").value.trim(),
       actions,
+      contacts: getSelectedMeetingContacts(),
       createdAt: iso(new Date())
     });
     saveAndRender("会议已保存");
     $("#meetingForm").reset();
+  });
+
+  $("#meetingContactInput").addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    addMeetingContact();
   });
 
   $("#managerForm").addEventListener("submit", (event) => {
@@ -309,6 +320,8 @@ function bindActions() {
   $$(".mood-btn").forEach((button) => {
     button.addEventListener("click", () => setReviewMood(Number(button.dataset.reviewScore)));
   });
+  $("#btnAddMeetingContact").addEventListener("click", addMeetingContact);
+  $("#meetingContactList").addEventListener("click", handleMeetingContactAction);
 
   $("#btnAddObjective").addEventListener("click", addObjective);
   $("#btnAddProject").addEventListener("click", addProject);
@@ -392,6 +405,8 @@ function startFocus() {
   const timer = state.focusTimer;
   if (timer.running) return toast("专注计时已在进行");
   timer.title = $("#focusTitle").value.trim() || timer.title || "未命名专注";
+  timer.targetMinutes = clampFocusTarget($("#focusTargetMinutes").value);
+  timer.reward = $("#focusReward").value.trim();
   timer.startedAt = iso(new Date());
   timer.running = true;
   saveAndRender("专注开始");
@@ -416,18 +431,74 @@ function finishFocus() {
     id: uid(),
     title: timer.title || $("#focusTitle").value.trim() || "未命名专注",
     minutes,
+    targetMinutes: timer.targetMinutes || clampFocusTarget($("#focusTargetMinutes").value),
+    reward: timer.reward || $("#focusReward").value.trim(),
+    rewardEarned: Boolean((timer.targetMinutes || clampFocusTarget($("#focusTargetMinutes").value)) && minutes >= (timer.targetMinutes || clampFocusTarget($("#focusTargetMinutes").value))),
     startedAt: iso(new Date(endedAt.getTime() - elapsedMs)),
     endedAt: iso(endedAt)
   });
-  state.focusTimer = { title: "", running: false, startedAt: null, elapsedMs: 0 };
+  const latest = state.focusSessions[0];
+  state.focusTimer = { title: "", running: false, startedAt: null, elapsedMs: 0, targetMinutes: latest.targetMinutes || 25, reward: latest.reward || "" };
   $("#focusTitle").value = "";
-  saveAndRender("专注已完成");
+  if (latest.rewardEarned && latest.reward) {
+    saveAndRender(`目标达成，奖励自己：${latest.reward}`);
+  } else if (latest.rewardEarned) {
+    saveAndRender("目标达成，记得兑现给自己的奖励");
+  } else if (latest.targetMinutes) {
+    saveAndRender(`专注已保存，本次未达成 ${latest.targetMinutes} 分钟目标`);
+  } else {
+    saveAndRender("专注已完成");
+  }
 }
 
 function resetFocus() {
-  state.focusTimer = { title: "", running: false, startedAt: null, elapsedMs: 0 };
+  state.focusTimer = {
+    title: "",
+    running: false,
+    startedAt: null,
+    elapsedMs: 0,
+    targetMinutes: clampFocusTarget($("#focusTargetMinutes").value),
+    reward: $("#focusReward").value.trim()
+  };
   $("#focusTitle").value = "";
   saveAndRender("专注计时已重置");
+}
+
+function clampFocusTarget(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return 0;
+  return Math.max(1, Math.min(240, Math.round(number)));
+}
+
+function addMeetingContact() {
+  const input = $("#meetingContactInput");
+  const name = input.value.trim();
+  if (!name) return toast("请先输入联系人");
+  state.meetingContacts = state.meetingContacts || [];
+  const exists = state.meetingContacts.some((item) => item.toLowerCase() === name.toLowerCase());
+  if (exists) return toast("这个联系人已经在常用名单里");
+  const selected = getSelectedMeetingContacts();
+  state.meetingContacts.push(name);
+  input.value = "";
+  saveState();
+  renderMeetingContacts([...selected, name]);
+  renderIcons();
+  toast("联系人已加入常用");
+}
+
+function handleMeetingContactAction(event) {
+  const button = event.target.closest("[data-contact-delete]");
+  if (!button) return;
+  const selected = getSelectedMeetingContacts().filter((name) => name !== button.dataset.contactDelete);
+  state.meetingContacts = (state.meetingContacts || []).filter((name) => name !== button.dataset.contactDelete);
+  saveState();
+  renderMeetingContacts(selected);
+  renderIcons();
+  toast("常用联系人已删除");
+}
+
+function getSelectedMeetingContacts() {
+  return $$("[data-meeting-contact]:checked").map((input) => input.value);
 }
 
 function setReviewMood(score, reason = null) {
@@ -708,6 +779,10 @@ function renderRhythm() {
               <div>
                 <h3><i data-lucide="timer"></i> ${escapeHtml(item.title || "未命名专注")}</h3>
                 <p>${formatTime(item.startedAt)} - ${formatTime(item.endedAt)} · ${formatMinutes(item.minutes)}</p>
+                <div class="item-meta">
+                  ${item.targetMinutes ? `<span class="tag">目标 ${item.targetMinutes} 分钟</span>` : ""}
+                  ${item.reward ? `<span class="tag ${item.rewardEarned ? "low" : "medium"}">${item.rewardEarned ? "奖励已解锁" : "奖励未解锁"}：${escapeHtml(item.reward)}</span>` : ""}
+                </div>
               </div>
               <button class="icon-btn" data-delete-id="${item.id}" aria-label="删除专注记录" title="删除专注记录"><i data-lucide="trash-2"></i></button>
             </div>
@@ -785,9 +860,21 @@ function renderFocusTimer() {
   const ms = currentFocusMs();
   $("#focusTimer").textContent = formatDuration(ms);
   const timer = state.focusTimer;
+  const isLocked = timer.running || Number(timer.elapsedMs || 0) > 0;
+  if (isLocked) {
+    if (timer.targetMinutes) $("#focusTargetMinutes").value = timer.targetMinutes;
+    $("#focusReward").value = timer.reward || "";
+  }
+  const targetMinutes = isLocked ? Number(timer.targetMinutes || 0) : clampFocusTarget($("#focusTargetMinutes").value);
+  const reward = isLocked ? (timer.reward || "") : $("#focusReward").value.trim();
+  const progress = targetMinutes ? Math.min(100, Math.floor((ms / (targetMinutes * 60000)) * 100)) : 0;
   $("#focusState").textContent = timer.running ? "进行中" : ms > 0 ? "已暂停" : "未开始";
   $("#focusState").className = `status-pill ${timer.running ? "good" : "neutral"}`;
   if (timer.title && !$("#focusTitle").value) $("#focusTitle").value = timer.title;
+  $("#focusGoalLabel").textContent = targetMinutes ? `目标 ${targetMinutes} 分钟` : "未设置目标";
+  $("#focusGoalProgress").textContent = `${progress}%`;
+  $("#focusGoalBar").style.width = `${progress}%`;
+  $("#focusRewardPreview").textContent = reward ? `达成奖励：${reward}` : "达成后给自己一个奖励";
 }
 
 function renderTasks() {
@@ -872,6 +959,7 @@ function renderOkr() {
 }
 
 function renderMeetings() {
+  renderMeetingContacts();
   $("#meetingList").innerHTML = state.meetings.map((meeting) => `
     <div class="stack-item">
       <div class="stack-item-head">
@@ -885,9 +973,22 @@ function renderMeetings() {
         <button class="icon-btn" data-delete-id="${meeting.id}" aria-label="删除会议" title="删除会议"><i data-lucide="trash-2"></i></button>
       </div>
       <p>${escapeHtml(meeting.decision || "暂无结论")}</p>
+      ${(meeting.contacts || []).length ? `<div class="item-meta">${meeting.contacts.map((contact) => `<span class="tag">联系人：${escapeHtml(contact)}</span>`).join("")}</div>` : ""}
       <div class="item-meta">${(meeting.actions || []).map((action) => `<span class="tag">${escapeHtml(action)}</span>`).join("")}</div>
     </div>
   `).join("") || empty("暂无会议记录");
+}
+
+function renderMeetingContacts(selected = getSelectedMeetingContacts()) {
+  const contacts = state.meetingContacts || [];
+  const selectedSet = new Set(selected);
+  $("#meetingContactList").innerHTML = contacts.length ? contacts.map((contact) => `
+    <label class="contact-check">
+      <input type="checkbox" value="${escapeHtml(contact)}" data-meeting-contact ${selectedSet.has(contact) ? "checked" : ""}>
+      <span>${escapeHtml(contact)}</span>
+      <button type="button" data-contact-delete="${escapeHtml(contact)}" aria-label="删除常用联系人 ${escapeHtml(contact)}" title="删除常用联系人"><i data-lucide="x"></i></button>
+    </label>
+  `).join("") : `<div class="empty compact">添加常用联系人后可直接勾选</div>`;
 }
 
 function renderManager() {
@@ -974,10 +1075,12 @@ function renderSettings() {
     miniProgramCollections: {
       owners: ["_id", "name", "domain", "role", "createdAt"],
       rhythmLogs: ["_id", "ownerId", "type", "at", "note"],
+      focusSessions: ["_id", "ownerId", "title", "minutes", "targetMinutes", "reward", "rewardEarned", "startedAt", "endedAt"],
+      meetingContacts: ["_id", "ownerId", "name", "createdAt"],
       tasks: ["_id", "ownerId", "title", "status", "priority", "project", "due", "completedAt"],
       okrs: ["_id", "ownerId", "title", "keyResult", "progress"],
       projects: ["_id", "ownerId", "name", "role", "health", "risk", "next"],
-      meetings: ["_id", "ownerId", "title", "type", "when", "decision", "actions"],
+      meetings: ["_id", "ownerId", "title", "type", "when", "contacts", "decision", "actions"],
       resourceNotes: ["_id", "ownerId", "topic", "progress", "risk", "ask", "createdAt"],
       healthLogs: ["_id", "ownerId", "day", "energy", "load", "boundaryDone", "note"],
       reviews: ["_id", "ownerId", "day", "wins", "risks", "tomorrow", "score", "moodReason"]
