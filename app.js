@@ -71,10 +71,10 @@ function createDefaultState() {
       }
     ],
     attendanceLogs: [
-      { id: uid(), type: "in", at: iso(new Date(`${yesterday}T09:04:00`)), note: "到位" },
-      { id: uid(), type: "out", at: iso(new Date(`${yesterday}T18:12:00`)), note: "离开" },
-      { id: uid(), type: "in", at: iso(new Date(`${twoDaysAgo}T09:30:00`)), note: "到位" },
-      { id: uid(), type: "out", at: iso(new Date(`${twoDaysAgo}T17:50:00`)), note: "离开" }
+      { id: uid(), type: "in", at: iso(new Date(`${yesterday}T09:04:00`)), note: "开工" },
+      { id: uid(), type: "out", at: iso(new Date(`${yesterday}T18:12:00`)), note: "收工" },
+      { id: uid(), type: "in", at: iso(new Date(`${twoDaysAgo}T09:30:00`)), note: "开工" },
+      { id: uid(), type: "out", at: iso(new Date(`${twoDaysAgo}T17:50:00`)), note: "收工" }
     ],
     focusSessions: [
       { id: uid(), title: "处理客户问题清单", minutes: 72, startedAt: iso(new Date(`${yesterday}T10:00:00`)), endedAt: iso(new Date(`${yesterday}T11:12:00`)) },
@@ -113,7 +113,7 @@ function createDefaultState() {
         topic: "客户交付优化本周同步",
         progress: "已整理 3 类风险并推进产品确认。",
         risk: "客户新增需求可能影响原排期。",
-        ask: "需要主管帮忙确认优先级取舍。",
+        ask: "需要关键资源帮忙确认优先级取舍。",
         createdAt: iso(addDays(now, -1))
       }
     ],
@@ -140,7 +140,7 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return createDefaultState();
     const parsed = JSON.parse(raw);
-    return mergeState(createDefaultState(), parsed);
+    return normalizeLegacyWording(mergeState(createDefaultState(), parsed));
   } catch (error) {
     console.warn("Failed to load state", error);
     return createDefaultState();
@@ -153,6 +153,40 @@ function mergeState(base, incoming) {
     ...incoming,
     focusTimer: { ...base.focusTimer, ...(incoming.focusTimer || {}) }
   };
+}
+
+function normalizeLegacyWording(nextState) {
+  const attendanceLabels = {
+    "到位": "开工",
+    "离开": "收工",
+    "年假": "主动休息",
+    "病假": "身体恢复",
+    "调休": "节奏调整",
+    "外勤": "外出事务",
+    "自动关闭": "自动收工"
+  };
+
+  nextState.attendanceLogs = (nextState.attendanceLogs || []).map((item) => ({
+    ...item,
+    note: attendanceLabels[item.note] || item.note
+  }));
+
+  nextState.managerNotes = (nextState.managerNotes || []).map((item) => ({
+    ...item,
+    topic: replaceLegacyPerspective(item.topic),
+    progress: replaceLegacyPerspective(item.progress),
+    risk: replaceLegacyPerspective(item.risk),
+    ask: replaceLegacyPerspective(item.ask)
+  }));
+
+  return nextState;
+}
+
+function replaceLegacyPerspective(value) {
+  if (typeof value !== "string") return value;
+  return value
+    .replace(/主管/g, "关键资源")
+    .replace(/向上/g, "资源");
 }
 
 function saveState() {
@@ -277,6 +311,8 @@ function bindActions() {
   $("#okrList").addEventListener("input", handleOkrProgress);
   $("#okrList").addEventListener("click", handleOkrDelete);
   $("#projectTable").addEventListener("click", handleProjectDelete);
+  $("#attendanceList").addEventListener("click", handleDeleteFromList("attendanceLogs", "行动记录已删除"));
+  $("#focusHistoryList").addEventListener("click", handleDeleteFromList("focusSessions", "专注记录已删除"));
   $("#meetingList").addEventListener("click", handleDeleteFromList("meetings", "会议已删除"));
   $("#managerList").addEventListener("click", handleDeleteFromList("managerNotes", "同步记录已删除"));
   $("#reviewList").addEventListener("click", handleDeleteFromList("reviews", "复盘已删除"));
@@ -315,18 +351,18 @@ function showSection(id) {
 }
 
 function checkIn() {
-  state.attendanceLogs.push({ id: uid(), type: "in", at: iso(new Date()), note: "到位" });
-  saveAndRender("已记录到位");
+  state.attendanceLogs.push({ id: uid(), type: "in", at: iso(new Date()), note: "开工" });
+  saveAndRender("已记录开工");
 }
 
 function checkOut() {
-  state.attendanceLogs.push({ id: uid(), type: "out", at: iso(new Date()), note: "离开" });
-  saveAndRender("已记录离开");
+  state.attendanceLogs.push({ id: uid(), type: "out", at: iso(new Date()), note: "收工" });
+  saveAndRender("已记录收工");
 }
 
 function addLeave() {
   state.attendanceLogs.push({ id: uid(), type: "leave", at: iso(new Date()), note: $("#leaveType").value });
-  saveAndRender("请假记录已添加");
+  saveAndRender("休整记录已添加");
 }
 
 function closeOpenLogs() {
@@ -338,7 +374,7 @@ function closeOpenLogs() {
 function clearTodayLeaves() {
   const today = todayKey();
   state.attendanceLogs = state.attendanceLogs.filter((item) => !(item.type === "leave" && dateKey(new Date(item.at)) === today));
-  saveAndRender("今日请假记录已清空");
+  saveAndRender("今日休整记录已清空");
 }
 
 function startFocus() {
@@ -520,7 +556,7 @@ function exportData() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `企效工作台-${todayKey()}.json`;
+  link.download = `早日成为富婆-${todayKey()}.json`;
   link.click();
   URL.revokeObjectURL(url);
   toast("JSON 已导出");
@@ -577,6 +613,11 @@ function renderHome() {
   const totalTasks = state.tasks.length;
   const openTasks = state.tasks.filter((task) => task.status !== "done").length;
   const avgOkr = state.okrs.length ? Math.round(state.okrs.reduce((sum, item) => sum + item.progress, 0) / state.okrs.length) : 0;
+  const topTask = todayTasks.slice().sort(sortTasks).find((task) => task.status !== "done") || todayTasks[0];
+  const todayMeetings = state.meetings
+    .filter((item) => dateKey(new Date(item.when)) === today)
+    .sort((a, b) => new Date(a.when) - new Date(b.when));
+  const nextMeeting = todayMeetings.find((item) => new Date(item.when) >= new Date()) || todayMeetings[0];
 
   $("#todayWorkMinutes").textContent = formatMinutes(workMinutes);
   $("#todayFocusMinutes").textContent = formatMinutes(focus);
@@ -592,8 +633,16 @@ function renderHome() {
   $("#moduleManager").textContent = state.managerNotes.length;
   $("#moduleEnergy").textContent = health ? `${health.energy}/5` : "-";
   $("#moduleReview").textContent = state.reviews.length;
+  $("#heroTodaySignal").textContent = openCount > 0 ? `进行中 ${openCount}` : openTasks > 0 ? `待推进 ${openTasks}` : "今日清爽";
+  $("#heroTodaySignal").className = `status-pill ${openCount > 0 ? "good" : openTasks > 0 ? "warn" : "neutral"}`;
+  $("#heroTopTask").textContent = topTask ? topTask.title : "暂无重点任务";
+  $("#heroTopTaskMeta").textContent = topTask ? `${statusMap[topTask.status]} · ${topTask.priority}优先级${topTask.due ? ` · ${topTask.due}` : ""}` : "从任务看板添加";
+  $("#heroNextMeeting").textContent = nextMeeting ? nextMeeting.title : "暂无会议";
+  $("#heroMeetingMeta").textContent = nextMeeting ? `${formatTime(nextMeeting.when)} · ${nextMeeting.type}` : "会议协作中记录";
+  $("#heroOkrAvg").textContent = `${avgOkr}%`;
+  $("#heroEnergyState").textContent = health ? `${health.energy}/5` : "未记录";
   $("#workStateLabel").textContent = openCount > 0 ? "工作段进行中" : workMinutes > 0 ? "今日已有工作记录" : "尚未开始工作";
-  $("#openLogBadge").textContent = openCount > 0 ? `进行中 ${openCount}` : "待到位";
+  $("#openLogBadge").textContent = openCount > 0 ? `进行中 ${openCount}` : "待开工";
   $("#openLogBadge").className = `status-pill ${openCount > 0 ? "good" : "neutral"}`;
 
   $("#homeTaskList").innerHTML = todayTasks.length ? todayTasks
@@ -607,19 +656,92 @@ function renderHome() {
 }
 
 function renderRhythm() {
-  $("#attendanceList").innerHTML = recentAttendance().map((item) => {
-    const icon = item.type === "in" ? "log-in" : item.type === "out" ? "log-out" : "umbrella";
-    const title = item.type === "leave" ? item.note : item.type === "in" ? "到位" : "离开";
-    return `
-      <div class="stack-item">
-        <div class="stack-item-head">
-          <h3><i data-lucide="${icon}"></i> ${escapeHtml(title)}</h3>
-          <span class="tag">${formatDateTime(item.at)}</span>
-        </div>
-        <p>${escapeHtml(item.note || "")}</p>
+  const groups = groupedAttendanceByDay();
+  const focusGroups = groupedFocusByDay();
+  $("#focusHistoryList").innerHTML = focusGroups.map((group) => `
+    <div class="date-group">
+      <div class="date-divider">
+        <span>${escapeHtml(formatDayTitle(group.day))}</span>
+        <strong>${formatMinutes(group.totalMinutes)}</strong>
       </div>
-    `;
-  }).join("") || empty("暂无打卡记录");
+      <div class="stack-list">
+        ${group.items.map((item) => `
+          <div class="stack-item focus-history-item">
+            <div class="stack-item-head">
+              <div>
+                <h3><i data-lucide="timer"></i> ${escapeHtml(item.title || "未命名专注")}</h3>
+                <p>${formatTime(item.startedAt)} - ${formatTime(item.endedAt)} · ${formatMinutes(item.minutes)}</p>
+              </div>
+              <button class="icon-btn" data-delete-id="${item.id}" aria-label="删除专注记录" title="删除专注记录"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `).join("") || empty("完成一次专注后会出现在这里");
+
+  $("#attendanceList").innerHTML = groups.map((group) => `
+    <div class="date-group">
+      <div class="date-divider">
+        <span>${escapeHtml(formatDayTitle(group.day))}</span>
+        <strong>${group.items.length} 条</strong>
+      </div>
+      <div class="stack-list">
+        ${group.items.map((item) => {
+          const icon = item.type === "in" ? "log-in" : item.type === "out" ? "log-out" : "umbrella";
+          const title = item.type === "leave" ? item.note : item.type === "in" ? "开工" : "收工";
+          return `
+            <div class="stack-item attendance-item">
+              <div class="stack-item-head">
+                <div>
+                  <h3><i data-lucide="${icon}"></i> ${escapeHtml(title)}</h3>
+                  <p>${escapeHtml(item.note || "")}</p>
+                </div>
+                <div class="attendance-actions">
+                  <span class="tag">${formatTime(item.at)}</span>
+                  <button class="icon-btn" data-delete-id="${item.id}" aria-label="删除行动记录" title="删除行动记录"><i data-lucide="trash-2"></i></button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `).join("") || empty("暂无行动记录");
+}
+
+function groupedFocusByDay() {
+  const groups = new Map();
+  state.focusSessions
+    .slice()
+    .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt))
+    .slice(0, 20)
+    .forEach((item) => {
+      const day = dateKey(new Date(item.startedAt));
+      if (!groups.has(day)) groups.set(day, []);
+      groups.get(day).push(item);
+    });
+  return Array.from(groups.entries()).map(([day, items]) => ({
+    day,
+    items,
+    totalMinutes: items.reduce((sum, item) => sum + Number(item.minutes || 0), 0)
+  }));
+}
+
+function groupedAttendanceByDay() {
+  const groups = new Map();
+  recentAttendance().forEach((item) => {
+    const day = dateKey(new Date(item.at));
+    if (!groups.has(day)) groups.set(day, []);
+    groups.get(day).push(item);
+  });
+  return Array.from(groups.entries()).map(([day, items]) => ({ day, items }));
+}
+
+function formatDayTitle(day) {
+  const date = new Date(`${day}T12:00:00`);
+  const weekday = date.toLocaleDateString("zh-CN", { weekday: "long" });
+  return `${day} ${weekday}`;
 }
 
 function renderFocusTimer() {
@@ -811,21 +933,21 @@ function renderReview() {
 function renderSettings() {
   $("#schemaPreview").textContent = JSON.stringify({
     miniProgramCollections: {
-      users: ["_id", "name", "department", "role", "managerId", "createdAt"],
-      attendanceLogs: ["_id", "userId", "type", "at", "note"],
-      tasks: ["_id", "userId", "title", "status", "priority", "project", "due", "completedAt"],
-      okrs: ["_id", "userId", "title", "keyResult", "progress"],
-      projects: ["_id", "userId", "name", "role", "health", "risk", "next"],
-      meetings: ["_id", "userId", "title", "type", "when", "decision", "actions"],
-      managerNotes: ["_id", "userId", "topic", "progress", "risk", "ask", "createdAt"],
-      healthLogs: ["_id", "userId", "day", "energy", "load", "boundaryDone", "note"],
-      reviews: ["_id", "userId", "day", "wins", "risks", "tomorrow", "score"]
+      owners: ["_id", "name", "domain", "role", "createdAt"],
+      rhythmLogs: ["_id", "ownerId", "type", "at", "note"],
+      tasks: ["_id", "ownerId", "title", "status", "priority", "project", "due", "completedAt"],
+      okrs: ["_id", "ownerId", "title", "keyResult", "progress"],
+      projects: ["_id", "ownerId", "name", "role", "health", "risk", "next"],
+      meetings: ["_id", "ownerId", "title", "type", "when", "decision", "actions"],
+      resourceNotes: ["_id", "ownerId", "topic", "progress", "risk", "ask", "createdAt"],
+      healthLogs: ["_id", "ownerId", "day", "energy", "load", "boundaryDone", "note"],
+      reviews: ["_id", "ownerId", "day", "wins", "risks", "tomorrow", "score"]
     },
     migrationNotes: [
       "localStorage -> wx.cloud.database",
       "单页 section -> 小程序 pages",
       "render 函数 -> setData 与组件拆分",
-      "导出 JSON -> 管理端数据备份"
+      "导出 JSON -> 主理人数据备份"
     ]
   }, null, 2);
 }
@@ -1052,8 +1174,8 @@ function buildTimeline(day) {
     .filter((item) => dateKey(new Date(item.at)) === day)
     .map((item) => ({
       at: item.at,
-      title: item.type === "in" ? "到位" : item.type === "out" ? "离开" : item.note,
-      note: item.type === "leave" ? "请假 / 外勤记录" : "工作打卡"
+      title: item.type === "in" ? "开工" : item.type === "out" ? "收工" : item.note,
+      note: item.type === "leave" ? "休整 / 外出记录" : "工作记录"
     }));
 
   const meetings = state.meetings

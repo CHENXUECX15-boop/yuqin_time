@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>企效工作台 | 企业员工日常推进系统</title>
+  <title>早日成为富婆 | work for tomorrow.</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
   <script src="app.js" defer></script>
@@ -14,8 +14,8 @@
       <div class="brand">
         <div class="brand-mark"><i data-lucide="briefcase-business"></i></div>
         <div>
-          <div class="brand-name">企效工作台</div>
-          <div class="brand-subtitle">Employee Workspace</div>
+          <div class="brand-name">早日成为富婆</div>
+          <div class="brand-subtitle">work for tomorrow.</div>
         </div>
       </div>
 
@@ -30,7 +30,7 @@
         <button class="nav-btn" data-section="tasks"><span>任务看板</span><i data-lucide="list-checks"></i></button>
         <button class="nav-btn" data-section="okr"><span>OKR 与项目</span><i data-lucide="target"></i></button>
         <button class="nav-btn" data-section="meetings"><span>会议协作</span><i data-lucide="messages-square"></i></button>
-        <button class="nav-btn" data-section="manager"><span>向上管理</span><i data-lucide="user-round-check"></i></button>
+        <button class="nav-btn" data-section="manager"><span>资源协同</span><i data-lucide="user-round-check"></i></button>
         <button class="nav-btn" data-section="wellbeing"><span>健康边界</span><i data-lucide="heart-pulse"></i></button>
         <button class="nav-btn" data-section="review"><span>每日复盘</span><i data-lucide="notebook-pen"></i></button>
         <button class="nav-btn" data-section="dashboard"><span>数据看板</span><i data-lucide="chart-no-axes-combined"></i></button>
@@ -51,17 +51,49 @@
         <div class="top-grid">
           <article class="panel intro-panel">
             <div class="intro-copy">
-              <div class="eyebrow">企业员工版 · 首屏工作台</div>
+              <div class="eyebrow">个人主理人版 · 首屏工作台</div>
               <h1 id="homeTitle">把今天的推进、协作和边界放在同一屏</h1>
-              <p>适合普通员工、项目成员、团队骨干在一天内完成打卡、专注、任务、会议、复盘与数据沉淀。</p>
+              <p>适合把自己当老板的人、项目主理人和自由职业者，在一天内完成开工、专注、任务、会议、复盘与数据沉淀。</p>
               <div class="quick-actions">
                 <button class="primary-btn" id="heroStartWork"><i data-lucide="play"></i><span>开始工作</span></button>
                 <button class="ghost-btn" data-jump="tasks"><i data-lucide="plus"></i><span>新增任务</span></button>
                 <button class="ghost-btn" data-jump="review"><i data-lucide="square-pen"></i><span>写复盘</span></button>
               </div>
             </div>
-            <div class="intro-visual">
-              <img src="assets/workbench-hero.png" alt="企业员工数字工作台">
+            <div class="intro-widget" aria-label="今日推进概览">
+              <div class="intro-widget-head">
+                <div>
+                  <div class="eyebrow">今日推进</div>
+                  <h2>实时工作卡</h2>
+                </div>
+                <span id="heroTodaySignal" class="status-pill neutral">待启动</span>
+              </div>
+              <div class="hero-live-list">
+                <button class="hero-live-item" data-jump="tasks">
+                  <span>重点任务</span>
+                  <strong id="heroTopTask">暂无重点任务</strong>
+                  <small id="heroTopTaskMeta">从任务看板添加</small>
+                </button>
+                <button class="hero-live-item" data-jump="meetings">
+                  <span>下一会议</span>
+                  <strong id="heroNextMeeting">暂无会议</strong>
+                  <small id="heroMeetingMeta">会议协作中记录</small>
+                </button>
+              </div>
+              <div class="hero-score-row">
+                <button data-jump="okr">
+                  <span>OKR 均值</span>
+                  <strong id="heroOkrAvg">0%</strong>
+                </button>
+                <button data-jump="wellbeing">
+                  <span>能量状态</span>
+                  <strong id="heroEnergyState">未记录</strong>
+                </button>
+              </div>
+              <div class="hero-widget-actions">
+                <button class="ghost-btn" data-jump="meetings"><i data-lucide="calendar-plus"></i><span>记会议</span></button>
+                <button class="ghost-btn" data-jump="manager"><i data-lucide="send"></i><span>同步资源</span></button>
+              </div>
             </div>
           </article>
 
@@ -71,18 +103,18 @@
                 <h2>今日状态</h2>
                 <p id="workStateLabel">尚未开始工作</p>
               </div>
-              <span id="openLogBadge" class="status-pill neutral">待到位</span>
+              <span id="openLogBadge" class="status-pill neutral">待开工</span>
             </div>
             <div class="check-actions">
-              <button class="primary-btn" id="btnCheckIn"><i data-lucide="log-in"></i><span>到位</span></button>
-              <button class="secondary-btn" id="btnCheckOut"><i data-lucide="log-out"></i><span>离开</span></button>
+              <button class="primary-btn" id="btnCheckIn"><i data-lucide="log-in"></i><span>开工</span></button>
+              <button class="secondary-btn" id="btnCheckOut"><i data-lucide="log-out"></i><span>收工</span></button>
               <select id="leaveType" class="field">
-                <option value="年假">年假</option>
-                <option value="病假">病假</option>
-                <option value="调休">调休</option>
-                <option value="外勤">外勤</option>
+                <option value="主动休息">主动休息</option>
+                <option value="身体恢复">身体恢复</option>
+                <option value="节奏调整">节奏调整</option>
+                <option value="外出事务">外出事务</option>
               </select>
-              <button class="ghost-btn" id="btnLeave"><i data-lucide="umbrella"></i><span>请假</span></button>
+              <button class="ghost-btn" id="btnLeave"><i data-lucide="umbrella"></i><span>休整</span></button>
             </div>
             <div class="mini-metrics four">
               <div><span>工作时长</span><strong id="todayWorkMinutes">0 分钟</strong></div>
@@ -124,14 +156,14 @@
             <div class="panel-head">
               <div>
                 <h2>主题速览</h2>
-                <p>面向员工日常的核心模块</p>
+                <p>面向自我经营日常的核心模块</p>
               </div>
             </div>
             <div class="module-grid">
               <button data-jump="tasks"><i data-lucide="kanban"></i><span>任务流</span><strong id="moduleTask">0</strong></button>
               <button data-jump="okr"><i data-lucide="goal"></i><span>OKR</span><strong id="moduleOkr">0%</strong></button>
               <button data-jump="meetings"><i data-lucide="calendar-days"></i><span>会议</span><strong id="moduleMeetings">0</strong></button>
-              <button data-jump="manager"><i data-lucide="send"></i><span>向上同步</span><strong id="moduleManager">0</strong></button>
+              <button data-jump="manager"><i data-lucide="send"></i><span>资源同步</span><strong id="moduleManager">0</strong></button>
               <button data-jump="wellbeing"><i data-lucide="activity"></i><span>健康</span><strong id="moduleEnergy">-</strong></button>
               <button data-jump="review"><i data-lucide="book-open-check"></i><span>复盘</span><strong id="moduleReview">0</strong></button>
             </div>
@@ -147,7 +179,7 @@
           </div>
           <div class="head-actions">
             <button class="ghost-btn" id="btnCloseOpenLogs"><i data-lucide="lock"></i><span>关闭未结束工作段</span></button>
-            <button class="ghost-btn" id="btnClearTodayLeaves"><i data-lucide="eraser"></i><span>清空今日请假</span></button>
+            <button class="ghost-btn" id="btnClearTodayLeaves"><i data-lucide="eraser"></i><span>清空今日休整</span></button>
           </div>
         </div>
 
@@ -168,13 +200,22 @@
               <button class="ghost-btn" id="btnFocusFinish"><i data-lucide="check"></i><span>完成</span></button>
               <button class="danger-btn" id="btnFocusReset"><i data-lucide="rotate-ccw"></i><span>重置</span></button>
             </div>
+            <div class="focus-history-block">
+              <div class="subsection-head">
+                <div>
+                  <h3>专注历史</h3>
+                  <p>按日期记录每次完成的专注</p>
+                </div>
+              </div>
+              <div id="focusHistoryList" class="stack-list"></div>
+            </div>
           </article>
 
           <article class="panel">
             <div class="panel-head">
               <div>
-                <h2>打卡明细</h2>
-                <p>到位、离开、请假和外勤</p>
+                <h2>行动记录</h2>
+                <p>开工、收工、休整和外出</p>
               </div>
             </div>
             <div id="attendanceList" class="stack-list"></div>
@@ -300,7 +341,7 @@
         <div class="section-head">
           <div>
             <div class="eyebrow">Alignment</div>
-            <h1 id="managerTitle">向上管理</h1>
+            <h1 id="managerTitle">资源协同</h1>
           </div>
         </div>
 
@@ -309,14 +350,14 @@
             <div class="panel-head">
               <div>
                 <h2>同步卡片</h2>
-                <p>进展、风险、需要支持</p>
+                <p>进展、风险、需要的支持</p>
               </div>
             </div>
             <form id="managerForm" class="stack-form">
               <input id="managerTopic" class="field full" placeholder="同步主题">
               <textarea id="managerProgress" class="field textarea" placeholder="本周进展"></textarea>
               <textarea id="managerRisk" class="field textarea" placeholder="风险或阻塞"></textarea>
-              <textarea id="managerAsk" class="field textarea" placeholder="需要主管支持"></textarea>
+              <textarea id="managerAsk" class="field textarea" placeholder="需要的支持或资源"></textarea>
               <button class="primary-btn" type="submit"><i data-lucide="send"></i><span>保存同步</span></button>
             </form>
           </article>
@@ -447,7 +488,7 @@
           <article class="panel">
             <div class="panel-head">
               <div>
-                <h2>员工体感</h2>
+                <h2>自我体感</h2>
                 <p>能量与压力的相对变化</p>
               </div>
             </div>
