@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>早日成为富婆 | work for tomorrow.</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=38">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="app.js?v=38" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -231,12 +231,34 @@
           <div>
             <div class="eyebrow">TIME TABLE</div>
             <h1 id="okrTitle">24 小时时间表</h1>
-            <p>最小刻度 0.5 小时，随机组合一天 24 小时的安排。</p>
+            <p>最小刻度 0.5 小时，可以手动编辑，也可以从日历同步导入。</p>
           </div>
-          <button class="primary-btn" id="btnRandomDayPlan"><i data-lucide="shuffle"></i><span>随机生成一天</span></button>
         </div>
 
-        <div class="dashboard-grid">
+        <div class="dashboard-grid time-table-layout">
+          <article class="panel calendar-sync-panel">
+            <div class="panel-head compact">
+              <div>
+                <h2>账号与日历同步</h2>
+                <p>登录邮箱后，可以把 Google 日程和 Outlook 日历导入到当天时间表。</p>
+              </div>
+              <span id="calendarLoginBadge" class="status-pill neutral">未登录</span>
+            </div>
+            <form id="calendarLoginForm" class="calendar-login-form">
+              <input id="calendarEmail" class="field" type="email" placeholder="邮箱账号" autocomplete="email">
+              <input id="calendarPassword" class="field" type="password" placeholder="密码或授权码" autocomplete="current-password">
+              <button class="primary-btn" type="submit"><i data-lucide="mail-check"></i><span>登录账号</span></button>
+              <button class="ghost-btn" id="btnCalendarLogout" type="button"><i data-lucide="log-out"></i><span>退出登录</span></button>
+            </form>
+            <div id="calendarAccountStatus" class="calendar-account-status"></div>
+            <div class="calendar-connect-actions">
+              <button class="ghost-btn" id="btnConnectGoogle" type="button"><i data-lucide="calendar-days"></i><span>连接 Google 日程</span></button>
+              <button class="ghost-btn" id="btnConnectOutlook" type="button"><i data-lucide="calendar-check"></i><span>连接 Outlook 日历</span></button>
+              <button class="secondary-btn" id="btnImportCalendars" type="button"><i data-lucide="cloud-download"></i><span>导入已连接日历</span></button>
+            </div>
+            <div id="calendarProviderList" class="calendar-provider-list"></div>
+          </article>
+
           <article class="panel span-two day-plan-panel">
             <div class="panel-head">
               <div>
@@ -246,6 +268,16 @@
             </div>
             <div id="dayPlanSummary" class="day-plan-summary"></div>
             <div id="dayPlanLegend" class="day-plan-legend"></div>
+            <form id="dayPlanEditor" class="day-plan-editor">
+              <input id="daySegmentId" type="hidden">
+              <input id="daySegmentTitle" class="field" placeholder="活动名称">
+              <select id="daySegmentCategory" class="field" aria-label="选择类别"></select>
+              <select id="daySegmentStart" class="field" aria-label="开始时间"></select>
+              <select id="daySegmentEnd" class="field" aria-label="结束时间"></select>
+              <button class="primary-btn" id="btnSaveDaySegment" type="submit"><i data-lucide="save"></i><span>保存时间段</span></button>
+              <button class="ghost-btn" id="btnCancelDaySegment" type="button" hidden><i data-lucide="x"></i><span>取消编辑</span></button>
+            </form>
+            <p class="form-hint">用户可以新增、编辑、删除任意 0.5 小时倍数的时间段。重叠部分会自动被新安排替换。</p>
             <div id="dayPlanBoard" class="day-plan-board" aria-label="24 小时时间表"></div>
             <div class="panel-head compact day-plan-detail-head">
               <div>
@@ -522,6 +554,30 @@
               </div>
             </div>
             <div id="languageChoiceList" class="language-grid" role="radiogroup" aria-label="语言选择"></div>
+          </article>
+
+          <article class="panel span-two account-sync-panel">
+            <div class="panel-head compact">
+              <div>
+                <h2>邮箱账号同步</h2>
+                <p>使用邮箱登录，把任务、时间表、会议和复盘同步到同一个账号。</p>
+              </div>
+              <span id="syncLoginBadge" class="status-pill neutral">未登录</span>
+            </div>
+            <form id="syncLoginForm" class="sync-login-form">
+              <input id="syncEmail" class="field" type="email" placeholder="邮箱账号" autocomplete="email">
+              <input id="syncPassword" class="field" type="password" placeholder="密码或验证码" autocomplete="current-password">
+              <input id="syncDeviceName" class="field" placeholder="设备名称，例如：办公室电脑">
+              <button class="primary-btn" type="submit"><i data-lucide="mail-check"></i><span>登录并同步</span></button>
+              <button class="ghost-btn" id="btnSyncLogout" type="button"><i data-lucide="log-out"></i><span>退出账号</span></button>
+            </form>
+            <div class="sync-toolbar">
+              <label class="check-line"><input id="syncAuto" type="checkbox"><span>自动同步</span></label>
+              <button class="secondary-btn" id="btnSyncNow" type="button"><i data-lucide="cloud-upload"></i><span>立即同步</span></button>
+              <button class="ghost-btn" id="btnPullCloud" type="button"><i data-lucide="cloud-download"></i><span>从账号拉取</span></button>
+            </div>
+            <div id="syncAccountStatus" class="sync-account-status"></div>
+            <div id="syncDeviceList" class="sync-device-list"></div>
           </article>
 
           <article class="panel">

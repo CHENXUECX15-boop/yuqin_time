@@ -1,4 +1,5 @@
 const STORAGE_KEY = "yuqin.employee.workspace.v1";
+const SYNC_STORAGE_PREFIX = "yuqin.owner.sync.";
 
 const statusMap = {
   todo: "待办",
@@ -31,6 +32,11 @@ const dayActivityPools = [
   { category: "生活", className: "life", activities: ["家务", "采购", "运动", "朋友家人"], durations: [1, 2, 3, 4] },
   { category: "成长", className: "learn", activities: ["学习充电", "阅读", "复盘计划"], durations: [1, 2, 3] },
   { category: "娱乐", className: "play", activities: ["娱乐放松", "看剧", "自由安排"], durations: [1, 2, 3, 4] }
+];
+
+const dayPlanCategoryOptions = [
+  { category: "未安排", className: "free" },
+  ...dayActivityPools.map(({ category, className }) => ({ category, className }))
 ];
 
 const DEFAULT_THEME = "mono-black";
@@ -149,13 +155,57 @@ const zhToEn = {
   "低优先级": "Low priority",
   "关联项目": "Project",
   "24 小时时间表": "24-Hour Timetable",
-  "最小刻度 0.5 小时，随机组合一天 24 小时的安排。": "Minimum step is 0.5 hour. Randomly compose a full 24-hour day.",
-  "随机生成一天": "Random Day",
+  "最小刻度 0.5 小时，可以手动编辑，也可以从日历同步导入。": "Minimum step is 0.5 hour. Edit manually or import from calendars.",
+  "账号与日历同步": "Account & Calendar Sync",
+  "登录邮箱后，可以把 Google 日程和 Outlook 日历导入到当天时间表。": "Log in with email to import Google Calendar and Outlook Calendar into today's timetable.",
+  "邮箱账号": "Email account",
+  "密码或授权码": "Password or auth code",
+  "密码或验证码": "Password or code",
+  "设备名称，例如：办公室电脑": "Device name, e.g. Office laptop",
+  "登录账号": "Log In",
+  "登录并同步": "Log In & Sync",
+  "退出账号": "Log Out",
+  "退出登录": "Log Out",
+  "未登录": "Not logged in",
+  "已登录": "Logged in",
+  "邮箱账号同步": "Email Account Sync",
+  "使用邮箱登录，把任务、时间表、会议和复盘同步到同一个账号。": "Log in with email to sync tasks, timetable, meetings, and reviews to one account.",
+  "未连接": "Not connected",
+  "已连接": "Connected",
+  "自动同步": "Auto sync",
+  "立即同步": "Sync Now",
+  "从账号拉取": "Pull From Account",
+  "当前设备": "Current device",
+  "云端版本": "Cloud version",
+  "尚未同步": "Not synced yet",
+  "等待其他设备登录同一邮箱": "Waiting for other devices to log in with the same email",
+  "自动同步已开启": "Auto sync on",
+  "自动同步已关闭": "Auto sync off",
+  "本地原型": "Local prototype",
+  "等待登录": "Waiting for login",
+  "最近同步": "Last sync",
+  "先登录邮箱账号，再连接日历来源。": "Use email login first, then connect calendar sources.",
+  "连接 Google 日程": "Connect Google Calendar",
+  "连接 Outlook 日历": "Connect Outlook Calendar",
+  "导入已连接日历": "Import Connected Calendars",
+  "Google 日程": "Google Calendar",
+  "Outlook 日历": "Outlook Calendar",
+  "Google 日程：晨间规划": "Google Calendar: Morning planning",
+  "Google 日程：深度工作": "Google Calendar: Deep work",
+  "Outlook 日历：项目跟进": "Outlook Calendar: Project follow-up",
+  "Outlook 日历：个人安排": "Outlook Calendar: Personal plan",
+  "活动名称": "Activity name",
+  "选择类别": "Choose category",
+  "开始时间": "Start time",
+  "结束时间": "End time",
+  "保存时间段": "Save Time Block",
+  "取消编辑": "Cancel Edit",
+  "用户可以新增、编辑、删除任意 0.5 小时倍数的时间段。重叠部分会自动被新安排替换。": "Add, edit, or delete time blocks in 0.5-hour increments. Overlaps are replaced by the new plan.",
+  "点击时间块或明细里的编辑按钮即可修改。": "Click a block or the edit button in details to modify it.",
   "今日时间组合": "Today's Time Mix",
   "每格 0.5 小时，用色块表示这段时间我在做什么。": "Each cell is 0.5 hour. Color blocks show what I did during that time.",
   "时间明细": "Time Details",
   "开始、结束、活动和时长": "Start, end, activity, and duration",
-  "时间表已随机生成": "Timetable randomized",
   "全天覆盖": "Full Day",
   "最小刻度": "Minimum Step",
   "半小时格": "Half-hour Slots",
@@ -169,6 +219,7 @@ const zhToEn = {
   "活动": "Activity",
   "类别": "Category",
   "时长": "Duration",
+  "未安排": "Unplanned",
   "睡眠": "Sleep",
   "睡觉": "Sleep",
   "赖床恢复": "Slow wake-up",
@@ -311,6 +362,8 @@ const zhToEn = {
   "前一列": "Previous",
   "后一列": "Next",
   "删除": "Delete",
+  "编辑": "Edit",
+  "操作": "Actions",
   "删除专注记录": "Delete focus record",
   "删除行动记录": "Delete activity record",
   "工作记录": "Work record",
@@ -354,6 +407,26 @@ const zhToEn = {
   "复盘已删除": "Review deleted",
   "健康记录已删除": "Wellbeing record deleted",
   "健康状态已保存": "Wellbeing saved",
+  "请先输入邮箱账号": "Please enter an email account",
+  "请先登录邮箱账号": "Please log in with an email account first",
+  "请先连接至少一个日历": "Please connect at least one calendar",
+  "邮箱账号已登录": "Email account logged in",
+  "邮箱账号已退出": "Email account logged out",
+  "账号数据已同步": "Account data synced",
+  "暂无账号同步数据": "No account sync data yet",
+  "已从账号拉取数据": "Pulled data from account",
+  "日历账号已登录": "Calendar account logged in",
+  "日历账号已退出": "Calendar account logged out",
+  "已连接 Google 日程": "Google Calendar connected",
+  "已连接 Outlook 日历": "Outlook Calendar connected",
+  "Google 日程已断开": "Google Calendar disconnected",
+  "Outlook 日历已断开": "Outlook Calendar disconnected",
+  "日历已导入时间表": "Calendar imported into timetable",
+  "请填写活动名称": "Please enter an activity name",
+  "结束时间必须晚于开始时间": "End time must be later than start time",
+  "时间段已保存": "Time block saved",
+  "时间段已删除": "Time block deleted",
+  "已进入编辑模式": "Edit mode enabled",
   "JSON 已导出": "JSON exported",
   "数据已导入": "Data imported",
   "导入失败，请检查 JSON 文件": "Import failed. Check the JSON file",
@@ -450,7 +523,24 @@ function createDefaultState() {
       { id: uid(), name: "数据看板升级", role: "需求接口人", health: "绿", risk: "暂无", next: "补齐字段口径" },
       { id: uid(), name: "流程模板库", role: "共建成员", health: "蓝", risk: "素材分散", next: "收集团队历史文档" }
     ],
-    dayPlan: createRandomDayPlan(today),
+    dayPlan: createBlankDayPlan(today),
+    calendarAccount: {
+      email: "",
+      loggedIn: false,
+      google: false,
+      outlook: false,
+      lastSync: null
+    },
+    syncAccount: {
+      email: "",
+      loggedIn: false,
+      autoSync: true,
+      lastSync: null,
+      cloudVersion: 0,
+      deviceId: uid(),
+      deviceName: "当前网页",
+      devices: []
+    },
     meetings: [
       {
         id: uid(),
@@ -514,7 +604,9 @@ function mergeState(base, incoming) {
     ...base,
     ...incoming,
     appearance: mergeAppearance(base.appearance, incoming.appearance),
-    focusTimer: { ...base.focusTimer, ...(incoming.focusTimer || {}) }
+    focusTimer: { ...base.focusTimer, ...(incoming.focusTimer || {}) },
+    calendarAccount: { ...base.calendarAccount, ...(incoming.calendarAccount || {}) },
+    syncAccount: { ...base.syncAccount, ...(incoming.syncAccount || {}) }
   };
 }
 
@@ -561,6 +653,7 @@ function replaceLegacyPerspective(value) {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  autoSyncState();
 }
 
 function bindNavigation() {
@@ -660,6 +753,10 @@ function bindForms() {
     else state.reviews.unshift({ id: uid(), ...payload });
     saveAndRender("复盘已保存");
   });
+
+  $("#calendarLoginForm").addEventListener("submit", handleCalendarLogin);
+  $("#syncLoginForm").addEventListener("submit", handleSyncLogin);
+  $("#dayPlanEditor").addEventListener("submit", saveDaySegment);
 }
 
 function bindActions() {
@@ -680,7 +777,17 @@ function bindActions() {
   $("#btnAddMeetingContact").addEventListener("click", addMeetingContact);
   $("#meetingContactList").addEventListener("click", handleMeetingContactAction);
 
-  $("#btnRandomDayPlan").addEventListener("click", randomizeDayPlan);
+  $("#btnCalendarLogout").addEventListener("click", logoutCalendarAccount);
+  $("#btnSyncLogout").addEventListener("click", logoutSyncAccount);
+  $("#btnSyncNow").addEventListener("click", () => pushAccountSync(true));
+  $("#btnPullCloud").addEventListener("click", pullAccountSync);
+  $("#syncAuto").addEventListener("change", toggleAutoSync);
+  $("#btnConnectGoogle").addEventListener("click", () => toggleCalendarProvider("google"));
+  $("#btnConnectOutlook").addEventListener("click", () => toggleCalendarProvider("outlook"));
+  $("#btnImportCalendars").addEventListener("click", importConnectedCalendars);
+  $("#btnCancelDaySegment").addEventListener("click", resetDayPlanEditor);
+  $("#dayPlanBoard").addEventListener("click", handleDayPlanEditClick);
+  $("#dayPlanDetails").addEventListener("click", handleDayPlanDetailAction);
   $("#btnBoundaryDone").addEventListener("click", () => {
     upsertHealthLog({ boundaryDone: true });
   });
@@ -930,9 +1037,323 @@ function handleTaskAction(event) {
   saveAndRender(action === "delete" ? "任务已删除" : "任务状态已更新");
 }
 
-function randomizeDayPlan() {
-  state.dayPlan = createRandomDayPlan(todayKey());
-  saveAndRender("时间表已随机生成");
+function handleCalendarLogin(event) {
+  event.preventDefault();
+  const email = $("#calendarEmail").value.trim();
+  if (!email) return toast("请先输入邮箱账号");
+  loginSharedEmailAccount(email, "当前网页");
+  state.calendarAccount = {
+    ...ensureCalendarAccount(),
+    email,
+    loggedIn: true
+  };
+  $("#calendarPassword").value = "";
+  saveAndRender("日历账号已登录");
+}
+
+function logoutCalendarAccount() {
+  state.calendarAccount = {
+    email: "",
+    loggedIn: false,
+    google: false,
+    outlook: false,
+    lastSync: null
+  };
+  saveAndRender("日历账号已退出");
+}
+
+function handleSyncLogin(event) {
+  event.preventDefault();
+  const email = $("#syncEmail").value.trim();
+  const deviceName = $("#syncDeviceName").value.trim();
+  if (!email) return toast("请先输入邮箱账号");
+  loginSharedEmailAccount(email, deviceName);
+  $("#syncPassword").value = "";
+  saveAndRender("邮箱账号已登录");
+}
+
+function loginSharedEmailAccount(email, deviceName = "") {
+  const account = ensureSyncAccount();
+  account.email = email;
+  account.loggedIn = true;
+  account.autoSync = account.autoSync !== false;
+  account.deviceId = account.deviceId || uid();
+  account.deviceName = deviceName || account.deviceName || "当前网页";
+  account.devices = upsertSyncDevice(account.devices || [], account);
+  const calendar = ensureCalendarAccount();
+  calendar.email = email;
+  calendar.loggedIn = true;
+}
+
+function logoutSyncAccount() {
+  state.syncAccount = {
+    email: "",
+    loggedIn: false,
+    autoSync: true,
+    lastSync: null,
+    cloudVersion: 0,
+    deviceId: ensureSyncAccount().deviceId || uid(),
+    deviceName: ensureSyncAccount().deviceName || "当前网页",
+    devices: []
+  };
+  state.calendarAccount = {
+    ...ensureCalendarAccount(),
+    email: "",
+    loggedIn: false,
+    google: false,
+    outlook: false,
+    lastSync: null
+  };
+  saveAndRender("邮箱账号已退出");
+}
+
+function toggleAutoSync() {
+  const account = ensureSyncAccount();
+  account.autoSync = $("#syncAuto").checked;
+  saveState();
+  renderSettings();
+  renderTimeTable();
+  renderIcons();
+  toast(account.autoSync ? "自动同步已开启" : "自动同步已关闭");
+}
+
+function autoSyncState() {
+  const account = state.syncAccount;
+  if (!account || !account.loggedIn || account.autoSync === false) return;
+  pushAccountSync(false, { silent: true });
+}
+
+function pushAccountSync(showToast = true, options = {}) {
+  const account = ensureSyncAccount();
+  if (!account.loggedIn || !account.email) {
+    if (showToast) toast("请先登录邮箱账号");
+    return false;
+  }
+  const now = iso(new Date());
+  account.lastSync = now;
+  account.cloudVersion = Number(account.cloudVersion || 0) + 1;
+  account.devices = upsertSyncDevice(account.devices || [], account, now);
+  const payload = {
+    email: account.email,
+    savedAt: now,
+    version: account.cloudVersion,
+    devices: account.devices,
+    data: snapshotForAccountSync()
+  };
+  localStorage.setItem(syncStorageKey(account.email), JSON.stringify(payload));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (showToast && !options.silent) {
+    renderAll();
+    toast("账号数据已同步");
+  }
+  return true;
+}
+
+function pullAccountSync() {
+  const account = ensureSyncAccount();
+  if (!account.loggedIn || !account.email) return toast("请先登录邮箱账号");
+  const raw = localStorage.getItem(syncStorageKey(account.email));
+  if (!raw) return toast("暂无账号同步数据");
+  try {
+    const payload = JSON.parse(raw);
+    const currentDeviceId = account.deviceId || uid();
+    const currentDeviceName = account.deviceName || "当前网页";
+    state = mergeState(createDefaultState(), payload.data || {});
+    state.syncAccount = {
+      ...ensureSyncAccount(),
+      ...(payload.data?.syncAccount || {}),
+      email: account.email,
+      loggedIn: true,
+      autoSync: account.autoSync !== false,
+      lastSync: payload.savedAt || iso(new Date()),
+      cloudVersion: Number(payload.version || 0),
+      deviceId: currentDeviceId,
+      deviceName: currentDeviceName,
+      devices: upsertSyncDevice(payload.devices || [], { deviceId: currentDeviceId, deviceName: currentDeviceName })
+    };
+    state.calendarAccount = {
+      ...ensureCalendarAccount(),
+      email: account.email,
+      loggedIn: true
+    };
+    saveAndRender("已从账号拉取数据");
+  } catch (error) {
+    toast("导入失败，请检查 JSON 文件");
+  }
+}
+
+function snapshotForAccountSync() {
+  return JSON.parse(JSON.stringify(state));
+}
+
+function syncStorageKey(email) {
+  return `${SYNC_STORAGE_PREFIX}${String(email || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
+function upsertSyncDevice(devices, account, syncedAt = iso(new Date())) {
+  const deviceId = account.deviceId || uid();
+  const deviceName = account.deviceName || "当前网页";
+  const next = (devices || []).filter((device) => device.id !== deviceId);
+  next.unshift({
+    id: deviceId,
+    name: deviceName,
+    type: "web",
+    lastSync: syncedAt
+  });
+  return next.slice(0, 6);
+}
+
+function toggleCalendarProvider(provider) {
+  const account = ensureCalendarAccount();
+  if (!account.loggedIn) return toast("请先登录邮箱账号");
+  account[provider] = !account[provider];
+  const providerText = provider === "google" ? "Google 日程" : "Outlook 日历";
+  saveAndRender(account[provider] ? `已连接 ${providerText}` : `${providerText}已断开`);
+}
+
+function importConnectedCalendars() {
+  const account = ensureCalendarAccount();
+  if (!account.loggedIn) return toast("请先登录邮箱账号");
+  if (!account.google && !account.outlook) return toast("请先连接至少一个日历");
+  const imports = buildCalendarImports(account);
+  imports.forEach((segment) => insertDaySegment(segment));
+  account.lastSync = iso(new Date());
+  saveAndRender("日历已导入时间表");
+}
+
+function buildCalendarImports(account) {
+  const items = [];
+  if (account.google) {
+    items.push({
+      id: uid(),
+      startSlot: 18,
+      slots: 2,
+      category: "会议",
+      className: "meeting",
+      activity: "Google 日程：晨间规划",
+      source: "google"
+    });
+    items.push({
+      id: uid(),
+      startSlot: 32,
+      slots: 2,
+      category: "工作",
+      className: "work",
+      activity: "Google 日程：深度工作",
+      source: "google"
+    });
+  }
+  if (account.outlook) {
+    items.push({
+      id: uid(),
+      startSlot: 26,
+      slots: 3,
+      category: "会议",
+      className: "meeting",
+      activity: "Outlook 日历：项目跟进",
+      source: "outlook"
+    });
+    items.push({
+      id: uid(),
+      startSlot: 38,
+      slots: 2,
+      category: "生活",
+      className: "life",
+      activity: "Outlook 日历：个人安排",
+      source: "outlook"
+    });
+  }
+  return items;
+}
+
+function saveDaySegment(event) {
+  event.preventDefault();
+  const id = $("#daySegmentId").value;
+  const activity = $("#daySegmentTitle").value.trim();
+  const startSlot = Number($("#daySegmentStart").value);
+  const endSlot = Number($("#daySegmentEnd").value);
+  const category = categoryByClassName($("#daySegmentCategory").value);
+  if (!activity) return toast("请填写活动名称");
+  if (!Number.isFinite(startSlot) || !Number.isFinite(endSlot) || endSlot <= startSlot) return toast("结束时间必须晚于开始时间");
+
+  insertDaySegment({
+    id: id || uid(),
+    startSlot,
+    slots: endSlot - startSlot,
+    category: category.category,
+    className: category.className,
+    activity
+  }, id || null);
+  resetDayPlanEditor(false);
+  saveAndRender("时间段已保存");
+}
+
+function handleDayPlanEditClick(event) {
+  const block = event.target.closest("[data-day-segment-edit]");
+  if (!block) return;
+  editDaySegment(block.dataset.daySegmentEdit);
+}
+
+function handleDayPlanDetailAction(event) {
+  const editButton = event.target.closest("[data-day-segment-edit]");
+  if (editButton) {
+    editDaySegment(editButton.dataset.daySegmentEdit);
+    return;
+  }
+  const deleteButton = event.target.closest("[data-day-segment-delete]");
+  if (!deleteButton) return;
+  deleteDaySegment(deleteButton.dataset.daySegmentDelete);
+}
+
+function editDaySegment(id) {
+  const segment = ensureDayPlan().segments.find((item) => item.id === id);
+  if (!segment) return;
+  renderDayPlanEditorOptions(segment.className, segment.startSlot, segment.startSlot + segment.slots);
+  $("#daySegmentId").value = segment.id;
+  $("#daySegmentTitle").value = segment.activity;
+  $("#btnCancelDaySegment").hidden = false;
+  toast("已进入编辑模式");
+}
+
+function resetDayPlanEditor(shouldRenderIcons = true) {
+  $("#daySegmentId").value = "";
+  $("#daySegmentTitle").value = "";
+  renderDayPlanEditorOptions("work", 18, 20);
+  $("#btnCancelDaySegment").hidden = true;
+  if (shouldRenderIcons) renderIcons();
+}
+
+function deleteDaySegment(id) {
+  const plan = ensureDayPlan();
+  plan.segments = normalizeDaySegments(plan.segments.filter((segment) => segment.id !== id));
+  saveAndRender("时间段已删除");
+}
+
+function insertDaySegment(newSegment, replaceId = null) {
+  const plan = ensureDayPlan();
+  const newStart = Number(newSegment.startSlot);
+  const newEnd = newStart + Number(newSegment.slots);
+  const kept = [];
+  (plan.segments || []).forEach((segment) => {
+    if (replaceId && segment.id === replaceId) return;
+    const start = Number(segment.startSlot);
+    const end = start + Number(segment.slots);
+    if (end <= newStart || start >= newEnd) {
+      kept.push({ ...segment });
+      return;
+    }
+    if (start < newStart) {
+      kept.push({ ...segment, id: uid(), startSlot: start, slots: newStart - start });
+    }
+    if (end > newEnd) {
+      kept.push({ ...segment, id: uid(), startSlot: newEnd, slots: end - newEnd });
+    }
+  });
+  kept.push(newSegment);
+  plan.day = todayKey();
+  plan.mode = "manual";
+  plan.updatedAt = iso(new Date());
+  plan.segments = normalizeDaySegments(kept);
 }
 
 function addObjective() {
@@ -1431,6 +1852,8 @@ function taskCard(task) {
 }
 
 function renderTimeTable() {
+  renderCalendarSync();
+  renderDayPlanEditorOptions();
   const plan = ensureDayPlan();
   const segments = plan.segments || [];
   const categories = uniqueCategories(segments);
@@ -1464,14 +1887,16 @@ function renderTimeTable() {
     </div>
     <div class="day-plan-strip" role="img" aria-label="${escapeHtml(t("24 小时时间表"))}">
       ${segments.map((segment) => `
-        <div
+        <button
+          type="button"
           class="day-plan-block plan-${segment.className}"
+          data-day-segment-edit="${segment.id}"
           style="grid-column:${segment.startSlot + 1} / span ${segment.slots}"
           title="${escapeHtml(segmentTitle(segment))}"
         >
           <strong>${escapeHtml(t(segment.activity))}</strong>
           <span>${escapeHtml(segmentTimeRange(segment))}</span>
-        </div>
+        </button>
       `).join("")}
     </div>
   `;
@@ -1482,6 +1907,7 @@ function renderTimeTable() {
       <span>${escapeHtml(t("活动"))}</span>
       <span>${escapeHtml(t("类别"))}</span>
       <span>${escapeHtml(t("时长"))}</span>
+      <span>${escapeHtml(t("操作"))}</span>
     </div>
     ${segments.map((segment) => `
       <div class="time-detail-row">
@@ -1489,67 +1915,195 @@ function renderTimeTable() {
         <strong>${escapeHtml(t(segment.activity))}</strong>
         <span><i class="plan-dot plan-${segment.className}"></i>${escapeHtml(t(segment.category))}</span>
         <span>${escapeHtml(formatSlotDuration(segment.slots))}</span>
+        <span class="tiny-actions">
+          <button type="button" data-day-segment-edit="${segment.id}">${escapeHtml(t("编辑"))}</button>
+          <button type="button" data-day-segment-delete="${segment.id}">${escapeHtml(t("删除"))}</button>
+        </span>
       </div>
     `).join("")}
   `;
 }
 
+function renderCalendarSync() {
+  const account = ensureCalendarAccount();
+  const syncAccount = ensureSyncAccount();
+  if (syncAccount.loggedIn && syncAccount.email && !account.loggedIn) {
+    account.email = syncAccount.email;
+    account.loggedIn = true;
+  }
+  const badge = $("#calendarLoginBadge");
+  badge.textContent = account.loggedIn ? t("已登录") : t("未登录");
+  badge.className = `status-pill ${account.loggedIn ? "good" : "neutral"}`;
+  $("#calendarEmail").value = account.email || "";
+  $("#btnCalendarLogout").disabled = !account.loggedIn;
+  $("#btnConnectGoogle").disabled = !account.loggedIn;
+  $("#btnConnectOutlook").disabled = !account.loggedIn;
+  $("#btnImportCalendars").disabled = !account.loggedIn || (!account.google && !account.outlook);
+
+  $("#calendarAccountStatus").innerHTML = account.loggedIn
+    ? `
+      <strong>${escapeHtml(account.email)}</strong>
+      <span>${escapeHtml(account.lastSync ? `${t("最近同步")} ${formatDateTime(account.lastSync)}` : t("本地原型"))}</span>
+    `
+    : `
+      <strong>${escapeHtml(t("等待登录"))}</strong>
+      <span>${escapeHtml(t("先登录邮箱账号，再连接日历来源。"))}</span>
+    `;
+
+  $("#calendarProviderList").innerHTML = [
+    { key: "google", name: "Google 日程", icon: "calendar-days" },
+    { key: "outlook", name: "Outlook 日历", icon: "calendar-check" }
+  ].map((provider) => {
+    const connected = Boolean(account[provider.key]);
+    return `
+      <div class="calendar-provider ${connected ? "is-connected" : ""}">
+        <i data-lucide="${provider.icon}"></i>
+        <div>
+          <strong>${escapeHtml(t(provider.name))}</strong>
+          <span>${escapeHtml(connected ? t("已连接") : t("未连接"))}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderDayPlanEditorOptions(categoryClass = $("#daySegmentCategory")?.value || "work", startSlot = Number($("#daySegmentStart")?.value || 18), endSlot = Number($("#daySegmentEnd")?.value || 20)) {
+  const categorySelect = $("#daySegmentCategory");
+  const startSelect = $("#daySegmentStart");
+  const endSelect = $("#daySegmentEnd");
+  if (!categorySelect || !startSelect || !endSelect) return;
+
+  categorySelect.innerHTML = dayPlanCategoryOptions.map((item) => `
+    <option value="${escapeHtml(item.className)}">${escapeHtml(t(item.category))}</option>
+  `).join("");
+  categorySelect.value = dayPlanCategoryOptions.some((item) => item.className === categoryClass) ? categoryClass : "work";
+
+  const slotOptions = Array.from({ length: 49 }, (_, slot) => `
+    <option value="${slot}">${formatSlotClock(slot)}</option>
+  `).join("");
+  startSelect.innerHTML = slotOptions;
+  endSelect.innerHTML = slotOptions;
+  startSelect.value = String(Math.max(0, Math.min(47, Number.isFinite(startSlot) ? startSlot : 18)));
+  endSelect.value = String(Math.max(1, Math.min(48, Number.isFinite(endSlot) ? endSlot : 20)));
+}
+
 function ensureDayPlan() {
-  if (!state.dayPlan || !Array.isArray(state.dayPlan.segments) || state.dayPlan.segments.length === 0) {
-    state.dayPlan = createRandomDayPlan(todayKey());
+  const hasCalendarSource = (state.dayPlan?.segments || []).some((segment) => segment.source);
+  const isLegacyGeneratedPlan = state.dayPlan && !state.dayPlan.mode && !hasCalendarSource;
+  if (!state.dayPlan || !Array.isArray(state.dayPlan.segments) || state.dayPlan.segments.length === 0 || isLegacyGeneratedPlan) {
+    state.dayPlan = createBlankDayPlan(todayKey());
     saveState();
   }
+  state.dayPlan.segments = normalizeDaySegments(state.dayPlan.segments);
   return state.dayPlan;
 }
 
-function createRandomDayPlan(day = todayKey()) {
-  let startSlot = 0;
-  let remaining = 48;
-  const segments = [];
-  while (remaining > 0) {
-    const pool = pickActivityPool(startSlot, remaining, segments[segments.length - 1]);
-    const possibleDurations = pool.durations.filter((duration) => duration <= remaining);
-    const slots = possibleDurations.length
-      ? possibleDurations[Math.floor(Math.random() * possibleDurations.length)]
-      : remaining;
-    const activity = pool.activities[Math.floor(Math.random() * pool.activities.length)];
-    const previous = segments[segments.length - 1];
-    if (previous && previous.activity === activity && previous.className === pool.className) {
-      previous.slots += slots;
-    } else {
-      segments.push({
-        id: uid(),
-        startSlot,
-        slots,
-        category: pool.category,
-        className: pool.className,
-        activity
-      });
-    }
-    startSlot += slots;
-    remaining -= slots;
-  }
-  let cursor = 0;
-  segments.forEach((segment) => {
-    segment.startSlot = cursor;
-    cursor += segment.slots;
-  });
-  return { day, generatedAt: iso(new Date()), segments };
+function createBlankDayPlan(day = todayKey()) {
+  return {
+    day,
+    mode: "manual",
+    updatedAt: iso(new Date()),
+    segments: [makeFreeSegment(0, 48)]
+  };
 }
 
-function pickActivityPool(startSlot, remaining, previous) {
-  const hour = startSlot / 2;
-  const candidates = dayActivityPools.filter((pool) => {
-    if (remaining <= 2) return pool.durations.some((duration) => duration <= remaining);
-    if (previous && previous.category === pool.category && Math.random() < 0.72) return false;
-    if ((hour < 6 || hour >= 23) && pool.category === "睡眠") return true;
-    if (hour >= 7 && hour < 10 && ["准备", "通勤", "吃饭"].includes(pool.category)) return true;
-    if (hour >= 10 && hour < 18 && ["工作", "会议", "吃饭", "恢复"].includes(pool.category)) return true;
-    if (hour >= 18 && hour < 23 && ["吃饭", "生活", "成长", "娱乐", "恢复"].includes(pool.category)) return true;
-    return Math.random() < 0.38;
+function ensureCalendarAccount() {
+  if (!state.calendarAccount) {
+    state.calendarAccount = {
+      email: "",
+      loggedIn: false,
+      google: false,
+      outlook: false,
+      lastSync: null
+    };
+  }
+  return state.calendarAccount;
+}
+
+function ensureSyncAccount() {
+  if (!state.syncAccount) {
+    state.syncAccount = {
+      email: "",
+      loggedIn: false,
+      autoSync: true,
+      lastSync: null,
+      cloudVersion: 0,
+      deviceId: uid(),
+      deviceName: "当前网页",
+      devices: []
+    };
+  }
+  state.syncAccount.deviceId = state.syncAccount.deviceId || uid();
+  state.syncAccount.deviceName = state.syncAccount.deviceName || "当前网页";
+  state.syncAccount.devices = state.syncAccount.devices || [];
+  return state.syncAccount;
+}
+
+function normalizeDaySegments(segments) {
+  const clean = (segments || [])
+    .map((segment) => {
+      const startSlot = Math.max(0, Math.min(48, Math.round(Number(segment.startSlot || 0))));
+      const slots = Math.max(0, Math.min(48 - startSlot, Math.round(Number(segment.slots || 0))));
+      const category = categoryByClassName(segment.className || "free");
+      return {
+        id: segment.id || uid(),
+        startSlot,
+        slots,
+        category: segment.category || category.category,
+        className: category.className,
+        activity: segment.activity || segment.category || category.category,
+        source: segment.source || ""
+      };
+    })
+    .filter((segment) => segment.slots > 0)
+    .sort((a, b) => a.startSlot - b.startSlot);
+
+  const filled = [];
+  let cursor = 0;
+  clean.forEach((segment) => {
+    const start = Math.max(cursor, segment.startSlot);
+    const end = Math.min(48, segment.startSlot + segment.slots);
+    if (start > cursor) filled.push(makeFreeSegment(cursor, start - cursor));
+    if (end > start) {
+      filled.push({ ...segment, startSlot: start, slots: end - start });
+      cursor = end;
+    }
   });
-  const pool = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : dayActivityPools[Math.floor(Math.random() * dayActivityPools.length)];
-  return pool.durations.some((duration) => duration <= remaining) ? pool : dayActivityPools.find((item) => item.durations.some((duration) => duration <= remaining)) || dayActivityPools[0];
+  if (cursor < 48) filled.push(makeFreeSegment(cursor, 48 - cursor));
+  return mergeAdjacentDaySegments(filled);
+}
+
+function makeFreeSegment(startSlot, slots) {
+  return {
+    id: uid(),
+    startSlot,
+    slots,
+    category: "未安排",
+    className: "free",
+    activity: "未安排"
+  };
+}
+
+function mergeAdjacentDaySegments(segments) {
+  return segments.reduce((items, segment) => {
+    const previous = items[items.length - 1];
+    if (
+      previous &&
+      previous.startSlot + previous.slots === segment.startSlot &&
+      previous.category === segment.category &&
+      previous.className === segment.className &&
+      previous.activity === segment.activity
+    ) {
+      previous.slots += segment.slots;
+    } else {
+      items.push({ ...segment });
+    }
+    return items;
+  }, []);
+}
+
+function categoryByClassName(className) {
+  return dayPlanCategoryOptions.find((item) => item.className === className) || dayPlanCategoryOptions[0];
 }
 
 function uniqueCategories(segments) {
@@ -1742,9 +2296,60 @@ function renderLanguageSettings() {
   `).join("");
 }
 
+function renderSyncSettings() {
+  const account = ensureSyncAccount();
+  const loggedIn = Boolean(account.loggedIn && account.email);
+  const badge = $("#syncLoginBadge");
+  badge.textContent = loggedIn ? t("已登录") : t("未登录");
+  badge.className = `status-pill ${loggedIn ? "good" : "neutral"}`;
+  $("#syncEmail").value = account.email || "";
+  $("#syncDeviceName").value = account.deviceName || "";
+  $("#syncAuto").checked = account.autoSync !== false;
+  $("#btnSyncLogout").disabled = !loggedIn;
+  $("#btnSyncNow").disabled = !loggedIn;
+  $("#btnPullCloud").disabled = !loggedIn;
+
+  $("#syncAccountStatus").innerHTML = loggedIn
+    ? `
+      <div>
+        <span>${escapeHtml(t("邮箱账号"))}</span>
+        <strong>${escapeHtml(account.email)}</strong>
+      </div>
+      <div>
+        <span>${escapeHtml(t("最近同步"))}</span>
+        <strong>${escapeHtml(account.lastSync ? formatDateTime(account.lastSync) : t("尚未同步"))}</strong>
+      </div>
+      <div>
+        <span>${escapeHtml(t("云端版本"))}</span>
+        <strong>${escapeHtml(String(account.cloudVersion || 0))}</strong>
+      </div>
+    `
+    : `
+      <div>
+        <span>${escapeHtml(t("等待登录"))}</span>
+        <strong>${escapeHtml(isEnglish() ? "Use an email account to sync across devices." : "使用邮箱账号后可同步多设备数据")}</strong>
+      </div>
+    `;
+
+  const devices = account.devices || [];
+  $("#syncDeviceList").innerHTML = loggedIn && devices.length
+    ? devices.map((device) => `
+      <div class="sync-device-card">
+        <i data-lucide="${device.id === account.deviceId ? "monitor" : "smartphone"}"></i>
+        <div>
+          <strong>${escapeHtml(device.name || t("当前设备"))}</strong>
+          <span>${escapeHtml(device.lastSync ? formatDateTime(device.lastSync) : t("尚未同步"))}</span>
+        </div>
+        ${device.id === account.deviceId ? `<em>${escapeHtml(t("当前设备"))}</em>` : ""}
+      </div>
+    `).join("")
+    : `<div class="empty compact">${escapeHtml(loggedIn ? t("等待其他设备登录同一邮箱") : t("请先登录邮箱账号"))}</div>`;
+}
+
 function renderSettings() {
   renderThemeSettings();
   renderLanguageSettings();
+  renderSyncSettings();
   $("#schemaPreview").textContent = JSON.stringify({
     miniProgramCollections: {
       owners: ["_id", "name", "domain", "role", "createdAt"],
@@ -1752,7 +2357,9 @@ function renderSettings() {
       rhythmLogs: ["_id", "ownerId", "type", "at", "note"],
       focusSessions: ["_id", "ownerId", "title", "minutes", "targetMinutes", "reward", "rewardEarned", "startedAt", "endedAt"],
       meetingContacts: ["_id", "ownerId", "name", "createdAt"],
-      dayPlans: ["_id", "ownerId", "day", "segments", "generatedAt"],
+      syncAccounts: ["_id", "email", "deviceId", "deviceName", "autoSync", "lastSync", "cloudVersion"],
+      calendarAccounts: ["_id", "ownerId", "email", "googleConnected", "outlookConnected", "lastSync"],
+      dayPlans: ["_id", "ownerId", "day", "segments", "source", "updatedAt"],
       tasks: ["_id", "ownerId", "title", "status", "priority", "project", "due", "completedAt"],
       okrs: ["_id", "ownerId", "title", "keyResult", "progress"],
       projects: ["_id", "ownerId", "name", "role", "health", "risk", "next"],
