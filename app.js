@@ -302,6 +302,7 @@ const zhToEn = {
   "原因": "Reason",
   "写下原因，方便以后回看触发点": "Write the reason so you can review the trigger later",
   "保存复盘": "Save Review",
+  "保存修改": "Save Changes",
   "复盘记录": "Review Log",
   "保留每日可回看的工作轨迹": "Keep a daily work trail you can revisit",
   "数据周期": "Data range",
@@ -354,6 +355,7 @@ const zhToEn = {
   "后一列": "Next",
   "删除": "Delete",
   "编辑": "Edit",
+  "编辑复盘": "Edit review",
   "操作": "Actions",
   "删除专注记录": "Delete focus record",
   "删除行动记录": "Delete activity record",
@@ -397,6 +399,7 @@ const zhToEn = {
   "会议已删除": "Meeting deleted",
   "同步记录已删除": "Resource note deleted",
   "复盘已删除": "Review deleted",
+  "复盘已更新": "Review updated",
   "健康记录已删除": "Wellbeing record deleted",
   "健康状态已保存": "Wellbeing saved",
   "请先输入邮箱账号": "Please enter an email account",
@@ -411,6 +414,7 @@ const zhToEn = {
   "时间段已保存": "Time block saved",
   "时间段已删除": "Time block deleted",
   "已进入编辑模式": "Edit mode enabled",
+  "已进入复盘编辑模式": "Review edit mode enabled",
   "JSON 已导出": "JSON exported",
   "数据已导入": "Data imported",
   "导入失败，请检查 JSON 文件": "Import failed. Check the JSON file",
@@ -619,6 +623,11 @@ function normalizeLegacyWording(nextState) {
     ask: replaceLegacyPerspective(item.ask)
   }));
 
+  nextState.reviews = (nextState.reviews || []).map((item) => ({
+    ...item,
+    id: item.id || uid()
+  }));
+
   return nextState;
 }
 
@@ -716,19 +725,36 @@ function bindForms() {
 
   $("#reviewForm").addEventListener("submit", (event) => {
     event.preventDefault();
+    const editingId = $("#reviewEditId").value;
+    const editingDay = $("#reviewEditDay").value;
     const day = todayKey();
-    const existing = state.reviews.find((item) => item.day === day);
+    const now = iso(new Date());
     const payload = {
-      day,
       wins: $("#reviewWins").value.trim(),
       risks: $("#reviewRisks").value.trim(),
       tomorrow: $("#reviewTomorrow").value.trim(),
       score: Number($("#reviewScore").value),
       moodReason: shouldCollectMoodReason(Number($("#reviewScore").value)) ? $("#reviewMoodReason").value.trim() : "",
-      createdAt: iso(new Date())
+      updatedAt: now
     };
-    if (existing) Object.assign(existing, payload);
-    else state.reviews.unshift({ id: uid(), ...payload });
+
+    if (editingId) {
+      const editing = state.reviews.find((item) => item.id === editingId);
+      if (editing) {
+        Object.assign(editing, {
+          ...payload,
+          day: editing.day || editingDay || day,
+          createdAt: editing.createdAt || now
+        });
+      }
+      clearReviewEditState();
+      saveAndRender("复盘已更新");
+      return;
+    }
+
+    const existing = state.reviews.find((item) => item.day === day);
+    if (existing) Object.assign(existing, { ...payload, day, createdAt: existing.createdAt || now });
+    else state.reviews.unshift({ id: uid(), day, createdAt: now, ...payload });
     saveAndRender("复盘已保存");
   });
 
@@ -751,6 +777,7 @@ function bindActions() {
   $$(".mood-btn").forEach((button) => {
     button.addEventListener("click", () => setReviewMood(Number(button.dataset.reviewScore)));
   });
+  $("#btnCancelReviewEdit").addEventListener("click", resetReviewEditor);
   $("#btnAddMeetingContact").addEventListener("click", addMeetingContact);
   $("#meetingContactList").addEventListener("click", handleMeetingContactAction);
 
@@ -778,7 +805,7 @@ function bindActions() {
   $("#focusHistoryList").addEventListener("click", handleDeleteFromList("focusSessions", "专注记录已删除"));
   $("#meetingList").addEventListener("click", handleDeleteFromList("meetings", "会议已删除"));
   $("#managerList").addEventListener("click", handleDeleteFromList("managerNotes", "同步记录已删除"));
-  $("#reviewList").addEventListener("click", handleDeleteFromList("reviews", "复盘已删除"));
+  $("#reviewList").addEventListener("click", handleReviewListAction);
   $("#healthList").addEventListener("click", handleDeleteFromList("healthLogs", "健康记录已删除"));
 
   $$(".segmented button").forEach((button) => {
@@ -967,6 +994,64 @@ function setReviewMood(score, reason = null) {
 
 function shouldCollectMoodReason(score) {
   return Number(score) === 1 || Number(score) === 5;
+}
+
+function fillReviewForm(review) {
+  $("#reviewWins").value = review?.wins || "";
+  $("#reviewRisks").value = review?.risks || "";
+  $("#reviewTomorrow").value = review?.tomorrow || "";
+  setReviewMood(Number(review?.score || 4), review?.moodReason || "");
+}
+
+function clearReviewForm() {
+  $("#reviewWins").value = "";
+  $("#reviewRisks").value = "";
+  $("#reviewTomorrow").value = "";
+  $("#reviewMoodReason").value = "";
+  setReviewMood(4, "");
+}
+
+function setReviewEditState(review = null) {
+  $("#reviewEditId").value = review?.id || "";
+  $("#reviewEditDay").value = review?.day || "";
+  $("#btnCancelReviewEdit").hidden = !review;
+  $("#reviewSubmitLabel").textContent = review ? t("保存修改") : t("保存复盘");
+}
+
+function clearReviewEditState() {
+  setReviewEditState(null);
+}
+
+function resetReviewEditor() {
+  clearReviewEditState();
+  const today = state.reviews.find((item) => item.day === todayKey());
+  if (today) fillReviewForm(today);
+  else clearReviewForm();
+  renderIcons();
+}
+
+function editReview(id) {
+  const review = state.reviews.find((item) => item.id === id);
+  if (!review) return;
+  fillReviewForm(review);
+  setReviewEditState(review);
+  renderIcons();
+  toast("已进入复盘编辑模式");
+}
+
+function handleReviewListAction(event) {
+  const editButton = event.target.closest("[data-review-edit]");
+  if (editButton) {
+    editReview(editButton.dataset.reviewEdit);
+    return;
+  }
+
+  const deleteButton = event.target.closest("[data-delete-id]");
+  if (!deleteButton) return;
+  const deletedId = deleteButton.dataset.deleteId;
+  state.reviews = state.reviews.filter((item) => item.id !== deletedId);
+  if ($("#reviewEditId").value === deletedId) clearReviewEditState();
+  saveAndRender("复盘已删除");
 }
 
 function addTask(title, priority = "中", project = "", due = "") {
@@ -2057,14 +2142,17 @@ function renderHealth() {
 }
 
 function renderReview() {
+  const editing = state.reviews.find((item) => item.id === $("#reviewEditId")?.value);
   const today = state.reviews.find((item) => item.day === todayKey());
-  if (today) {
-    $("#reviewWins").value = today.wins;
-    $("#reviewRisks").value = today.risks;
-    $("#reviewTomorrow").value = today.tomorrow;
-    setReviewMood(today.score, today.moodReason || "");
+  if (editing) {
+    fillReviewForm(editing);
+    setReviewEditState(editing);
+  } else if (today) {
+    fillReviewForm(today);
+    setReviewEditState(null);
   } else {
-    setReviewMood(Number($("#reviewScore").value || 4), $("#reviewMoodReason").value);
+    clearReviewForm();
+    setReviewEditState(null);
   }
 
   $("#reviewList").innerHTML = state.reviews
@@ -2077,7 +2165,10 @@ function renderReview() {
             <h3>${escapeHtml(review.day)}</h3>
             <div class="item-meta"><span class="tag low">${escapeHtml(moodText(review.score))} · ${review.score}/5</span></div>
           </div>
-          <button class="icon-btn" data-delete-id="${review.id}" aria-label="${isEnglish() ? "Delete review" : "删除复盘"}" title="${isEnglish() ? "Delete review" : "删除复盘"}"><i data-lucide="trash-2"></i></button>
+          <div class="stack-actions">
+            <button class="icon-btn" data-review-edit="${review.id}" aria-label="${isEnglish() ? "Edit review" : "编辑复盘"}" title="${isEnglish() ? "Edit review" : "编辑复盘"}"><i data-lucide="square-pen"></i></button>
+            <button class="icon-btn" data-delete-id="${review.id}" aria-label="${isEnglish() ? "Delete review" : "删除复盘"}" title="${isEnglish() ? "Delete review" : "删除复盘"}"><i data-lucide="trash-2"></i></button>
+          </div>
         </div>
         <p><strong>${isEnglish() ? "Wins: " : "成果："}</strong>${escapeHtml(review.wins || (isEnglish() ? "None" : "暂无"))}</p>
         <p><strong>${isEnglish() ? "Risks: " : "风险："}</strong>${escapeHtml(review.risks || (isEnglish() ? "None" : "暂无"))}</p>

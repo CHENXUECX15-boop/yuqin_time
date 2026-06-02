@@ -1119,6 +1119,7 @@ h3 {
   gap: 8px;
 }
 
+.stack-actions,
 .attendance-actions {
   display: flex;
   align-items: center;
