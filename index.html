@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>早日成为富婆 | work for tomorrow.</title>
-  <link rel="stylesheet" href="styles.css?v=38">
+  <link rel="stylesheet" href="styles.css?v=40">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-  <script src="app.js?v=38" defer></script>
+  <script src="app.js?v=40" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -231,34 +231,11 @@
           <div>
             <div class="eyebrow">TIME TABLE</div>
             <h1 id="okrTitle">24 小时时间表</h1>
-            <p>最小刻度 0.5 小时，可以手动编辑，也可以从日历同步导入。</p>
+            <p>最小刻度 0.5 小时，可以手动编辑一天的安排。</p>
           </div>
         </div>
 
         <div class="dashboard-grid time-table-layout">
-          <article class="panel calendar-sync-panel">
-            <div class="panel-head compact">
-              <div>
-                <h2>账号与日历同步</h2>
-                <p>登录邮箱后，可以把 Google 日程和 Outlook 日历导入到当天时间表。</p>
-              </div>
-              <span id="calendarLoginBadge" class="status-pill neutral">未登录</span>
-            </div>
-            <form id="calendarLoginForm" class="calendar-login-form">
-              <input id="calendarEmail" class="field" type="email" placeholder="邮箱账号" autocomplete="email">
-              <input id="calendarPassword" class="field" type="password" placeholder="密码或授权码" autocomplete="current-password">
-              <button class="primary-btn" type="submit"><i data-lucide="mail-check"></i><span>登录账号</span></button>
-              <button class="ghost-btn" id="btnCalendarLogout" type="button"><i data-lucide="log-out"></i><span>退出登录</span></button>
-            </form>
-            <div id="calendarAccountStatus" class="calendar-account-status"></div>
-            <div class="calendar-connect-actions">
-              <button class="ghost-btn" id="btnConnectGoogle" type="button"><i data-lucide="calendar-days"></i><span>连接 Google 日程</span></button>
-              <button class="ghost-btn" id="btnConnectOutlook" type="button"><i data-lucide="calendar-check"></i><span>连接 Outlook 日历</span></button>
-              <button class="secondary-btn" id="btnImportCalendars" type="button"><i data-lucide="cloud-download"></i><span>导入已连接日历</span></button>
-            </div>
-            <div id="calendarProviderList" class="calendar-provider-list"></div>
-          </article>
-
           <article class="panel span-two day-plan-panel">
             <div class="panel-head">
               <div>

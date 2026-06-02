@@ -817,13 +817,6 @@ h3 {
   gap: 10px;
 }
 
-.calendar-sync-panel,
-.calendar-provider-list {
-  display: grid;
-  gap: 12px;
-}
-
-.calendar-login-form,
 .sync-login-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr)) auto auto;
@@ -835,7 +828,6 @@ h3 {
   grid-template-columns: repeat(3, minmax(0, 1fr)) auto auto;
 }
 
-.calendar-connect-actions,
 .sync-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -843,8 +835,6 @@ h3 {
   align-items: center;
 }
 
-.calendar-account-status,
-.calendar-provider,
 .sync-account-status,
 .sync-device-card {
   display: flex;
@@ -857,21 +847,16 @@ h3 {
   border-radius: var(--radius);
 }
 
-.calendar-account-status,
 .sync-account-status {
   justify-content: space-between;
 }
 
-.calendar-account-status strong,
-.calendar-provider strong,
 .sync-account-status strong,
 .sync-device-card strong {
   display: block;
   font-weight: 850;
 }
 
-.calendar-account-status span,
-.calendar-provider span,
 .sync-account-status span,
 .sync-device-card span {
   color: var(--muted);
@@ -934,18 +919,6 @@ h3 {
   width: 18px;
   height: 18px;
   accent-color: var(--teal);
-}
-
-.calendar-provider.is-connected {
-  background: var(--green-soft);
-  border-color: rgba(47, 125, 79, 0.22);
-}
-
-.calendar-provider > svg {
-  width: 22px;
-  height: 22px;
-  color: var(--teal);
-  flex: 0 0 auto;
 }
 
 .meeting-contact-tools {
@@ -1286,6 +1259,38 @@ h3 {
   display: flex;
   justify-content: space-between;
   margin-bottom: 12px;
+}
+
+.task-lane {
+  display: grid;
+  gap: 10px;
+}
+
+.task-lane + .task-lane {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.task-lane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.task-lane-head strong {
+  display: inline-grid;
+  min-width: 24px;
+  min-height: 24px;
+  place-items: center;
+  color: var(--ink);
+  background: var(--surface-soft);
+  border-radius: 999px;
+  font-size: 12px;
 }
 
 .kanban-count {
@@ -2049,7 +2054,6 @@ canvas {
   .top-grid,
   .dashboard-grid,
   .kanban,
-  .calendar-login-form,
   .sync-login-form,
   .sync-account-status,
   .sync-device-list,
@@ -2109,7 +2113,6 @@ canvas {
   .inline-form,
   .task-form,
   .two-col,
-  .calendar-login-form,
   .sync-login-form,
   .sync-account-status,
   .sync-device-list,
