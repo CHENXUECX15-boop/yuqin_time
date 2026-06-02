@@ -28,7 +28,7 @@
         <button class="nav-btn is-active" data-section="home"><span>今日总览</span><i data-lucide="cat"></i></button>
         <button class="nav-btn" data-section="rhythm"><span>工作节奏</span><i data-lucide="paw-print"></i></button>
         <button class="nav-btn" data-section="tasks"><span>任务看板</span><i data-lucide="list-checks"></i></button>
-        <button class="nav-btn" data-section="okr"><span>OKR 与项目</span><i data-lucide="target"></i></button>
+        <button class="nav-btn" data-section="okr"><span>时间表</span><i data-lucide="calendar-clock"></i></button>
         <button class="nav-btn" data-section="meetings"><span>会议协作</span><i data-lucide="messages-square"></i></button>
         <button class="nav-btn" data-section="manager"><span>资源协同</span><i data-lucide="user-round-check"></i></button>
         <button class="nav-btn" data-section="wellbeing"><span>健康边界</span><i data-lucide="fish"></i></button>
@@ -229,32 +229,31 @@
       <section id="okr" class="view" aria-labelledby="okrTitle">
         <div class="section-head">
           <div>
-            <div class="eyebrow">Focus</div>
-            <h1 id="okrTitle">OKR 与项目</h1>
+            <div class="eyebrow">TIME TABLE</div>
+            <h1 id="okrTitle">24 小时时间表</h1>
+            <p>最小刻度 0.5 小时，随机组合一天 24 小时的安排。</p>
           </div>
-          <button class="primary-btn" id="btnAddObjective"><i data-lucide="plus"></i><span>新增目标</span></button>
+          <button class="primary-btn" id="btnRandomDayPlan"><i data-lucide="shuffle"></i><span>随机生成一天</span></button>
         </div>
 
         <div class="dashboard-grid">
-          <article class="panel span-two">
+          <article class="panel span-two day-plan-panel">
             <div class="panel-head">
               <div>
-                <h2>个人 OKR</h2>
-                <p>目标、关键结果与推进率</p>
+                <h2>今日时间组合</h2>
+                <p>每格 0.5 小时，用色块表示这段时间我在做什么。</p>
               </div>
             </div>
-            <div id="okrList" class="okr-list"></div>
-          </article>
-
-          <article class="panel span-two">
-            <div class="panel-head">
+            <div id="dayPlanSummary" class="day-plan-summary"></div>
+            <div id="dayPlanLegend" class="day-plan-legend"></div>
+            <div id="dayPlanBoard" class="day-plan-board" aria-label="24 小时时间表"></div>
+            <div class="panel-head compact day-plan-detail-head">
               <div>
-                <h2>项目组合</h2>
-                <p>职责、风险和下一步</p>
+                <h2>时间明细</h2>
+                <p>开始、结束、活动和时长</p>
               </div>
-              <button class="ghost-btn" id="btnAddProject"><i data-lucide="plus"></i><span>新增项目</span></button>
             </div>
-            <div id="projectTable" class="data-table"></div>
+            <div id="dayPlanDetails" class="day-plan-details"></div>
           </article>
         </div>
       </section>
@@ -468,7 +467,7 @@
             <div class="panel-head">
               <div>
                 <h2>工作趋势</h2>
-                <p>工作分钟、专注分钟、完成任务</p>
+                <p>工作时长、专注时长、完成任务</p>
               </div>
             </div>
             <canvas id="mainChart" height="220"></canvas>

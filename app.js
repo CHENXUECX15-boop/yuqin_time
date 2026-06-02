@@ -20,6 +20,19 @@ const moodLabels = {
   5: "非常高兴"
 };
 
+const dayActivityPools = [
+  { category: "睡眠", className: "sleep", activities: ["睡觉", "赖床恢复", "午间小睡"], durations: [1, 2, 3, 12, 13, 14, 15, 16] },
+  { category: "准备", className: "prep", activities: ["晨间准备", "洗漱收尾", "整理房间"], durations: [1, 2] },
+  { category: "通勤", className: "commute", activities: ["通勤", "外出路上", "步行转换"], durations: [1, 2, 3] },
+  { category: "工作", className: "work", activities: ["深度工作", "项目推进", "邮件与消息", "文档整理"], durations: [1, 2, 3, 4, 5, 6] },
+  { category: "会议", className: "meeting", activities: ["会议沟通", "客户沟通", "需求确认"], durations: [1, 2, 3] },
+  { category: "吃饭", className: "meal", activities: ["早餐", "午餐", "晚餐", "咖啡休息"], durations: [1, 2] },
+  { category: "恢复", className: "rest", activities: ["主动休息", "散步恢复", "发呆放空"], durations: [1, 2, 3] },
+  { category: "生活", className: "life", activities: ["家务", "采购", "运动", "朋友家人"], durations: [1, 2, 3, 4] },
+  { category: "成长", className: "learn", activities: ["学习充电", "阅读", "复盘计划"], durations: [1, 2, 3] },
+  { category: "娱乐", className: "play", activities: ["娱乐放松", "看剧", "自由安排"], durations: [1, 2, 3, 4] }
+];
+
 const DEFAULT_THEME = "mono-black";
 
 const themeOptions = [
@@ -48,6 +61,7 @@ const zhToEn = {
   "工作节奏": "Rhythm",
   "任务看板": "Tasks",
   "OKR 与项目": "OKR & Projects",
+  "时间表": "Timetable",
   "会议协作": "Meetings",
   "资源协同": "Resources",
   "健康边界": "Wellbeing",
@@ -134,6 +148,66 @@ const zhToEn = {
   "中优先级": "Medium priority",
   "低优先级": "Low priority",
   "关联项目": "Project",
+  "24 小时时间表": "24-Hour Timetable",
+  "最小刻度 0.5 小时，随机组合一天 24 小时的安排。": "Minimum step is 0.5 hour. Randomly compose a full 24-hour day.",
+  "随机生成一天": "Random Day",
+  "今日时间组合": "Today's Time Mix",
+  "每格 0.5 小时，用色块表示这段时间我在做什么。": "Each cell is 0.5 hour. Color blocks show what I did during that time.",
+  "时间明细": "Time Details",
+  "开始、结束、活动和时长": "Start, end, activity, and duration",
+  "时间表已随机生成": "Timetable randomized",
+  "全天覆盖": "Full Day",
+  "最小刻度": "Minimum Step",
+  "半小时格": "Half-hour Slots",
+  "活动段": "Activity Blocks",
+  "0.5 小时": "0.5 hr",
+  "24 小时": "24 hrs",
+  "48 格": "48 slots",
+  "段": "blocks",
+  "时间轴": "Timeline",
+  "时间": "Time",
+  "活动": "Activity",
+  "类别": "Category",
+  "时长": "Duration",
+  "睡眠": "Sleep",
+  "睡觉": "Sleep",
+  "赖床恢复": "Slow wake-up",
+  "午间小睡": "Nap",
+  "准备": "Prep",
+  "晨间准备": "Morning prep",
+  "洗漱收尾": "Wind down",
+  "整理房间": "Tidy room",
+  "通勤": "Commute",
+  "外出路上": "In transit",
+  "步行转换": "Walking transfer",
+  "深度工作": "Deep work",
+  "项目推进": "Project work",
+  "邮件与消息": "Email & messages",
+  "文档整理": "Document work",
+  "会议沟通": "Meetings",
+  "客户沟通": "Client sync",
+  "需求确认": "Requirement check",
+  "吃饭": "Meals",
+  "早餐": "Breakfast",
+  "午餐": "Lunch",
+  "晚餐": "Dinner",
+  "咖啡休息": "Coffee break",
+  "恢复": "Recovery",
+  "散步恢复": "Recovery walk",
+  "发呆放空": "Blank space",
+  "生活": "Life",
+  "家务": "Chores",
+  "采购": "Errands",
+  "运动": "Exercise",
+  "朋友家人": "Friends & family",
+  "成长": "Growth",
+  "学习充电": "Learning",
+  "阅读": "Reading",
+  "复盘计划": "Review planning",
+  "娱乐": "Leisure",
+  "娱乐放松": "Relaxing",
+  "看剧": "Watch shows",
+  "自由安排": "Free time",
   "新增目标": "New Objective",
   "个人 OKR": "Personal OKR",
   "目标、关键结果与推进率": "Objectives, key results, and progress",
@@ -193,7 +267,7 @@ const zhToEn = {
   "14 天": "14 days",
   "30 天": "30 days",
   "工作趋势": "Work Trend",
-  "工作分钟、专注分钟、完成任务": "Work minutes, focus minutes, and completed tasks",
+  "工作时长、专注时长、完成任务": "Work time, focus time, and completed tasks",
   "任务分布": "Task Distribution",
   "待办、进行中、已完成": "To do, in progress, and done",
   "自我体感": "Self Check",
@@ -376,6 +450,7 @@ function createDefaultState() {
       { id: uid(), name: "数据看板升级", role: "需求接口人", health: "绿", risk: "暂无", next: "补齐字段口径" },
       { id: uid(), name: "流程模板库", role: "共建成员", health: "蓝", risk: "素材分散", next: "收集团队历史文档" }
     ],
+    dayPlan: createRandomDayPlan(today),
     meetings: [
       {
         id: uid(),
@@ -605,8 +680,7 @@ function bindActions() {
   $("#btnAddMeetingContact").addEventListener("click", addMeetingContact);
   $("#meetingContactList").addEventListener("click", handleMeetingContactAction);
 
-  $("#btnAddObjective").addEventListener("click", addObjective);
-  $("#btnAddProject").addEventListener("click", addProject);
+  $("#btnRandomDayPlan").addEventListener("click", randomizeDayPlan);
   $("#btnBoundaryDone").addEventListener("click", () => {
     upsertHealthLog({ boundaryDone: true });
   });
@@ -620,9 +694,6 @@ function bindActions() {
   $("#languageChoiceList").addEventListener("keydown", handleLanguageChoiceKey);
 
   $("#kanbanBoard").addEventListener("click", handleTaskAction);
-  $("#okrList").addEventListener("input", handleOkrProgress);
-  $("#okrList").addEventListener("click", handleOkrDelete);
-  $("#projectTable").addEventListener("click", handleProjectDelete);
   $("#attendanceList").addEventListener("click", handleDeleteFromList("attendanceLogs", "行动记录已删除"));
   $("#focusHistoryList").addEventListener("click", handleDeleteFromList("focusSessions", "专注记录已删除"));
   $("#meetingList").addEventListener("click", handleDeleteFromList("meetings", "会议已删除"));
@@ -654,6 +725,7 @@ function bindRanges() {
 
 function showSection(id) {
   activeSection = id;
+  hideChartTooltip();
   $$(".view").forEach((section) => section.classList.toggle("is-visible", section.id === id));
   $$(".nav-btn").forEach((button) => button.classList.toggle("is-active", button.dataset.section === id));
   renderCharts();
@@ -856,6 +928,11 @@ function handleTaskAction(event) {
     state.tasks = state.tasks.filter((item) => item.id !== task.id);
   }
   saveAndRender(action === "delete" ? "任务已删除" : "任务状态已更新");
+}
+
+function randomizeDayPlan() {
+  state.dayPlan = createRandomDayPlan(todayKey());
+  saveAndRender("时间表已随机生成");
 }
 
 function addObjective() {
@@ -1146,7 +1223,7 @@ function renderAll() {
   renderHome();
   renderRhythm();
   renderTasks();
-  renderOkr();
+  renderTimeTable();
   renderMeetings();
   renderManager();
   renderHealth();
@@ -1353,38 +1430,157 @@ function taskCard(task) {
   `;
 }
 
-function renderOkr() {
-  $("#okrList").innerHTML = state.okrs.map((okr) => `
-    <div class="okr-item">
-      <div class="okr-top">
-        <div>
-          <h3>${escapeHtml(okr.title)}</h3>
-          <p>${escapeHtml(okr.keyResult)}</p>
-        </div>
-        <button class="icon-btn" data-okr-delete data-id="${okr.id}" aria-label="${isEnglish() ? "Delete objective" : "删除目标"}" title="${isEnglish() ? "Delete objective" : "删除目标"}"><i data-lucide="trash-2"></i></button>
-      </div>
-      <div class="progress-wrap">
-        <input type="range" min="0" max="100" value="${okr.progress}" data-okr-progress data-id="${okr.id}" aria-label="${escapeHtml(okr.title)} ${isEnglish() ? "progress" : "进度"}">
-        <label class="progress-number" aria-label="${escapeHtml(okr.title)} ${isEnglish() ? "progress percent" : "进度百分比"}">
-          <input type="number" min="0" max="100" step="1" inputmode="numeric" value="${okr.progress}" data-okr-number data-id="${okr.id}">
-          <span>%</span>
-        </label>
-      </div>
+function renderTimeTable() {
+  const plan = ensureDayPlan();
+  const segments = plan.segments || [];
+  const categories = uniqueCategories(segments);
+  $("#dayPlanSummary").innerHTML = [
+    [t("全天覆盖"), t("24 小时")],
+    [t("最小刻度"), t("0.5 小时")],
+    [t("半小时格"), t("48 格")],
+    [t("活动段"), `${segments.length} ${t("段")}`]
+  ].map(([label, value]) => `
+    <div>
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
     </div>
-  `).join("") || empty("暂无 OKR");
+  `).join("");
 
-  $("#projectTable").innerHTML = `
-    <div class="table-row header"><span>${isEnglish() ? "Project" : "项目"}</span><span>${isEnglish() ? "Role" : "角色"}</span><span>${isEnglish() ? "Status" : "状态"}</span><span>${isEnglish() ? "Next" : "下一步"}</span><span></span></div>
-    ${state.projects.map((project) => `
-      <div class="table-row">
-        <strong>${escapeHtml(project.name)}</strong>
-        <span>${escapeHtml(project.role)}</span>
-        <span class="tag ${project.health === "绿" ? "low" : project.health === "黄" ? "medium" : ""}">${escapeHtml(t(project.health))}</span>
-        <span>${escapeHtml(project.next)}<br><small>${escapeHtml(project.risk)}</small></span>
-        <button class="icon-btn" data-project-delete data-id="${project.id}" aria-label="${isEnglish() ? "Delete project" : "删除项目"}" title="${isEnglish() ? "Delete project" : "删除项目"}"><i data-lucide="trash-2"></i></button>
+  $("#dayPlanLegend").innerHTML = categories.map((category) => `
+    <span class="day-plan-legend-item">
+      <i class="plan-dot plan-${category.className}"></i>${escapeHtml(t(category.name))}
+    </span>
+  `).join("");
+
+  $("#dayPlanBoard").innerHTML = `
+    <div class="day-plan-board-head">
+      <span>${escapeHtml(t("时间轴"))}</span>
+      <strong>${escapeHtml(plan.day || todayKey())}</strong>
+    </div>
+    <div class="day-plan-axis">
+      ${Array.from({ length: 13 }, (_, index) => index * 2).map((hour) => `
+        <span style="grid-column:${hour * 2 + 1}">${hour === 24 ? "24:00" : `${String(hour).padStart(2, "0")}:00`}</span>
+      `).join("")}
+    </div>
+    <div class="day-plan-strip" role="img" aria-label="${escapeHtml(t("24 小时时间表"))}">
+      ${segments.map((segment) => `
+        <div
+          class="day-plan-block plan-${segment.className}"
+          style="grid-column:${segment.startSlot + 1} / span ${segment.slots}"
+          title="${escapeHtml(segmentTitle(segment))}"
+        >
+          <strong>${escapeHtml(t(segment.activity))}</strong>
+          <span>${escapeHtml(segmentTimeRange(segment))}</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  $("#dayPlanDetails").innerHTML = `
+    <div class="time-detail-row header">
+      <span>${escapeHtml(t("时间"))}</span>
+      <span>${escapeHtml(t("活动"))}</span>
+      <span>${escapeHtml(t("类别"))}</span>
+      <span>${escapeHtml(t("时长"))}</span>
+    </div>
+    ${segments.map((segment) => `
+      <div class="time-detail-row">
+        <time>${escapeHtml(segmentTimeRange(segment))}</time>
+        <strong>${escapeHtml(t(segment.activity))}</strong>
+        <span><i class="plan-dot plan-${segment.className}"></i>${escapeHtml(t(segment.category))}</span>
+        <span>${escapeHtml(formatSlotDuration(segment.slots))}</span>
       </div>
     `).join("")}
   `;
+}
+
+function ensureDayPlan() {
+  if (!state.dayPlan || !Array.isArray(state.dayPlan.segments) || state.dayPlan.segments.length === 0) {
+    state.dayPlan = createRandomDayPlan(todayKey());
+    saveState();
+  }
+  return state.dayPlan;
+}
+
+function createRandomDayPlan(day = todayKey()) {
+  let startSlot = 0;
+  let remaining = 48;
+  const segments = [];
+  while (remaining > 0) {
+    const pool = pickActivityPool(startSlot, remaining, segments[segments.length - 1]);
+    const possibleDurations = pool.durations.filter((duration) => duration <= remaining);
+    const slots = possibleDurations.length
+      ? possibleDurations[Math.floor(Math.random() * possibleDurations.length)]
+      : remaining;
+    const activity = pool.activities[Math.floor(Math.random() * pool.activities.length)];
+    const previous = segments[segments.length - 1];
+    if (previous && previous.activity === activity && previous.className === pool.className) {
+      previous.slots += slots;
+    } else {
+      segments.push({
+        id: uid(),
+        startSlot,
+        slots,
+        category: pool.category,
+        className: pool.className,
+        activity
+      });
+    }
+    startSlot += slots;
+    remaining -= slots;
+  }
+  let cursor = 0;
+  segments.forEach((segment) => {
+    segment.startSlot = cursor;
+    cursor += segment.slots;
+  });
+  return { day, generatedAt: iso(new Date()), segments };
+}
+
+function pickActivityPool(startSlot, remaining, previous) {
+  const hour = startSlot / 2;
+  const candidates = dayActivityPools.filter((pool) => {
+    if (remaining <= 2) return pool.durations.some((duration) => duration <= remaining);
+    if (previous && previous.category === pool.category && Math.random() < 0.72) return false;
+    if ((hour < 6 || hour >= 23) && pool.category === "睡眠") return true;
+    if (hour >= 7 && hour < 10 && ["准备", "通勤", "吃饭"].includes(pool.category)) return true;
+    if (hour >= 10 && hour < 18 && ["工作", "会议", "吃饭", "恢复"].includes(pool.category)) return true;
+    if (hour >= 18 && hour < 23 && ["吃饭", "生活", "成长", "娱乐", "恢复"].includes(pool.category)) return true;
+    return Math.random() < 0.38;
+  });
+  const pool = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : dayActivityPools[Math.floor(Math.random() * dayActivityPools.length)];
+  return pool.durations.some((duration) => duration <= remaining) ? pool : dayActivityPools.find((item) => item.durations.some((duration) => duration <= remaining)) || dayActivityPools[0];
+}
+
+function uniqueCategories(segments) {
+  const seen = new Set();
+  return segments.reduce((items, segment) => {
+    if (seen.has(segment.category)) return items;
+    seen.add(segment.category);
+    items.push({ name: segment.category, className: segment.className });
+    return items;
+  }, []);
+}
+
+function segmentTimeRange(segment) {
+  return `${formatSlotClock(segment.startSlot)}-${formatSlotClock(segment.startSlot + segment.slots)}`;
+}
+
+function segmentTitle(segment) {
+  return `${segmentTimeRange(segment)} · ${t(segment.activity)} · ${formatSlotDuration(segment.slots)}`;
+}
+
+function formatSlotClock(slot) {
+  if (slot >= 48) return "24:00";
+  const hour = Math.floor(slot / 2);
+  const minute = slot % 2 === 0 ? "00" : "30";
+  return `${String(hour).padStart(2, "0")}:${minute}`;
+}
+
+function formatSlotDuration(slots) {
+  const hours = Number(slots || 0) / 2;
+  if (isEnglish()) return `${Number.isInteger(hours) ? hours : hours.toFixed(1)} hr`;
+  return `${Number.isInteger(hours) ? hours : hours.toFixed(1)} 小时`;
 }
 
 function renderMeetings() {
@@ -1556,6 +1752,7 @@ function renderSettings() {
       rhythmLogs: ["_id", "ownerId", "type", "at", "note"],
       focusSessions: ["_id", "ownerId", "title", "minutes", "targetMinutes", "reward", "rewardEarned", "startedAt", "endedAt"],
       meetingContacts: ["_id", "ownerId", "name", "createdAt"],
+      dayPlans: ["_id", "ownerId", "day", "segments", "generatedAt"],
       tasks: ["_id", "ownerId", "title", "status", "priority", "project", "due", "completedAt"],
       okrs: ["_id", "ownerId", "title", "keyResult", "progress"],
       projects: ["_id", "ownerId", "name", "role", "health", "risk", "next"],
@@ -1596,29 +1793,39 @@ function drawTrendChart(canvas, range, options = {}) {
   if (!chart) return;
   const { ctx, width, height } = chart;
   const days = lastDays(range);
-  const maxWork = Math.max(...days.map((day) => workMinutesForDay(day)), 60);
-  const maxFocus = Math.max(...days.map((day) => focusMinutesForDay(day)), 30);
+  const maxMinutes = niceMinuteCeil(Math.max(
+    ...days.map((day) => workMinutesForDay(day)),
+    ...days.map((day) => focusMinutesForDay(day)),
+    60
+  ));
   const maxDone = Math.max(...days.map((day) => doneTasksForDay(day)), 1);
   const top = 24;
   const bottom = 34;
-  const left = 36;
-  const right = 16;
+  const left = options.compact ? 44 : 50;
+  const right = options.compact ? 48 : 56;
   const plotW = width - left - right;
   const plotH = height - top - bottom;
   const group = plotW / days.length;
   const barW = Math.max(8, Math.min(18, group * 0.22));
+  const hitAreas = [];
 
   clearCanvas(ctx, width, height);
   drawGrid(ctx, left, top, plotW, plotH);
+  drawHourAxis(ctx, left, top, plotW, plotH, maxMinutes);
 
   days.forEach((day, index) => {
     const x = left + index * group + group / 2;
     const work = workMinutesForDay(day);
     const focus = focusMinutesForDay(day);
-    const workH = (work / maxWork) * plotH;
-    const focusH = (focus / maxFocus) * plotH;
-    roundRect(ctx, x - barW - 2, top + plotH - workH, barW, workH, 4, "#08756f");
-    roundRect(ctx, x + 2, top + plotH - focusH, barW, focusH, 4, "#d85d50");
+    const done = doneTasksForDay(day);
+    const workH = (work / maxMinutes) * plotH;
+    const focusH = (focus / maxMinutes) * plotH;
+    const workRect = { x: x - barW - 2, y: top + plotH - workH, width: barW, height: Math.max(2, workH) };
+    const focusRect = { x: x + 2, y: top + plotH - focusH, width: barW, height: Math.max(2, focusH) };
+    roundRect(ctx, workRect.x, workRect.y, workRect.width, workH, 4, "#08756f");
+    roundRect(ctx, focusRect.x, focusRect.y, focusRect.width, focusH, 4, "#d85d50");
+    if (work > 0) hitAreas.push({ ...workRect, day, work, focus, done, series: "工作" });
+    if (focus > 0) hitAreas.push({ ...focusRect, day, work, focus, done, series: "专注" });
     ctx.fillStyle = "#697386";
     ctx.font = "11px Arial";
     ctx.textAlign = "center";
@@ -1636,6 +1843,8 @@ function drawTrendChart(canvas, range, options = {}) {
     ["专注", "#d85d50"],
     ["完成", "#5d55b3"]
   ], options.compact ? 26 : 38);
+  canvas.__chartBars = hitAreas;
+  ensureTrendChartHover(canvas);
 }
 
 function drawTaskDonut(canvas) {
@@ -1717,7 +1926,7 @@ function prepareCanvas(canvas) {
   if (!canvas) return null;
   const rect = canvas.getBoundingClientRect();
   const width = Math.floor(rect.width);
-  const height = Number(canvas.getAttribute("height")) || 220;
+  const height = Math.floor(rect.height) || Number(canvas.getAttribute("height")) || 220;
   if (width < 40) return null;
   const ratio = window.devicePixelRatio || 1;
   canvas.width = width * ratio;
@@ -1790,6 +1999,95 @@ function drawLegend(ctx, items, x) {
     ctx.textAlign = "left";
     ctx.fillText(displayLabel, x + 16, y + 1);
   });
+}
+
+function drawHourAxis(ctx, left, top, width, height, maxMinutes) {
+  const unit = isEnglish() ? "hr" : "小时";
+  const ticks = [maxMinutes, Math.round(maxMinutes / 2), 0];
+  const x = left + width + 8;
+  ctx.fillStyle = "#697386";
+  ctx.font = "11px Arial";
+  ctx.textAlign = "left";
+  ticks.forEach((tick) => {
+    const y = top + height - (tick / maxMinutes) * height;
+    ctx.fillText(formatHourTick(tick), x, y + 4);
+  });
+  ctx.font = "700 11px Arial";
+  ctx.fillText(unit, x, Math.max(12, top - 8));
+}
+
+function formatHourTick(minutes) {
+  const hours = Number(minutes || 0) / 60;
+  if (Number.isInteger(hours)) return String(hours);
+  return hours.toFixed(1).replace(/\.0$/, "");
+}
+
+function niceMinuteCeil(value) {
+  const safe = Math.max(60, Number(value) || 0);
+  const steps = [60, 120, 180, 240, 360, 480, 600, 720, 960, 1200];
+  return steps.find((step) => step >= safe) || Math.ceil(safe / 60) * 60;
+}
+
+function ensureTrendChartHover(canvas) {
+  if (canvas.__trendHoverReady) return;
+  canvas.__trendHoverReady = true;
+  canvas.addEventListener("mousemove", (event) => {
+    const hit = findChartBar(canvas, event);
+    if (!hit) {
+      hideChartTooltip();
+      return;
+    }
+    showChartTooltip(event, hit);
+  });
+  canvas.addEventListener("mouseleave", hideChartTooltip);
+}
+
+function findChartBar(canvas, event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const padding = 7;
+  return (canvas.__chartBars || []).find((bar) => (
+    x >= bar.x - padding
+    && x <= bar.x + bar.width + padding
+    && y >= bar.y - padding
+    && y <= bar.y + bar.height + padding
+  ));
+}
+
+function showChartTooltip(event, hit) {
+  const tooltip = getChartTooltip();
+  const selected = t(hit.series);
+  tooltip.innerHTML = `
+    <strong>${escapeHtml(hit.day)} · ${escapeHtml(selected)}</strong>
+    <span>${escapeHtml(t("工作"))}: ${escapeHtml(formatMinutes(hit.work))}</span><br>
+    <span>${escapeHtml(t("专注"))}: ${escapeHtml(formatMinutes(hit.focus))}</span><br>
+    <span>${escapeHtml(t("完成"))}: ${escapeHtml(countLabel(hit.done, "个任务", "task"))}</span>
+  `;
+  tooltip.hidden = false;
+  const margin = 16;
+  const tooltipRect = tooltip.getBoundingClientRect();
+  const left = Math.min(event.clientX + 12, window.innerWidth - tooltipRect.width - margin);
+  const top = Math.min(event.clientY + 12, window.innerHeight - tooltipRect.height - margin);
+  tooltip.style.left = `${Math.max(margin, left)}px`;
+  tooltip.style.top = `${Math.max(margin, top)}px`;
+}
+
+function getChartTooltip() {
+  let tooltip = $("#chartTooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "chartTooltip";
+    tooltip.className = "chart-tooltip";
+    tooltip.hidden = true;
+    document.body.appendChild(tooltip);
+  }
+  return tooltip;
+}
+
+function hideChartTooltip() {
+  const tooltip = $("#chartTooltip");
+  if (tooltip) tooltip.hidden = true;
 }
 
 function tickClock() {
