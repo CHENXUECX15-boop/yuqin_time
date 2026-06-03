@@ -1,5 +1,4 @@
-const STORAGE_KEY = "yuqin.employee.workspace.v1";
-const SYNC_STORAGE_PREFIX = "yuqin.owner.sync.";
+﻿const STORAGE_KEY = "yuqin.employee.workspace.v1";
 
 const statusMap = {
   todo: "待办",
@@ -69,8 +68,6 @@ const zhToEn = {
   "OKR 与项目": "OKR & Projects",
   "时间表": "Timetable",
   "会议协作": "Meetings",
-  "资源协同": "Resources",
-  "健康边界": "Wellbeing",
   "每日复盘": "Review",
   "数据看板": "Analytics",
   "数据管理": "Data",
@@ -78,10 +75,9 @@ const zhToEn = {
   "专注": "Focus",
   "任务": "Tasks",
   "会议": "Meetings",
-  "能量": "Energy",
   "未记录": "Not recorded",
   "个人主理人版 · 首屏工作台": "Owner Mode · Workspace",
-  "把今天的推进、协作和边界放在同一屏": "Put progress, collaboration, and boundaries on one screen",
+  "把今天的推进、任务和复盘放在同一屏": "Put today's progress, tasks, and reviews on one screen",
   "适合把自己当老板的人、项目主理人和自由职业者，在一天内完成开工、专注、任务、会议、复盘与数据沉淀。": "For self-directed owners, project leads, and freelancers who want work sessions, focus, tasks, meetings, reviews, and data in one place.",
   "开始工作": "Start Work",
   "新增任务": "New Task",
@@ -96,9 +92,7 @@ const zhToEn = {
   "暂无会议": "No meetings",
   "会议协作中记录": "Record in meetings",
   "OKR 均值": "OKR Avg",
-  "能量状态": "Energy",
   "记会议": "Log Meeting",
-  "同步资源": "Sync Resources",
   "今日状态": "Status",
   "尚未开始工作": "Work not started",
   "待开工": "Ready",
@@ -125,8 +119,6 @@ const zhToEn = {
   "面向自我经营日常的核心模块": "Core modules for self-directed work",
   "任务流": "Task Flow",
   "复盘": "Review",
-  "资源同步": "Resource Sync",
-  "健康": "Health",
   "关闭未结束工作段": "Close Open Work",
   "清空今日休整": "Clear Rest",
   "专注计时": "Focus Timer",
@@ -147,7 +139,7 @@ const zhToEn = {
   "行动记录": "Activity Log",
   "开工、收工、休整和外出": "Start, end, rest, and outings",
   "近 7 天节奏": "Last 7 Days",
-  "工作时长、专注时长与健康负荷": "Work time, focus time, and load",
+  "工作时长、专注时长与完成任务": "Work time, focus time, and completed tasks",
   "0 个任务": "0 tasks",
   "任务名称": "Task name",
   "今日任务": "Today's Tasks",
@@ -159,32 +151,6 @@ const zhToEn = {
   "关联项目": "Project",
   "24 小时时间表": "24-Hour Timetable",
   "最小刻度 0.5 小时，可以手动编辑一天的安排。": "Minimum step is 0.5 hour. Edit a full day manually.",
-  "邮箱账号": "Email account",
-  "密码或授权码": "Password or auth code",
-  "密码或验证码": "Password or code",
-  "设备名称，例如：办公室电脑": "Device name, e.g. Office laptop",
-  "登录账号": "Log In",
-  "登录并同步": "Log In & Sync",
-  "退出账号": "Log Out",
-  "退出登录": "Log Out",
-  "未登录": "Not logged in",
-  "已登录": "Logged in",
-  "邮箱账号同步": "Email Account Sync",
-  "使用邮箱登录，把任务、时间表、会议和复盘同步到同一个账号。": "Log in with email to sync tasks, timetable, meetings, and reviews to one account.",
-  "未连接": "Not connected",
-  "已连接": "Connected",
-  "自动同步": "Auto sync",
-  "立即同步": "Sync Now",
-  "从账号拉取": "Pull From Account",
-  "当前设备": "Current device",
-  "云端版本": "Cloud version",
-  "尚未同步": "Not synced yet",
-  "等待其他设备登录同一邮箱": "Waiting for other devices to log in with the same email",
-  "自动同步已开启": "Auto sync on",
-  "自动同步已关闭": "Auto sync off",
-  "本地原型": "Local prototype",
-  "等待登录": "Waiting for login",
-  "最近同步": "Last sync",
   "活动名称": "Activity name",
   "选择类别": "Choose category",
   "开始时间": "Start time",
@@ -193,18 +159,28 @@ const zhToEn = {
   "取消编辑": "Cancel Edit",
   "用户可以新增、编辑、删除任意 0.5 小时倍数的时间段。重叠部分会自动被新安排替换。": "Add, edit, or delete time blocks in 0.5-hour increments. Overlaps are replaced by the new plan.",
   "点击时间块或明细里的编辑按钮即可修改。": "Click a block or the edit button in details to modify it.",
-  "今日时间组合": "Today's Time Mix",
-  "每格 0.5 小时，用色块表示这段时间我在做什么。": "Each cell is 0.5 hour. Color blocks show what I did during that time.",
+  "正计时": "Count Up",
+  "未选择时间段": "No time block selected",
+  "本次用时会写入对应时间段": "This session will be saved to the linked block",
+  "输入活动后开始计时": "Enter an activity to start timing",
+  "填写活动名称并选择类别，完成后会自动加入 24 小时时间表。": "Enter an activity and category. When finished, it will be added to the 24-hour timetable.",
+  "待写入时间表": "Ready to add to timetable",
+  "开始计时": "Start Timer",
+  "暂停计时": "Pause Timer",
+  "完成并写入": "Finish & Save",
+  "重置计时": "Reset Timer",
+  "计时": "Timer",
+  "计时中": "Timing",
+  "已选择": "Selected",
+  "本次": "Session",
+  "本次用时": "Session Time",
+  "累计计时": "Tracked",
+  "计时任务已加入时间表": "Timed activity added to timetable",
+  "请先填写活动名称": "Enter an activity name first",
+  "请先选择时间段或填写活动名称": "Select a time block or enter an activity name first",
+  "请先完成或重置当前计时": "Finish or reset the current timer first",
   "时间明细": "Time Details",
   "开始、结束、活动和时长": "Start, end, activity, and duration",
-  "全天覆盖": "Full Day",
-  "最小刻度": "Minimum Step",
-  "半小时格": "Half-hour Slots",
-  "活动段": "Activity Blocks",
-  "0.5 小时": "0.5 hr",
-  "24 小时": "24 hrs",
-  "48 格": "48 slots",
-  "段": "blocks",
   "时间轴": "Timeline",
   "时间": "Time",
   "活动": "Activity",
@@ -270,24 +246,6 @@ const zhToEn = {
   "保存会议": "Save Meeting",
   "协作记录": "Collaboration Log",
   "最近会议与待跟进项": "Recent meetings and follow-ups",
-  "同步卡片": "Resource Card",
-  "进展、风险、需要的支持": "Progress, risks, and support needed",
-  "同步主题": "Topic",
-  "本周进展": "Progress this week",
-  "风险或阻塞": "Risks or blockers",
-  "需要的支持或资源": "Support or resources needed",
-  "保存同步": "Save Resource Note",
-  "同步历史": "Resource History",
-  "用于周报、1:1 和绩效沟通": "For weekly reports, 1:1s, and performance talks",
-  "今日准点下线": "End On Time",
-  "能量登记": "Energy Check-in",
-  "工作负荷、恢复感与备注": "Load, recovery, and notes",
-  "能量值": "Energy",
-  "压力值": "Stress",
-  "今天需要照顾的身体或情绪信号": "Physical or emotional signals to care for today",
-  "保存状态": "Save Status",
-  "边界记录": "Boundary Log",
-  "能量、压力和下线状态": "Energy, stress, and boundary status",
   "今天的闭环": "Today's Closure",
   "成果、风险、明日优先级": "Wins, risks, and tomorrow's priorities",
   "今天完成了什么": "What did you complete today?",
@@ -313,8 +271,6 @@ const zhToEn = {
   "工作时长、专注时长、完成任务": "Work time, focus time, and completed tasks",
   "任务分布": "Task Distribution",
   "待办、进行中、已完成": "To do, in progress, and done",
-  "自我体感": "Self Check",
-  "能量与压力的相对变化": "Energy and stress over time",
   "主题外观": "Theme",
   "当前主题：": "Current theme: ",
   "语言设置": "Language",
@@ -326,13 +282,9 @@ const zhToEn = {
   "导入 JSON": "Import JSON",
   "重置演示数据": "Reset Demo Data",
   "导出内容会显示在这里": "Exported content appears here",
-  "小程序迁移模型": "Mini Program Model",
-  "后续可映射到云开发集合": "Can later map to cloud collections",
   "暂无任务": "No tasks",
   "暂无 OKR": "No OKRs",
   "暂无会议记录": "No meeting records",
-  "暂无同步记录": "No resource notes",
-  "暂无健康记录": "No wellbeing records",
   "暂无复盘记录": "No review records",
   "暂无行动记录": "No activity records",
   "今天还没有重点任务": "No key tasks today",
@@ -365,8 +317,6 @@ const zhToEn = {
   "自动收工": "Auto end",
   "请先填写会议主题": "Please enter a meeting topic",
   "会议已保存": "Meeting saved",
-  "请先填写同步主题": "Please enter a resource topic",
-  "同步卡片已保存": "Resource note saved",
   "复盘已保存": "Review saved",
   "已记录开工": "Start recorded",
   "已记录收工": "End recorded",
@@ -397,24 +347,21 @@ const zhToEn = {
   "行动记录已删除": "Activity deleted",
   "专注记录已删除": "Focus record deleted",
   "会议已删除": "Meeting deleted",
-  "同步记录已删除": "Resource note deleted",
   "复盘已删除": "Review deleted",
   "复盘已更新": "Review updated",
-  "健康记录已删除": "Wellbeing record deleted",
-  "健康状态已保存": "Wellbeing saved",
-  "请先输入邮箱账号": "Please enter an email account",
-  "请先登录邮箱账号": "Please log in with an email account first",
-  "邮箱账号已登录": "Email account logged in",
-  "邮箱账号已退出": "Email account logged out",
-  "账号数据已同步": "Account data synced",
-  "暂无账号同步数据": "No account sync data yet",
-  "已从账号拉取数据": "Pulled data from account",
   "请填写活动名称": "Please enter an activity name",
   "结束时间必须晚于开始时间": "End time must be later than start time",
   "时间段已保存": "Time block saved",
   "时间段已删除": "Time block deleted",
   "已进入编辑模式": "Edit mode enabled",
   "已进入复盘编辑模式": "Review edit mode enabled",
+  "正计时已开始": "Timer started",
+  "计时已暂停": "Timer paused",
+  "计时已重置": "Timer reset",
+  "计时已写入时间表": "Timer saved to timetable",
+  "请先选择时间段": "Select a time block first",
+  "请先完成当前计时": "Finish the current timer first",
+  "计时时间太短": "Timer was too short",
   "JSON 已导出": "JSON exported",
   "数据已导入": "Data imported",
   "导入失败，请检查 JSON 文件": "Import failed. Check the JSON file",
@@ -428,6 +375,7 @@ let state = loadState();
 let activeSection = "home";
 let dashboardRange = 7;
 let timerTick = null;
+let dayPlanScrollLeft = null;
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -436,11 +384,13 @@ document.addEventListener("DOMContentLoaded", () => {
   bindNavigation();
   bindForms();
   bindActions();
-  bindRanges();
   applyTheme();
   tickClock();
   setInterval(tickClock, 1000);
-  timerTick = setInterval(renderFocusTimer, 500);
+  timerTick = setInterval(() => {
+    renderFocusTimer();
+    renderDayPlanTimer();
+  }, 500);
   renderAll();
 });
 
@@ -512,16 +462,7 @@ function createDefaultState() {
       { id: uid(), name: "流程模板库", role: "共建成员", health: "蓝", risk: "素材分散", next: "收集团队历史文档" }
     ],
     dayPlan: createBlankDayPlan(today),
-    syncAccount: {
-      email: "",
-      loggedIn: false,
-      autoSync: true,
-      lastSync: null,
-      cloudVersion: 0,
-      deviceId: uid(),
-      deviceName: "当前网页",
-      devices: []
-    },
+    dayPlanTimer: createDefaultDayPlanTimer(),
     meetings: [
       {
         id: uid(),
@@ -539,20 +480,6 @@ function createDefaultState() {
       theme: DEFAULT_THEME,
       language: DEFAULT_LANGUAGE
     },
-    managerNotes: [
-      {
-        id: uid(),
-        topic: "客户交付优化本周同步",
-        progress: "已整理 3 类风险并推进产品确认。",
-        risk: "客户新增需求可能影响原排期。",
-        ask: "需要关键资源帮忙确认优先级取舍。",
-        createdAt: iso(addDays(now, -1))
-      }
-    ],
-    healthLogs: [
-      { id: uid(), day: yesterday, energy: 4, load: 3, boundaryDone: true, note: "下午状态较好，晚上按时下线。", createdAt: iso(addDays(now, -1)) },
-      { id: uid(), day: twoDaysAgo, energy: 3, load: 4, boundaryDone: false, note: "会议偏多，明天减少临时切换。", createdAt: iso(addDays(now, -2)) }
-    ],
     reviews: [
       {
         id: uid(),
@@ -583,12 +510,15 @@ function loadState() {
 function mergeState(base, incoming) {
   const cleanIncoming = { ...(incoming || {}) };
   delete cleanIncoming[["cal", "endarAccount"].join("")];
+  delete cleanIncoming.managerNotes;
+  delete cleanIncoming.healthLogs;
+  delete cleanIncoming[["sync", "Account"].join("")];
   return {
     ...base,
     ...cleanIncoming,
     appearance: mergeAppearance(base.appearance, cleanIncoming.appearance),
     focusTimer: { ...base.focusTimer, ...(cleanIncoming.focusTimer || {}) },
-    syncAccount: { ...base.syncAccount, ...(cleanIncoming.syncAccount || {}) }
+    dayPlanTimer: { ...createDefaultDayPlanTimer(), ...(cleanIncoming.dayPlanTimer || {}) }
   };
 }
 
@@ -615,14 +545,6 @@ function normalizeLegacyWording(nextState) {
     note: attendanceLabels[item.note] || item.note
   }));
 
-  nextState.managerNotes = (nextState.managerNotes || []).map((item) => ({
-    ...item,
-    topic: replaceLegacyPerspective(item.topic),
-    progress: replaceLegacyPerspective(item.progress),
-    risk: replaceLegacyPerspective(item.risk),
-    ask: replaceLegacyPerspective(item.ask)
-  }));
-
   nextState.reviews = (nextState.reviews || []).map((item) => ({
     ...item,
     id: item.id || uid()
@@ -631,16 +553,8 @@ function normalizeLegacyWording(nextState) {
   return nextState;
 }
 
-function replaceLegacyPerspective(value) {
-  if (typeof value !== "string") return value;
-  return value
-    .replace(/主管/g, "关键资源")
-    .replace(/向上/g, "资源");
-}
-
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  autoSyncState();
 }
 
 function bindNavigation() {
@@ -698,31 +612,6 @@ function bindForms() {
     addMeetingContact();
   });
 
-  $("#managerForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const topic = $("#managerTopic").value.trim();
-    if (!topic) return toast("请先填写同步主题");
-    state.managerNotes.unshift({
-      id: uid(),
-      topic,
-      progress: $("#managerProgress").value.trim(),
-      risk: $("#managerRisk").value.trim(),
-      ask: $("#managerAsk").value.trim(),
-      createdAt: iso(new Date())
-    });
-    saveAndRender("同步卡片已保存");
-    $("#managerForm").reset();
-  });
-
-  $("#healthForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    upsertHealthLog({
-      energy: Number($("#energyRange").value),
-      load: Number($("#loadRange").value),
-      note: $("#healthNote").value.trim()
-    });
-  });
-
   $("#reviewForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const editingId = $("#reviewEditId").value;
@@ -758,7 +647,6 @@ function bindForms() {
     saveAndRender("复盘已保存");
   });
 
-  $("#syncLoginForm").addEventListener("submit", handleSyncLogin);
   $("#dayPlanEditor").addEventListener("submit", saveDaySegment);
 }
 
@@ -781,16 +669,15 @@ function bindActions() {
   $("#btnAddMeetingContact").addEventListener("click", addMeetingContact);
   $("#meetingContactList").addEventListener("click", handleMeetingContactAction);
 
-  $("#btnSyncLogout").addEventListener("click", logoutSyncAccount);
-  $("#btnSyncNow").addEventListener("click", () => pushAccountSync(true));
-  $("#btnPullCloud").addEventListener("click", pullAccountSync);
-  $("#syncAuto").addEventListener("change", toggleAutoSync);
   $("#btnCancelDaySegment").addEventListener("click", resetDayPlanEditor);
+  $("#btnDayTimerStart").addEventListener("click", resumeDayPlanTimer);
+  $("#btnDayTimerPause").addEventListener("click", pauseDayPlanTimer);
+  $("#btnDayTimerFinish").addEventListener("click", finishDayPlanTimer);
+  $("#btnDayTimerReset").addEventListener("click", resetDayPlanTimer);
+  $("#daySegmentTitle").addEventListener("input", renderDayPlanTimer);
+  $("#daySegmentCategory").addEventListener("change", renderDayPlanTimer);
   $("#dayPlanBoard").addEventListener("click", handleDayPlanEditClick);
   $("#dayPlanDetails").addEventListener("click", handleDayPlanDetailAction);
-  $("#btnBoundaryDone").addEventListener("click", () => {
-    upsertHealthLog({ boundaryDone: true });
-  });
 
   $("#btnExport").addEventListener("click", exportData);
   $("#importFile").addEventListener("change", importData);
@@ -804,9 +691,7 @@ function bindActions() {
   $("#attendanceList").addEventListener("click", handleDeleteFromList("attendanceLogs", "行动记录已删除"));
   $("#focusHistoryList").addEventListener("click", handleDeleteFromList("focusSessions", "专注记录已删除"));
   $("#meetingList").addEventListener("click", handleDeleteFromList("meetings", "会议已删除"));
-  $("#managerList").addEventListener("click", handleDeleteFromList("managerNotes", "同步记录已删除"));
   $("#reviewList").addEventListener("click", handleReviewListAction);
-  $("#healthList").addEventListener("click", handleDeleteFromList("healthLogs", "健康记录已删除"));
 
   $$(".segmented button").forEach((button) => {
     button.addEventListener("click", () => {
@@ -818,16 +703,11 @@ function bindActions() {
 
   window.addEventListener("resize", () => {
     window.clearTimeout(window.__workspaceResize);
-    window.__workspaceResize = window.setTimeout(renderCharts, 120);
+    window.__workspaceResize = window.setTimeout(() => {
+      renderCharts();
+      setupDayPlanScroll();
+    }, 120);
   });
-}
-
-function bindRanges() {
-  const energy = $("#energyRange");
-  const load = $("#loadRange");
-
-  energy.addEventListener("input", () => $("#energyValue").textContent = energy.value);
-  load.addEventListener("input", () => $("#loadValue").textContent = load.value);
 }
 
 function showSection(id) {
@@ -836,6 +716,7 @@ function showSection(id) {
   $$(".view").forEach((section) => section.classList.toggle("is-visible", section.id === id));
   $$(".nav-btn").forEach((button) => button.classList.toggle("is-active", button.dataset.section === id));
   renderCharts();
+  if (id === "okr") window.requestAnimationFrame(setupDayPlanScroll);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1098,131 +979,6 @@ function handleTaskAction(event) {
   saveAndRender(action === "delete" ? "任务已删除" : action === "today" ? "已加入今日任务" : "任务状态已更新");
 }
 
-function handleSyncLogin(event) {
-  event.preventDefault();
-  const email = $("#syncEmail").value.trim();
-  const deviceName = $("#syncDeviceName").value.trim();
-  if (!email) return toast("请先输入邮箱账号");
-  loginSharedEmailAccount(email, deviceName);
-  $("#syncPassword").value = "";
-  saveAndRender("邮箱账号已登录");
-}
-
-function loginSharedEmailAccount(email, deviceName = "") {
-  const account = ensureSyncAccount();
-  account.email = email;
-  account.loggedIn = true;
-  account.autoSync = account.autoSync !== false;
-  account.deviceId = account.deviceId || uid();
-  account.deviceName = deviceName || account.deviceName || "当前网页";
-  account.devices = upsertSyncDevice(account.devices || [], account);
-}
-
-function logoutSyncAccount() {
-  state.syncAccount = {
-    email: "",
-    loggedIn: false,
-    autoSync: true,
-    lastSync: null,
-    cloudVersion: 0,
-    deviceId: ensureSyncAccount().deviceId || uid(),
-    deviceName: ensureSyncAccount().deviceName || "当前网页",
-    devices: []
-  };
-  saveAndRender("邮箱账号已退出");
-}
-
-function toggleAutoSync() {
-  const account = ensureSyncAccount();
-  account.autoSync = $("#syncAuto").checked;
-  saveState();
-  renderSettings();
-  renderTimeTable();
-  renderIcons();
-  toast(account.autoSync ? "自动同步已开启" : "自动同步已关闭");
-}
-
-function autoSyncState() {
-  const account = state.syncAccount;
-  if (!account || !account.loggedIn || account.autoSync === false) return;
-  pushAccountSync(false, { silent: true });
-}
-
-function pushAccountSync(showToast = true, options = {}) {
-  const account = ensureSyncAccount();
-  if (!account.loggedIn || !account.email) {
-    if (showToast) toast("请先登录邮箱账号");
-    return false;
-  }
-  const now = iso(new Date());
-  account.lastSync = now;
-  account.cloudVersion = Number(account.cloudVersion || 0) + 1;
-  account.devices = upsertSyncDevice(account.devices || [], account, now);
-  const payload = {
-    email: account.email,
-    savedAt: now,
-    version: account.cloudVersion,
-    devices: account.devices,
-    data: snapshotForAccountSync()
-  };
-  localStorage.setItem(syncStorageKey(account.email), JSON.stringify(payload));
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  if (showToast && !options.silent) {
-    renderAll();
-    toast("账号数据已同步");
-  }
-  return true;
-}
-
-function pullAccountSync() {
-  const account = ensureSyncAccount();
-  if (!account.loggedIn || !account.email) return toast("请先登录邮箱账号");
-  const raw = localStorage.getItem(syncStorageKey(account.email));
-  if (!raw) return toast("暂无账号同步数据");
-  try {
-    const payload = JSON.parse(raw);
-    const currentDeviceId = account.deviceId || uid();
-    const currentDeviceName = account.deviceName || "当前网页";
-    state = mergeState(createDefaultState(), payload.data || {});
-    state.syncAccount = {
-      ...ensureSyncAccount(),
-      ...(payload.data?.syncAccount || {}),
-      email: account.email,
-      loggedIn: true,
-      autoSync: account.autoSync !== false,
-      lastSync: payload.savedAt || iso(new Date()),
-      cloudVersion: Number(payload.version || 0),
-      deviceId: currentDeviceId,
-      deviceName: currentDeviceName,
-      devices: upsertSyncDevice(payload.devices || [], { deviceId: currentDeviceId, deviceName: currentDeviceName })
-    };
-    saveAndRender("已从账号拉取数据");
-  } catch (error) {
-    toast("导入失败，请检查 JSON 文件");
-  }
-}
-
-function snapshotForAccountSync() {
-  return JSON.parse(JSON.stringify(state));
-}
-
-function syncStorageKey(email) {
-  return `${SYNC_STORAGE_PREFIX}${String(email || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-}
-
-function upsertSyncDevice(devices, account, syncedAt = iso(new Date())) {
-  const deviceId = account.deviceId || uid();
-  const deviceName = account.deviceName || "当前网页";
-  const next = (devices || []).filter((device) => device.id !== deviceId);
-  next.unshift({
-    id: deviceId,
-    name: deviceName,
-    type: "web",
-    lastSync: syncedAt
-  });
-  return next.slice(0, 6);
-}
-
 function saveDaySegment(event) {
   event.preventDefault();
   const id = $("#daySegmentId").value;
@@ -1230,6 +986,7 @@ function saveDaySegment(event) {
   const startSlot = Number($("#daySegmentStart").value);
   const endSlot = Number($("#daySegmentEnd").value);
   const category = categoryByClassName($("#daySegmentCategory").value);
+  const existingSegment = id ? ensureDayPlan().segments.find((segment) => segment.id === id) : null;
   if (!activity) return toast("请填写活动名称");
   if (!Number.isFinite(startSlot) || !Number.isFinite(endSlot) || endSlot <= startSlot) return toast("结束时间必须晚于开始时间");
 
@@ -1239,19 +996,25 @@ function saveDaySegment(event) {
     slots: endSlot - startSlot,
     category: category.category,
     className: category.className,
-    activity
+    activity,
+    trackedMs: Math.max(0, Number(existingSegment?.trackedMs || 0))
   }, id || null);
   resetDayPlanEditor(false);
   saveAndRender("时间段已保存");
 }
 
 function handleDayPlanEditClick(event) {
-  const block = event.target.closest("[data-day-segment-edit]");
+  const block = event.target.closest("[data-day-segment-start]");
   if (!block) return;
-  editDaySegment(block.dataset.daySegmentEdit);
+  startDayPlanTimer(block.dataset.daySegmentStart);
 }
 
 function handleDayPlanDetailAction(event) {
+  const timerButton = event.target.closest("[data-day-segment-start]");
+  if (timerButton) {
+    startDayPlanTimer(timerButton.dataset.daySegmentStart);
+    return;
+  }
   const editButton = event.target.closest("[data-day-segment-edit]");
   if (editButton) {
     editDaySegment(editButton.dataset.daySegmentEdit);
@@ -1282,8 +1045,154 @@ function resetDayPlanEditor(shouldRenderIcons = true) {
 
 function deleteDaySegment(id) {
   const plan = ensureDayPlan();
+  const timer = ensureDayPlanTimer();
+  if (timer.segmentId === id) Object.assign(timer, createDefaultDayPlanTimer());
   plan.segments = normalizeDaySegments(plan.segments.filter((segment) => segment.id !== id));
   saveAndRender("时间段已删除");
+}
+
+function createDefaultDayPlanTimer() {
+  return { segmentId: "", running: false, startedAt: null, firstStartedAt: null, elapsedMs: 0, activity: "", categoryClass: "work" };
+}
+
+function ensureDayPlanTimer() {
+  if (!state.dayPlanTimer) state.dayPlanTimer = createDefaultDayPlanTimer();
+  state.dayPlanTimer.elapsedMs = Math.max(0, Number(state.dayPlanTimer.elapsedMs || 0));
+  state.dayPlanTimer.segmentId = state.dayPlanTimer.segmentId || "";
+  state.dayPlanTimer.activity = state.dayPlanTimer.activity || "";
+  state.dayPlanTimer.categoryClass = state.dayPlanTimer.categoryClass || "work";
+  state.dayPlanTimer.firstStartedAt = state.dayPlanTimer.firstStartedAt || null;
+  if (state.dayPlanTimer.running && !state.dayPlanTimer.firstStartedAt) state.dayPlanTimer.firstStartedAt = state.dayPlanTimer.startedAt || iso(new Date());
+  return state.dayPlanTimer;
+}
+
+function currentDayPlanTimerMs(timer = ensureDayPlanTimer()) {
+  const base = Number(timer.elapsedMs || 0);
+  if (!timer.running || !timer.startedAt) return base;
+  return base + Math.max(0, Date.now() - new Date(timer.startedAt).getTime());
+}
+
+function dayTimerSegment() {
+  const timer = ensureDayPlanTimer();
+  return ensureDayPlan().segments.find((segment) => segment.id === timer.segmentId) || null;
+}
+
+function dayTimerDraftFromEditor() {
+  const activity = $("#daySegmentTitle")?.value.trim() || "";
+  const category = categoryByClassName($("#daySegmentCategory")?.value || "work");
+  return { activity, category: category.category, className: category.className };
+}
+
+function slotFromDate(dateValue = new Date()) {
+  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return slotFromDate(new Date());
+  const minutes = date.getHours() * 60 + date.getMinutes();
+  return Math.max(0, Math.min(47, Math.floor(minutes / 30)));
+}
+
+function insertTimerSegmentFromElapsed(timer, elapsedMs) {
+  const category = categoryByClassName(timer.categoryClass || "work");
+  const slots = Math.max(1, Math.min(48, Math.ceil(elapsedMs / (30 * 60 * 1000))));
+  let startSlot = slotFromDate(timer.firstStartedAt || timer.startedAt || new Date());
+  if (startSlot + slots > 48) startSlot = Math.max(0, 48 - slots);
+  insertDaySegment({
+    id: uid(),
+    startSlot,
+    slots,
+    category: category.category,
+    className: category.className,
+    activity: timer.activity.trim(),
+    trackedMs: elapsedMs
+  }, null);
+}
+
+function startDayPlanTimer(segmentId) {
+  const segment = ensureDayPlan().segments.find((item) => item.id === segmentId);
+  if (!segment) return toast("请先选择时间段");
+  const timer = ensureDayPlanTimer();
+  const hasElapsedTimer = currentDayPlanTimerMs(timer) > 0;
+  if ((timer.running || hasElapsedTimer) && timer.segmentId && timer.segmentId !== segment.id) return toast("请先完成或重置当前计时");
+  if ((timer.running || hasElapsedTimer) && timer.activity && !timer.segmentId) return toast("请先完成或重置当前计时");
+  if (timer.running && timer.segmentId === segment.id) {
+    renderDayPlanTimer();
+    return;
+  }
+  if (timer.segmentId !== segment.id) {
+    timer.elapsedMs = 0;
+    timer.activity = "";
+    timer.categoryClass = segment.className;
+    timer.firstStartedAt = iso(new Date());
+  }
+  timer.segmentId = segment.id;
+  timer.running = true;
+  timer.startedAt = iso(new Date());
+  if (!timer.firstStartedAt) timer.firstStartedAt = timer.startedAt;
+  saveState();
+  renderTimeTable();
+  renderIcons();
+  toast("正计时已开始");
+}
+
+function resumeDayPlanTimer() {
+  const timer = ensureDayPlanTimer();
+  const segment = dayTimerSegment();
+  if (!segment && !timer.activity) {
+    const draft = dayTimerDraftFromEditor();
+    if (!draft.activity) return toast("请先填写活动名称");
+    timer.segmentId = "";
+    timer.activity = draft.activity;
+    timer.categoryClass = draft.className;
+    timer.firstStartedAt = iso(new Date());
+    timer.elapsedMs = 0;
+  }
+  if (!segment && !timer.activity.trim()) return toast("请先填写活动名称");
+  if (timer.running) return;
+  timer.running = true;
+  timer.startedAt = iso(new Date());
+  if (!timer.firstStartedAt) timer.firstStartedAt = timer.startedAt;
+  saveState();
+  renderTimeTable();
+  renderIcons();
+  toast("正计时已开始");
+}
+
+function pauseDayPlanTimer() {
+  const timer = ensureDayPlanTimer();
+  if (!timer.segmentId && !timer.activity) return toast("请先选择时间段或填写活动名称");
+  timer.elapsedMs = currentDayPlanTimerMs(timer);
+  timer.running = false;
+  timer.startedAt = null;
+  saveState();
+  renderTimeTable();
+  renderIcons();
+  toast("计时已暂停");
+}
+
+function finishDayPlanTimer() {
+  const timer = ensureDayPlanTimer();
+  const segment = dayTimerSegment();
+  const elapsedMs = currentDayPlanTimerMs(timer);
+  if (!segment && !timer.activity.trim()) return toast("请先选择时间段或填写活动名称");
+  if (elapsedMs < 1000) return toast("计时时间太短");
+  if (segment) {
+    segment.trackedMs = Math.max(0, Number(segment.trackedMs || 0)) + elapsedMs;
+    ensureDayPlan().updatedAt = iso(new Date());
+    Object.assign(timer, createDefaultDayPlanTimer());
+    saveAndRender("计时已写入时间表");
+    return;
+  }
+  insertTimerSegmentFromElapsed(timer, elapsedMs);
+  Object.assign(timer, createDefaultDayPlanTimer());
+  resetDayPlanEditor(false);
+  saveAndRender("计时任务已加入时间表");
+}
+
+function resetDayPlanTimer() {
+  Object.assign(ensureDayPlanTimer(), createDefaultDayPlanTimer());
+  saveState();
+  renderTimeTable();
+  renderIcons();
+  toast("计时已重置");
 }
 
 function insertDaySegment(newSegment, replaceId = null) {
@@ -1311,6 +1220,9 @@ function insertDaySegment(newSegment, replaceId = null) {
   plan.mode = "manual";
   plan.updatedAt = iso(new Date());
   plan.segments = normalizeDaySegments(kept);
+  if (state.dayPlanTimer?.segmentId && !plan.segments.some((segment) => segment.id === state.dayPlanTimer.segmentId)) {
+    Object.assign(state.dayPlanTimer, createDefaultDayPlanTimer());
+  }
 }
 
 function addObjective() {
@@ -1377,29 +1289,6 @@ function handleDeleteFromList(key, message) {
     state[key] = state[key].filter((item) => item.id !== button.dataset.deleteId);
     saveAndRender(message);
   };
-}
-
-function upsertHealthLog(patch) {
-  const day = todayKey();
-  let log = state.healthLogs.find((item) => item.day === day);
-  if (!log) {
-    log = {
-      id: uid(),
-      day,
-      energy: Number($("#energyRange").value),
-      load: Number($("#loadRange").value),
-      boundaryDone: false,
-      note: "",
-      createdAt: iso(new Date())
-    };
-    state.healthLogs.unshift(log);
-  }
-  Object.assign(log, patch, { createdAt: iso(new Date()) });
-  $("#energyRange").value = log.energy;
-  $("#loadRange").value = log.load;
-  $("#energyValue").textContent = log.energy;
-  $("#loadValue").textContent = log.load;
-  saveAndRender("健康状态已保存");
 }
 
 function exportData() {
@@ -1603,8 +1492,6 @@ function renderAll() {
   renderTasks();
   renderTimeTable();
   renderMeetings();
-  renderManager();
-  renderHealth();
   renderReview();
   renderSettings();
   renderFocusTimer();
@@ -1620,7 +1507,6 @@ function renderHome() {
   const focus = focusMinutesForDay(today);
   const workMinutes = workMinutesForDay(today);
   const meetings = state.meetings.filter((item) => dateKey(new Date(item.when)) === today).length;
-  const health = state.healthLogs.find((item) => item.day === today);
   const openCount = openWorkSegmentCount();
   const totalTasks = state.tasks.length;
   const openTasks = state.tasks.filter((task) => task.status !== "done").length;
@@ -1632,7 +1518,6 @@ function renderHome() {
   $("#sideFocus").textContent = formatMinutes(focus);
   $("#sideTasks").textContent = `${totalTasks - openTasks}/${totalTasks}`;
   $("#sideMeetings").textContent = meetings;
-  $("#sideEnergy").textContent = health ? `${health.energy}/5` : t("未记录");
   $("#workStateLabel").textContent = openCount > 0 ? (isEnglish() ? "Work session active" : "工作段进行中") : workMinutes > 0 ? (isEnglish() ? "Work recorded today" : "今日已有工作记录") : t("尚未开始工作");
   $("#openLogBadge").textContent = openCount > 0 ? `${t("进行中")} ${openCount}` : t("待开工");
   $("#openLogBadge").className = `status-pill ${openCount > 0 ? "good" : "neutral"}`;
@@ -1835,18 +1720,9 @@ function renderTimeTable() {
   renderDayPlanEditorOptions();
   const plan = ensureDayPlan();
   const segments = plan.segments || [];
-  const categories = uniqueCategories(segments);
-  $("#dayPlanSummary").innerHTML = [
-    [t("全天覆盖"), t("24 小时")],
-    [t("最小刻度"), t("0.5 小时")],
-    [t("半小时格"), t("48 格")],
-    [t("活动段"), `${segments.length} ${t("段")}`]
-  ].map(([label, value]) => `
-    <div>
-      <span>${escapeHtml(label)}</span>
-      <strong>${escapeHtml(value)}</strong>
-    </div>
-  `).join("");
+  const visibleSegments = segments.filter((segment) => segment.className !== "free");
+  const timer = ensureDayPlanTimer();
+  const categories = uniqueCategories(visibleSegments);
 
   $("#dayPlanLegend").innerHTML = categories.map((category) => `
     <span class="day-plan-legend-item">
@@ -1859,24 +1735,30 @@ function renderTimeTable() {
       <span>${escapeHtml(t("时间轴"))}</span>
       <strong>${escapeHtml(plan.day || todayKey())}</strong>
     </div>
-    <div class="day-plan-axis">
-      ${Array.from({ length: 13 }, (_, index) => index * 2).map((hour) => `
-        <span style="grid-column:${hour * 2 + 1}">${hour === 24 ? "24:00" : `${String(hour).padStart(2, "0")}:00`}</span>
-      `).join("")}
-    </div>
-    <div class="day-plan-strip" role="img" aria-label="${escapeHtml(t("24 小时时间表"))}">
-      ${segments.map((segment) => `
-        <button
-          type="button"
-          class="day-plan-block plan-${segment.className}"
-          data-day-segment-edit="${segment.id}"
-          style="grid-column:${segment.startSlot + 1} / span ${segment.slots}"
-          title="${escapeHtml(segmentTitle(segment))}"
-        >
-          <strong>${escapeHtml(t(segment.activity))}</strong>
-          <span>${escapeHtml(segmentTimeRange(segment))}</span>
-        </button>
-      `).join("")}
+    <div class="day-plan-scroll" data-day-plan-scroll>
+      <div class="day-plan-track" data-day-plan-track>
+        <div class="day-plan-axis">
+          ${Array.from({ length: 13 }, (_, index) => index * 2).map((hour) => `
+            <span style="grid-column:${hour * 2 + 1}">${hour === 24 ? "24:00" : `${String(hour).padStart(2, "0")}:00`}</span>
+          `).join("")}
+        </div>
+        <div class="day-plan-strip" role="img" aria-label="${escapeHtml(t("24 小时时间表"))}">
+          ${visibleSegments.map((segment) => `
+            <button
+              type="button"
+              class="day-plan-block plan-${segment.className} ${timer.segmentId === segment.id ? "is-timing" : ""} ${Number(segment.trackedMs || 0) > 0 ? "has-timed" : ""}"
+              data-day-segment-start="${segment.id}"
+              style="grid-column:${segment.startSlot + 1} / span ${segment.slots}"
+              title="${escapeHtml(segmentTitle(segment))}"
+            >
+              <strong>${escapeHtml(t(segment.activity))}</strong>
+              <span>${escapeHtml(segmentTimeRange(segment))}</span>
+              ${timer.segmentId === segment.id ? `<em data-day-timer-live>${escapeHtml(`${timer.running ? t("计时中") : t("本次")} ${formatDuration(currentDayPlanTimerMs(timer))}`)}</em>` : ""}
+              ${timer.segmentId !== segment.id && Number(segment.trackedMs || 0) > 0 ? `<em>${escapeHtml(`${t("累计计时")} ${formatDuration(segment.trackedMs)}`)}</em>` : ""}
+            </button>
+          `).join("")}
+        </div>
+      </div>
     </div>
   `;
 
@@ -1888,19 +1770,74 @@ function renderTimeTable() {
       <span>${escapeHtml(t("时长"))}</span>
       <span>${escapeHtml(t("操作"))}</span>
     </div>
-    ${segments.map((segment) => `
+    ${visibleSegments.map((segment) => `
       <div class="time-detail-row">
         <time>${escapeHtml(segmentTimeRange(segment))}</time>
         <strong>${escapeHtml(t(segment.activity))}</strong>
         <span><i class="plan-dot plan-${segment.className}"></i>${escapeHtml(t(segment.category))}</span>
-        <span>${escapeHtml(formatSlotDuration(segment.slots))}</span>
+        <span class="duration-stack">
+          <span>${escapeHtml(formatSlotDuration(segment.slots))}</span>
+          ${Number(segment.trackedMs || 0) > 0 ? `<small>${escapeHtml(`${t("累计计时")} ${formatDuration(segment.trackedMs)}`)}</small>` : ""}
+        </span>
         <span class="tiny-actions">
+          <button type="button" data-day-segment-start="${segment.id}">${escapeHtml(t("计时"))}</button>
           <button type="button" data-day-segment-edit="${segment.id}">${escapeHtml(t("编辑"))}</button>
           <button type="button" data-day-segment-delete="${segment.id}">${escapeHtml(t("删除"))}</button>
         </span>
       </div>
     `).join("")}
   `;
+  renderDayPlanTimer();
+  setupDayPlanScroll();
+}
+
+function setupDayPlanScroll() {
+  const scroll = $("[data-day-plan-scroll]");
+  const track = $("[data-day-plan-track]");
+  if (!scroll || !track) return;
+  if (scroll.clientWidth < 20) return;
+  const viewportWidth = scroll.clientWidth;
+  const trackWidth = Math.max(1800, viewportWidth * 3);
+  track.style.width = `${trackWidth}px`;
+  const maxScroll = Math.max(0, trackWidth - viewportWidth);
+  const coreHoursStart = (trackWidth / 48) * 18;
+  const nextScroll = dayPlanScrollLeft === null ? coreHoursStart : dayPlanScrollLeft;
+  scroll.scrollLeft = Math.max(0, Math.min(maxScroll, nextScroll));
+  scroll.addEventListener("scroll", () => {
+    dayPlanScrollLeft = scroll.scrollLeft;
+  }, { passive: true });
+}
+
+function renderDayPlanTimer() {
+  const face = $("#dayTimerFace");
+  if (!face) return;
+  const timer = ensureDayPlanTimer();
+  const segment = dayTimerSegment();
+  const elapsedMs = currentDayPlanTimerMs(timer);
+  const editorDraft = dayTimerDraftFromEditor();
+  const draftActivity = timer.activity || editorDraft.activity;
+  const draftClassName = timer.activity ? timer.categoryClass : editorDraft.className;
+  const draftCategory = categoryByClassName(draftClassName);
+  const hasTimerTask = Boolean(segment || draftActivity);
+  const hasTimerState = Boolean(segment || timer.activity || elapsedMs > 0);
+  face.textContent = formatDuration(elapsedMs);
+  $("#dayTimerTitle").textContent = segment
+    ? `${t(segment.activity)} · ${segmentTimeRange(segment)}`
+    : draftActivity
+      ? `${t(draftActivity)} · ${t("待写入时间表")}`
+      : t("输入活动后开始计时");
+  $("#dayTimerMeta").textContent = segment
+    ? `${timer.running ? t("计时中") : elapsedMs > 0 ? t("已暂停") : t("已选择")} · ${t("本次用时")} ${formatDuration(elapsedMs)} · ${t("累计计时")} ${formatDuration(Number(segment.trackedMs || 0))}`
+    : draftActivity
+      ? `${draftCategory.category ? t(draftCategory.category) : ""} · ${timer.running ? t("计时中") : elapsedMs > 0 ? t("已暂停") : t("已选择")} · ${t("本次用时")} ${formatDuration(elapsedMs)}`
+      : t("填写活动名称并选择类别，完成后会自动加入 24 小时时间表。");
+  $("#btnDayTimerStart").disabled = !hasTimerTask || timer.running;
+  $("#btnDayTimerPause").disabled = !hasTimerTask || !timer.running;
+  $("#btnDayTimerFinish").disabled = !hasTimerTask || elapsedMs < 1000;
+  $("#btnDayTimerReset").disabled = !hasTimerState;
+  $$("[data-day-timer-live]").forEach((node) => {
+    node.textContent = `${timer.running ? t("计时中") : t("本次")} ${formatDuration(elapsedMs)}`;
+  });
 }
 
 function renderDayPlanEditorOptions(categoryClass = $("#daySegmentCategory")?.value || "work", startSlot = Number($("#daySegmentStart")?.value || 18), endSlot = Number($("#daySegmentEnd")?.value || 20)) {
@@ -1943,25 +1880,6 @@ function createBlankDayPlan(day = todayKey()) {
   };
 }
 
-function ensureSyncAccount() {
-  if (!state.syncAccount) {
-    state.syncAccount = {
-      email: "",
-      loggedIn: false,
-      autoSync: true,
-      lastSync: null,
-      cloudVersion: 0,
-      deviceId: uid(),
-      deviceName: "当前网页",
-      devices: []
-    };
-  }
-  state.syncAccount.deviceId = state.syncAccount.deviceId || uid();
-  state.syncAccount.deviceName = state.syncAccount.deviceName || "当前网页";
-  state.syncAccount.devices = state.syncAccount.devices || [];
-  return state.syncAccount;
-}
-
 function normalizeDaySegments(segments) {
   const clean = (segments || [])
     .map((segment) => {
@@ -1975,7 +1893,8 @@ function normalizeDaySegments(segments) {
         category: segment.category || category.category,
         className: category.className,
         activity: segment.activity || segment.category || category.category,
-        source: segment.source || ""
+        source: segment.source || "",
+        trackedMs: Math.max(0, Number(segment.trackedMs || 0))
       };
     })
     .filter((segment) => segment.slots > 0)
@@ -2018,6 +1937,7 @@ function mergeAdjacentDaySegments(segments) {
       previous.activity === segment.activity
     ) {
       previous.slots += segment.slots;
+      previous.trackedMs = Math.max(0, Number(previous.trackedMs || 0)) + Math.max(0, Number(segment.trackedMs || 0));
     } else {
       items.push({ ...segment });
     }
@@ -2091,54 +2011,6 @@ function renderMeetingContacts(selected = getSelectedMeetingContacts()) {
       <button type="button" data-contact-delete="${escapeHtml(contact)}" aria-label="${isEnglish() ? "Delete frequent contact" : "删除常用联系人"} ${escapeHtml(contact)}" title="${isEnglish() ? "Delete frequent contact" : "删除常用联系人"}"><i data-lucide="x"></i></button>
     </label>
   `).join("") : `<div class="empty compact">${isEnglish() ? "Add frequent contacts to select them quickly" : "添加常用联系人后可直接勾选"}</div>`;
-}
-
-function renderManager() {
-  $("#managerList").innerHTML = state.managerNotes.map((note) => `
-    <div class="stack-item">
-      <div class="stack-item-head">
-        <div>
-          <h3>${escapeHtml(note.topic)}</h3>
-          <div class="item-meta"><span class="tag">${formatDateTime(note.createdAt)}</span></div>
-        </div>
-        <button class="icon-btn" data-delete-id="${note.id}" aria-label="${isEnglish() ? "Delete resource note" : "删除同步"}" title="${isEnglish() ? "Delete resource note" : "删除同步"}"><i data-lucide="trash-2"></i></button>
-      </div>
-      <p><strong>${isEnglish() ? "Progress: " : "进展："}</strong>${escapeHtml(note.progress || (isEnglish() ? "None" : "暂无"))}</p>
-      <p><strong>${isEnglish() ? "Risk: " : "风险："}</strong>${escapeHtml(note.risk || (isEnglish() ? "None" : "暂无"))}</p>
-      <p><strong>${isEnglish() ? "Support: " : "支持："}</strong>${escapeHtml(note.ask || (isEnglish() ? "None" : "暂无"))}</p>
-    </div>
-  `).join("") || empty("暂无同步记录");
-}
-
-function renderHealth() {
-  const today = state.healthLogs.find((item) => item.day === todayKey());
-  if (today) {
-    $("#energyRange").value = today.energy;
-    $("#loadRange").value = today.load;
-    $("#energyValue").textContent = today.energy;
-    $("#loadValue").textContent = today.load;
-    $("#healthNote").value = today.note || "";
-  }
-
-  $("#healthList").innerHTML = state.healthLogs
-    .slice()
-    .sort((a, b) => b.day.localeCompare(a.day))
-    .map((log) => `
-      <div class="stack-item">
-        <div class="stack-item-head">
-          <div>
-            <h3>${escapeHtml(log.day)}</h3>
-            <div class="item-meta">
-              <span class="tag low">${isEnglish() ? "Energy" : "能量"} ${log.energy}/5</span>
-              <span class="tag ${log.load >= 4 ? "high" : "medium"}">${isEnglish() ? "Stress" : "压力"} ${log.load}/5</span>
-              <span class="tag">${log.boundaryDone ? (isEnglish() ? "Ended on time" : "已准点下线") : (isEnglish() ? "No end recorded" : "未记录下线")}</span>
-            </div>
-          </div>
-          <button class="icon-btn" data-delete-id="${log.id}" aria-label="${isEnglish() ? "Delete wellbeing record" : "删除健康记录"}" title="${isEnglish() ? "Delete wellbeing record" : "删除健康记录"}"><i data-lucide="trash-2"></i></button>
-        </div>
-        <p>${escapeHtml(log.note || (isEnglish() ? "No note" : "暂无备注"))}</p>
-      </div>
-    `).join("") || empty("暂无健康记录");
 }
 
 function renderReview() {
@@ -2225,91 +2097,9 @@ function renderLanguageSettings() {
   `).join("");
 }
 
-function renderSyncSettings() {
-  const account = ensureSyncAccount();
-  const loggedIn = Boolean(account.loggedIn && account.email);
-  const badge = $("#syncLoginBadge");
-  badge.textContent = loggedIn ? t("已登录") : t("未登录");
-  badge.className = `status-pill ${loggedIn ? "good" : "neutral"}`;
-  $("#syncEmail").value = account.email || "";
-  $("#syncDeviceName").value = account.deviceName || "";
-  $("#syncAuto").checked = account.autoSync !== false;
-  $("#btnSyncLogout").disabled = !loggedIn;
-  $("#btnSyncNow").disabled = !loggedIn;
-  $("#btnPullCloud").disabled = !loggedIn;
-
-  $("#syncAccountStatus").innerHTML = loggedIn
-    ? `
-      <div>
-        <span>${escapeHtml(t("邮箱账号"))}</span>
-        <strong>${escapeHtml(account.email)}</strong>
-      </div>
-      <div>
-        <span>${escapeHtml(t("最近同步"))}</span>
-        <strong>${escapeHtml(account.lastSync ? formatDateTime(account.lastSync) : t("尚未同步"))}</strong>
-      </div>
-      <div>
-        <span>${escapeHtml(t("云端版本"))}</span>
-        <strong>${escapeHtml(String(account.cloudVersion || 0))}</strong>
-      </div>
-    `
-    : `
-      <div>
-        <span>${escapeHtml(t("等待登录"))}</span>
-        <strong>${escapeHtml(isEnglish() ? "Use an email account to sync across devices." : "使用邮箱账号后可同步多设备数据")}</strong>
-      </div>
-    `;
-
-  const devices = account.devices || [];
-  $("#syncDeviceList").innerHTML = loggedIn && devices.length
-    ? devices.map((device) => `
-      <div class="sync-device-card">
-        <i data-lucide="${device.id === account.deviceId ? "monitor" : "smartphone"}"></i>
-        <div>
-          <strong>${escapeHtml(device.name || t("当前设备"))}</strong>
-          <span>${escapeHtml(device.lastSync ? formatDateTime(device.lastSync) : t("尚未同步"))}</span>
-        </div>
-        ${device.id === account.deviceId ? `<em>${escapeHtml(t("当前设备"))}</em>` : ""}
-      </div>
-    `).join("")
-    : `<div class="empty compact">${escapeHtml(loggedIn ? t("等待其他设备登录同一邮箱") : t("请先登录邮箱账号"))}</div>`;
-}
-
 function renderSettings() {
   renderThemeSettings();
   renderLanguageSettings();
-  renderSyncSettings();
-  $("#schemaPreview").textContent = JSON.stringify({
-    miniProgramCollections: {
-      owners: ["_id", "name", "domain", "role", "createdAt"],
-      appearanceProfiles: ["_id", "ownerId", "theme", "language", "updatedAt"],
-      rhythmLogs: ["_id", "ownerId", "type", "at", "note"],
-      focusSessions: ["_id", "ownerId", "title", "minutes", "targetMinutes", "reward", "rewardEarned", "startedAt", "endedAt"],
-      meetingContacts: ["_id", "ownerId", "name", "createdAt"],
-      syncAccounts: ["_id", "email", "deviceId", "deviceName", "autoSync", "lastSync", "cloudVersion"],
-      dayPlans: ["_id", "ownerId", "day", "segments", "source", "updatedAt"],
-      tasks: ["_id", "ownerId", "title", "status", "priority", "project", "due", "completedAt"],
-      okrs: ["_id", "ownerId", "title", "keyResult", "progress"],
-      projects: ["_id", "ownerId", "name", "role", "health", "risk", "next"],
-      meetings: ["_id", "ownerId", "title", "type", "when", "contacts", "decision", "actions"],
-      resourceNotes: ["_id", "ownerId", "topic", "progress", "risk", "ask", "createdAt"],
-      healthLogs: ["_id", "ownerId", "day", "energy", "load", "boundaryDone", "note"],
-      reviews: ["_id", "ownerId", "day", "wins", "risks", "tomorrow", "score", "moodReason"]
-    },
-    migrationNotes: isEnglish()
-      ? [
-        "localStorage -> wx.cloud.database",
-        "single-page sections -> mini program pages",
-        "render functions -> setData and component split",
-        "export JSON -> owner data backup"
-      ]
-      : [
-        "localStorage -> wx.cloud.database",
-        "单页 section -> 小程序 pages",
-        "render 函数 -> setData 与组件拆分",
-        "导出 JSON -> 主理人数据备份"
-      ]
-  }, null, 2);
 }
 
 function renderCharts() {
@@ -2319,7 +2109,6 @@ function renderCharts() {
   if (activeSection === "dashboard") {
     drawTrendChart($("#mainChart"), dashboardRange);
     drawTaskDonut($("#taskDonut"));
-    drawHealthChart($("#healthChart"), dashboardRange);
   }
 }
 
@@ -2417,43 +2206,6 @@ function drawTaskDonut(canvas) {
     ["待办", colors[0]],
     ["进行中", colors[1]],
     ["已完成", colors[2]]
-  ], 24);
-}
-
-function drawHealthChart(canvas, range) {
-  const chart = prepareCanvas(canvas);
-  if (!chart) return;
-  const { ctx, width, height } = chart;
-  const days = lastDays(range);
-  const top = 24;
-  const bottom = 34;
-  const left = 36;
-  const right = 16;
-  const plotW = width - left - right;
-  const plotH = height - top - bottom;
-  const group = plotW / Math.max(1, days.length - 1);
-  const energyPoints = [];
-  const loadPoints = [];
-
-  clearCanvas(ctx, width, height);
-  drawGrid(ctx, left, top, plotW, plotH);
-  days.forEach((day, index) => {
-    const log = state.healthLogs.find((item) => item.day === day);
-    const energy = log ? log.energy : 0;
-    const load = log ? log.load : 0;
-    const x = left + index * group;
-    energyPoints.push({ x, y: top + plotH - (energy / 5) * plotH });
-    loadPoints.push({ x, y: top + plotH - (load / 5) * plotH });
-    ctx.fillStyle = "#697386";
-    ctx.font = "11px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(day.slice(5), x, height - 12);
-  });
-  drawLine(ctx, energyPoints, "#2f7d4f");
-  drawLine(ctx, loadPoints, "#d85d50");
-  drawLegend(ctx, [
-    ["能量", "#2f7d4f"],
-    ["压力", "#d85d50"]
   ], 24);
 }
 

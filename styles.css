@@ -817,95 +817,6 @@ h3 {
   gap: 10px;
 }
 
-.sync-login-form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto auto;
-  gap: 10px;
-  align-items: center;
-}
-
-.sync-login-form {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto auto;
-}
-
-.sync-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-}
-
-.sync-account-status,
-.sync-device-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 10px 12px;
-  background: var(--surface-soft);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.sync-account-status {
-  justify-content: space-between;
-}
-
-.sync-account-status strong,
-.sync-device-card strong {
-  display: block;
-  font-weight: 850;
-}
-
-.sync-account-status span,
-.sync-device-card span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 750;
-}
-
-.account-sync-panel,
-.sync-device-list {
-  display: grid;
-  gap: 12px;
-}
-
-.sync-account-status {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.sync-device-list {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.sync-device-card {
-  justify-content: space-between;
-}
-
-.sync-device-card > svg {
-  width: 22px;
-  height: 22px;
-  color: var(--teal);
-  flex: 0 0 auto;
-}
-
-.sync-device-card div {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.sync-device-card em {
-  flex: 0 0 auto;
-  padding: 4px 8px;
-  color: var(--green);
-  background: var(--green-soft);
-  border-radius: 999px;
-  font-style: normal;
-  font-size: 12px;
-  font-weight: 850;
-}
-
 .check-line {
   display: inline-flex;
   align-items: center;
@@ -1387,6 +1298,66 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+.day-plan-timer {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(280px, 1.05fr);
+  gap: 14px;
+  align-items: stretch;
+  padding: 14px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.day-plan-timer-copy {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+}
+
+.day-plan-timer-copy span {
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.day-plan-timer-copy h3 {
+  font-size: 20px;
+}
+
+.day-plan-timer-copy p,
+.duration-stack small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.day-plan-timer-main {
+  display: grid;
+  gap: 10px;
+}
+
+.day-timer-face {
+  display: grid;
+  place-items: center;
+  min-height: 82px;
+  color: var(--teal);
+  background: #fff;
+  border: 1px solid rgba(8, 117, 111, 0.18);
+  border-radius: var(--radius);
+  font-size: 34px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-timer-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .day-plan-legend {
   display: flex;
   flex-wrap: wrap;
@@ -1431,24 +1402,52 @@ h3 {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .day-plan-board-head {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  min-width: 880px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 850;
 }
 
+.day-plan-scroll {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  scrollbar-gutter: stable;
+}
+
+.day-plan-scroll::-webkit-scrollbar {
+  height: 11px;
+}
+
+.day-plan-scroll::-webkit-scrollbar-track {
+  background: rgba(105, 115, 134, 0.12);
+  border-radius: 999px;
+}
+
+.day-plan-scroll::-webkit-scrollbar-thumb {
+  background: rgba(17, 17, 17, 0.42);
+  border: 3px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+}
+
+.day-plan-track {
+  display: grid;
+  gap: 8px;
+  min-width: 1800px;
+}
+
 .day-plan-axis,
 .day-plan-strip {
   display: grid;
-  grid-template-columns: repeat(48, minmax(18px, 1fr));
-  min-width: 880px;
+  grid-template-columns: repeat(48, minmax(0, 1fr));
+  width: 100%;
 }
 
 .day-plan-axis {
@@ -1494,8 +1493,20 @@ h3 {
   filter: brightness(0.98);
 }
 
+.day-plan-block.is-timing {
+  outline: 3px solid rgba(17, 17, 17, 0.25);
+  outline-offset: 2px;
+}
+
+.day-plan-block.has-timed:not(.is-timing) {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 0 0 2px rgba(17, 17, 17, 0.08);
+}
+
 .day-plan-block strong,
-.day-plan-block span {
+.day-plan-block span,
+.day-plan-block em {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1509,6 +1520,19 @@ h3 {
   opacity: 0.88;
   font-size: 11px;
   font-weight: 750;
+}
+
+.day-plan-block em {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 6px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .day-plan-detail-head {
@@ -1530,6 +1554,15 @@ h3 {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
+}
+
+.duration-stack {
+  display: grid;
+  gap: 2px;
+}
+
+.duration-stack small {
+  color: var(--teal);
 }
 
 .time-detail-row.header {
@@ -1987,20 +2020,6 @@ canvas {
   font-size: 12px;
 }
 
-.schema-box {
-  min-height: 340px;
-  margin: 0;
-  padding: 14px;
-  overflow: auto;
-  color: #253044;
-  background: #f8fafc;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  font-family: Consolas, "SFMono-Regular", Menlo, monospace;
-  font-size: 12px;
-  line-height: 1.55;
-}
-
 .toast {
   position: fixed;
   right: 20px;
@@ -2055,9 +2074,7 @@ canvas {
   .top-grid,
   .dashboard-grid,
   .kanban,
-  .sync-login-form,
-  .sync-account-status,
-  .sync-device-list,
+  .day-plan-timer,
   .day-plan-editor,
   .theme-grid,
   .language-grid {
@@ -2073,6 +2090,10 @@ canvas {
   }
 
   .day-plan-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .day-timer-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2114,9 +2135,8 @@ canvas {
   .inline-form,
   .task-form,
   .two-col,
-  .sync-login-form,
-  .sync-account-status,
-  .sync-device-list,
+  .day-plan-timer,
+  .day-timer-actions,
   .day-plan-editor,
   .focus-goal-grid,
   .mini-metrics.four,
