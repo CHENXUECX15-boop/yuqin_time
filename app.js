@@ -64,7 +64,6 @@ const zhToEn = {
   "早日成为富婆": "Early Rich Woman",
   "今日总览": "Today",
   "工作节奏": "Rhythm",
-  "倒计时": "Countdown",
   "任务看板": "Tasks",
   "OKR 与项目": "OKR & Projects",
   "时间表": "Timetable",
@@ -157,7 +156,7 @@ const zhToEn = {
   "结束时间": "End time",
   "保存时间段": "Save Time Block",
   "取消编辑": "Cancel Edit",
-  "用户可以新增、编辑、删除任意 0.5 小时倍数的时间段。重叠部分会自动被新安排替换。": "Add, edit, or delete time blocks in 0.5-hour increments. Overlaps are replaced by the new plan.",
+  "用户可以新增、编辑、删除任意 0.5 小时倍数的时间段。重叠部分会自动分为上下行显示。": "Add, edit, or delete time blocks in 0.5-hour increments. Overlaps are shown on separate rows.",
   "点击时间块或明细里的编辑按钮即可修改。": "Click a block or the edit button in details to modify it.",
   "正计时": "Count Up",
   "未选择时间段": "No time block selected",
@@ -273,6 +272,7 @@ const zhToEn = {
   "30 天": "30 days",
   "工作趋势": "Work Trend",
   "工作时长、专注时长、完成任务": "Work time, focus time, and completed tasks",
+  "工作时长、专注时长": "Work time and focus time",
   "任务分布": "Task Distribution",
   "待办、进行中、已完成": "To do, in progress, and done",
   "主题外观": "Theme",
@@ -726,10 +726,10 @@ function bindActions() {
   $("#btnCloseOpenLogs").addEventListener("click", closeOpenLogs);
   $("#btnClearTodayLeaves").addEventListener("click", clearTodayLeaves);
 
-  $("#btnFocusStart").addEventListener("click", startFocus);
-  $("#btnFocusPause").addEventListener("click", pauseFocus);
-  $("#btnFocusFinish").addEventListener("click", finishFocus);
-  $("#btnFocusReset").addEventListener("click", resetFocus);
+  $("#btnFocusStart")?.addEventListener("click", startFocus);
+  $("#btnFocusPause")?.addEventListener("click", pauseFocus);
+  $("#btnFocusFinish")?.addEventListener("click", finishFocus);
+  $("#btnFocusReset")?.addEventListener("click", resetFocus);
   $$(".mood-btn").forEach((button) => {
     button.addEventListener("click", () => setReviewMood(Number(button.dataset.reviewScore)));
   });
@@ -756,8 +756,9 @@ function bindActions() {
   $("#languageChoiceList").addEventListener("keydown", handleLanguageChoiceKey);
 
   $("#kanbanBoard").addEventListener("click", handleTaskAction);
+  $("#homeTaskList").addEventListener("click", handleTaskAction);
   $("#attendanceList").addEventListener("click", handleDeleteFromList("attendanceLogs", "行动记录已删除"));
-  $("#focusHistoryList").addEventListener("click", handleDeleteFromList("focusSessions", "专注记录已删除"));
+  $("#focusHistoryList")?.addEventListener("click", handleDeleteFromList("focusSessions", "专注记录已删除"));
   $("#meetingList").addEventListener("click", handleDeleteFromList("meetings", "会议已删除"));
   $("#reviewList").addEventListener("click", handleReviewListAction);
 
@@ -1272,24 +1273,9 @@ function resetDayPlanTimer() {
 
 function insertDaySegment(newSegment, replaceId = null) {
   const plan = ensureDayPlan();
-  const newStart = Number(newSegment.startSlot);
-  const newEnd = newStart + Number(newSegment.slots);
-  const kept = [];
-  (plan.segments || []).forEach((segment) => {
-    if (replaceId && segment.id === replaceId) return;
-    const start = Number(segment.startSlot);
-    const end = start + Number(segment.slots);
-    if (end <= newStart || start >= newEnd) {
-      kept.push({ ...segment });
-      return;
-    }
-    if (start < newStart) {
-      kept.push({ ...segment, id: uid(), startSlot: start, slots: newStart - start });
-    }
-    if (end > newEnd) {
-      kept.push({ ...segment, id: uid(), startSlot: newEnd, slots: end - newEnd });
-    }
-  });
+  const kept = (plan.segments || [])
+    .filter((segment) => !(replaceId && segment.id === replaceId))
+    .map((segment) => ({ ...segment }));
   kept.push(newSegment);
   plan.day = todayKey();
   plan.mode = "manual";
@@ -1590,6 +1576,7 @@ function renderHome() {
   $("#todayFocusMinutes").textContent = formatMinutes(focus);
   $("#todayDoneTasks").textContent = doneToday;
   $("#todayMeetingCount").textContent = meetings;
+  $("#sideWork").textContent = formatMinutes(workMinutes);
   $("#sideFocus").textContent = formatMinutes(focus);
   $("#sideTasks").textContent = `${totalTasks - openTasks}/${totalTasks}`;
   $("#sideMeetings").textContent = meetings;
@@ -1612,32 +1599,35 @@ function renderHome() {
 
 function renderRhythm() {
   const groups = groupedAttendanceByDay();
-  const focusGroups = groupedFocusByDay();
-  $("#focusHistoryList").innerHTML = focusGroups.map((group) => `
-    <div class="date-group">
-      <div class="date-divider">
-        <span>${escapeHtml(formatDayTitle(group.day))}</span>
-        <strong>${formatMinutes(group.totalMinutes)}</strong>
-      </div>
-      <div class="stack-list">
-        ${group.items.map((item) => `
-          <div class="stack-item focus-history-item">
-            <div class="stack-item-head">
-              <div>
-                <h3><i data-lucide="timer"></i> ${escapeHtml(item.title || (isEnglish() ? "Untitled focus" : "未命名专注"))}</h3>
-                <p>${formatTime(item.startedAt)} - ${formatTime(item.endedAt)} · ${formatMinutes(item.minutes)}</p>
-                <div class="item-meta">
-                  ${item.targetMinutes ? `<span class="tag">${isEnglish() ? `Target ${item.targetMinutes} min` : `目标 ${item.targetMinutes} 分钟`}</span>` : ""}
-                  ${item.reward ? `<span class="tag ${item.rewardEarned ? "low" : "medium"}">${item.rewardEarned ? (isEnglish() ? "Reward unlocked" : "奖励已解锁") : (isEnglish() ? "Reward locked" : "奖励未解锁")}${isEnglish() ? ": " : "："}${escapeHtml(item.reward)}</span>` : ""}
+  const focusHistoryList = $("#focusHistoryList");
+  if (focusHistoryList) {
+    const focusGroups = groupedFocusByDay();
+    focusHistoryList.innerHTML = focusGroups.map((group) => `
+      <div class="date-group">
+        <div class="date-divider">
+          <span>${escapeHtml(formatDayTitle(group.day))}</span>
+          <strong>${formatMinutes(group.totalMinutes)}</strong>
+        </div>
+        <div class="stack-list">
+          ${group.items.map((item) => `
+            <div class="stack-item focus-history-item">
+              <div class="stack-item-head">
+                <div>
+                  <h3><i data-lucide="timer"></i> ${escapeHtml(item.title || (isEnglish() ? "Untitled focus" : "未命名专注"))}</h3>
+                  <p>${formatTime(item.startedAt)} - ${formatTime(item.endedAt)} · ${formatMinutes(item.minutes)}</p>
+                  <div class="item-meta">
+                    ${item.targetMinutes ? `<span class="tag">${isEnglish() ? `Target ${item.targetMinutes} min` : `目标 ${item.targetMinutes} 分钟`}</span>` : ""}
+                    ${item.reward ? `<span class="tag ${item.rewardEarned ? "low" : "medium"}">${item.rewardEarned ? (isEnglish() ? "Reward unlocked" : "奖励已解锁") : (isEnglish() ? "Reward locked" : "奖励未解锁")}${isEnglish() ? ": " : "："}${escapeHtml(item.reward)}</span>` : ""}
+                  </div>
                 </div>
+                <button class="icon-btn" data-delete-id="${item.id}" aria-label="${t("删除专注记录")}" title="${t("删除专注记录")}"><i data-lucide="trash-2"></i></button>
               </div>
-              <button class="icon-btn" data-delete-id="${item.id}" aria-label="${t("删除专注记录")}" title="${t("删除专注记录")}"><i data-lucide="trash-2"></i></button>
             </div>
-          </div>
-        `).join("")}
+          `).join("")}
+        </div>
       </div>
-    </div>
-  `).join("") || empty("完成一次专注后会出现在这里");
+    `).join("") || empty("完成一次专注后会出现在这里");
+  }
 
   $("#attendanceList").innerHTML = groups.map((group) => `
     <div class="date-group">
@@ -1730,11 +1720,6 @@ function workPairMapForDay(day) {
     pairMap.set(attendancePairKey(log), visualPair);
   });
 
-  opened.forEach((start) => {
-    pairIndex += 1;
-    pairMap.set(attendancePairKey(start), ((pairIndex - 1) % 6) + 1);
-  });
-
   return pairMap;
 }
 
@@ -1745,6 +1730,7 @@ function formatDayTitle(day) {
 }
 
 function renderFocusTimer() {
+  if (!$("#focusTimer")) return;
   const ms = currentFocusMs();
   $("#focusTimer").textContent = formatDuration(ms);
   const timer = state.focusTimer;
@@ -1801,6 +1787,7 @@ function taskLane(title, tasks, showTodayAction) {
 }
 
 function isDailyTask(task, today = todayKey()) {
+  if (task.completedAt && dateKey(new Date(task.completedAt)) === today) return true;
   if (task.due === today) return true;
   if (task.due) return false;
   return task.createdAt ? dateKey(new Date(task.createdAt)) === today : true;
@@ -1840,6 +1827,7 @@ function renderTimeTable() {
   const plan = ensureDayPlan();
   const segments = plan.segments || [];
   const visibleSegments = segments.filter((segment) => segment.className !== "free");
+  const dayPlanLayout = layoutDayPlanSegments(visibleSegments);
   const timer = ensureDayPlanTimer();
   const categories = uniqueCategories(visibleSegments);
 
@@ -1861,13 +1849,13 @@ function renderTimeTable() {
             <span style="grid-column:${hour * 2 + 1}">${hour === 24 ? "24:00" : `${String(hour).padStart(2, "0")}:00`}</span>
           `).join("")}
         </div>
-        <div class="day-plan-strip" role="img" aria-label="${escapeHtml(t("24 小时时间表"))}">
-          ${visibleSegments.map((segment) => `
+        <div class="day-plan-strip" role="img" aria-label="${escapeHtml(t("24 小时时间表"))}" style="--day-plan-lanes:${Math.max(1, dayPlanLayout.lanes)}">
+          ${dayPlanLayout.segments.map((segment) => `
             <button
               type="button"
               class="day-plan-block plan-${segment.className} ${timer.segmentId === segment.id ? "is-timing" : ""} ${Number(segment.trackedMs || 0) > 0 ? "has-timed" : ""}"
               data-day-segment-start="${segment.id}"
-              style="grid-column:${segment.startSlot + 1} / span ${segment.slots}"
+              style="grid-column:${segment.startSlot + 1} / span ${segment.slots}; grid-row:${segment.lane + 1}"
               title="${escapeHtml(segmentTitle(segment))}"
             >
               <strong>${escapeHtml(t(segment.activity))}</strong>
@@ -2050,21 +2038,50 @@ function normalizeDaySegments(segments) {
       };
     })
     .filter((segment) => segment.slots > 0)
-    .sort((a, b) => a.startSlot - b.startSlot);
+    .sort((a, b) => a.startSlot - b.startSlot || (a.startSlot + a.slots) - (b.startSlot + b.slots));
 
-  const filled = [];
-  let cursor = 0;
-  clean.forEach((segment) => {
-    const start = Math.max(cursor, segment.startSlot);
-    const end = Math.min(48, segment.startSlot + segment.slots);
-    if (start > cursor) filled.push(makeFreeSegment(cursor, start - cursor));
-    if (end > start) {
-      filled.push({ ...segment, startSlot: start, slots: end - start });
-      cursor = end;
-    }
+  const visible = mergeAdjacentDaySegments(clean.filter((segment) => segment.className !== "free"));
+  const free = buildFreeDaySegments(visible);
+  return [...visible, ...free].sort((a, b) => a.startSlot - b.startSlot || (a.className === "free" ? 1 : -1));
+}
+
+function buildFreeDaySegments(visibleSegments) {
+  const occupied = Array(48).fill(false);
+  visibleSegments.forEach((segment) => {
+    const start = Math.max(0, Math.min(48, Number(segment.startSlot || 0)));
+    const end = Math.max(start, Math.min(48, start + Number(segment.slots || 0)));
+    for (let slot = start; slot < end; slot += 1) occupied[slot] = true;
   });
-  if (cursor < 48) filled.push(makeFreeSegment(cursor, 48 - cursor));
-  return mergeAdjacentDaySegments(filled);
+  const free = [];
+  let cursor = 0;
+  while (cursor < 48) {
+    while (cursor < 48 && occupied[cursor]) cursor += 1;
+    if (cursor >= 48) break;
+    const start = cursor;
+    while (cursor < 48 && !occupied[cursor]) cursor += 1;
+    free.push(makeFreeSegment(start, cursor - start));
+  }
+  return free;
+}
+
+function layoutDayPlanSegments(segments) {
+  const lanes = [];
+  const laidOut = segments
+    .slice()
+    .sort((a, b) => a.startSlot - b.startSlot || (a.startSlot + a.slots) - (b.startSlot + b.slots))
+    .map((segment) => {
+      const start = Number(segment.startSlot || 0);
+      const end = start + Number(segment.slots || 0);
+      let lane = lanes.findIndex((laneEnd) => laneEnd <= start);
+      if (lane < 0) {
+        lane = lanes.length;
+        lanes.push(end);
+      } else {
+        lanes[lane] = end;
+      }
+      return { ...segment, lane };
+    });
+  return { segments: laidOut, lanes: lanes.length || 1 };
 }
 
 function makeFreeSegment(startSlot, slots) {
@@ -2086,7 +2103,10 @@ function mergeAdjacentDaySegments(segments) {
       previous.startSlot + previous.slots === segment.startSlot &&
       previous.category === segment.category &&
       previous.className === segment.className &&
-      previous.activity === segment.activity
+      previous.activity === segment.activity &&
+      previous.source === segment.source &&
+      Number(previous.trackedMs || 0) === 0 &&
+      Number(segment.trackedMs || 0) === 0
     ) {
       previous.slots += segment.slots;
       previous.trackedMs = Math.max(0, Number(previous.trackedMs || 0)) + Math.max(0, Number(segment.trackedMs || 0));
@@ -2271,7 +2291,6 @@ function drawTrendChart(canvas, range, options = {}) {
     ...days.map((day) => focusMinutesForDay(day)),
     60
   ));
-  const maxDone = Math.max(...days.map((day) => doneTasksForDay(day)), 1);
   const top = 24;
   const bottom = 34;
   const left = options.compact ? 44 : 50;
@@ -2290,31 +2309,23 @@ function drawTrendChart(canvas, range, options = {}) {
     const x = left + index * group + group / 2;
     const work = workMinutesForDay(day);
     const focus = focusMinutesForDay(day);
-    const done = doneTasksForDay(day);
     const workH = (work / maxMinutes) * plotH;
     const focusH = (focus / maxMinutes) * plotH;
     const workRect = { x: x - barW - 2, y: top + plotH - workH, width: barW, height: Math.max(2, workH) };
     const focusRect = { x: x + 2, y: top + plotH - focusH, width: barW, height: Math.max(2, focusH) };
     roundRect(ctx, workRect.x, workRect.y, workRect.width, workH, 4, "#08756f");
     roundRect(ctx, focusRect.x, focusRect.y, focusRect.width, focusH, 4, "#d85d50");
-    if (work > 0) hitAreas.push({ ...workRect, day, work, focus, done, series: "工作" });
-    if (focus > 0) hitAreas.push({ ...focusRect, day, work, focus, done, series: "专注" });
+    if (work > 0) hitAreas.push({ ...workRect, day, work, focus, series: "工作" });
+    if (focus > 0) hitAreas.push({ ...focusRect, day, work, focus, series: "专注" });
     ctx.fillStyle = "#697386";
     ctx.font = "11px Arial";
     ctx.textAlign = "center";
     ctx.fillText(day.slice(5), x, height - 12);
   });
 
-  const linePoints = days.map((day, index) => {
-    const x = left + index * group + group / 2;
-    const y = top + plotH - (doneTasksForDay(day) / maxDone) * plotH;
-    return { x, y };
-  });
-  drawLine(ctx, linePoints, "#5d55b3");
   drawLegend(ctx, [
     ["工作", "#08756f"],
-    ["专注", "#d85d50"],
-    ["完成", "#5d55b3"]
+    ["专注", "#d85d50"]
   ], options.compact ? 26 : 38);
   canvas.__chartBars = hitAreas;
   ensureTrendChartHover(canvas);
@@ -2497,8 +2508,7 @@ function showChartTooltip(event, hit) {
   tooltip.innerHTML = `
     <strong>${escapeHtml(hit.day)} · ${escapeHtml(selected)}</strong>
     <span>${escapeHtml(t("工作"))}: ${escapeHtml(formatMinutes(hit.work))}</span><br>
-    <span>${escapeHtml(t("专注"))}: ${escapeHtml(formatMinutes(hit.focus))}</span><br>
-    <span>${escapeHtml(t("完成"))}: ${escapeHtml(countLabel(hit.done, "个任务", "task"))}</span>
+    <span>${escapeHtml(t("专注"))}: ${escapeHtml(formatMinutes(hit.focus))}</span>
   `;
   tooltip.hidden = false;
   const margin = 16;
