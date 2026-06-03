@@ -64,6 +64,7 @@ const zhToEn = {
   "早日成为富婆": "Early Rich Woman",
   "今日总览": "Today",
   "工作节奏": "Rhythm",
+  "倒计时": "Countdown",
   "任务看板": "Tasks",
   "OKR 与项目": "OKR & Projects",
   "时间表": "Timetable",
@@ -123,6 +124,7 @@ const zhToEn = {
   "清空今日休整": "Clear Rest",
   "专注计时": "Focus Timer",
   "与任务、工作段一起进入数据看板": "Flows into analytics with tasks and work sessions",
+  "设置目标、奖励和专注历史": "Set targets, rewards, and focus history",
   "未开始": "Not started",
   "专注主题，例如：整理客户问题清单": "Focus topic, e.g. organize customer issues",
   "目标分钟": "Target Minutes",
@@ -138,8 +140,6 @@ const zhToEn = {
   "按日期记录每次完成的专注": "Completed focus sessions by date",
   "行动记录": "Activity Log",
   "开工、收工、休整和外出": "Start, end, rest, and outings",
-  "近 7 天节奏": "Last 7 Days",
-  "工作时长、专注时长与完成任务": "Work time, focus time, and completed tasks",
   "0 个任务": "0 tasks",
   "任务名称": "Task name",
   "今日任务": "Today's Tasks",
@@ -719,7 +719,7 @@ function bindForms() {
 }
 
 function bindActions() {
-  $("#heroStartWork").addEventListener("click", checkIn);
+  $("#heroStartWork")?.addEventListener("click", checkIn);
   $("#btnCheckIn").addEventListener("click", checkIn);
   $("#btnCheckOut").addEventListener("click", checkOut);
   $("#btnLeave").addEventListener("click", addLeave);
@@ -1604,7 +1604,10 @@ function renderHome() {
     .map(taskCard)
     .join("") : empty("今天还没有重点任务");
 
-  $("#todayTimeline").innerHTML = buildTimeline(today).slice(0, 8).map(timelineItem).join("") || empty("今天还没有时间块");
+  const todayTimeline = $("#todayTimeline");
+  if (todayTimeline) {
+    todayTimeline.innerHTML = buildTimeline(today).slice(0, 8).map(timelineItem).join("") || empty("今天还没有时间块");
+  }
 }
 
 function renderRhythm() {
@@ -1646,8 +1649,10 @@ function renderRhythm() {
         ${group.items.map((item) => {
           const icon = item.type === "in" ? "log-in" : item.type === "out" ? "log-out" : "umbrella";
           const title = item.type === "leave" ? t(item.note) : item.type === "in" ? t("开工") : t("收工");
+          const pairClass = item.workPair ? ` work-pair-${item.workPair}` : "";
+          const pairLabel = item.workPair ? `${isEnglish() ? "Work session" : "工作段"} ${item.workPair}` : "";
           return `
-            <div class="stack-item attendance-item">
+            <div class="stack-item attendance-item${pairClass}" ${pairLabel ? `title="${escapeHtml(pairLabel)}"` : ""}>
               <div class="stack-item-head">
                 <div>
                   <h3><i data-lucide="${icon}"></i> ${escapeHtml(title)}</h3>
@@ -1691,7 +1696,46 @@ function groupedAttendanceByDay() {
     if (!groups.has(day)) groups.set(day, []);
     groups.get(day).push(item);
   });
-  return Array.from(groups.entries()).map(([day, items]) => ({ day, items }));
+  return Array.from(groups.entries()).map(([day, items]) => ({ day, items: decorateAttendancePairs(day, items) }));
+}
+
+function decorateAttendancePairs(day, items) {
+  const pairMap = workPairMapForDay(day);
+  return items.map((item) => ({
+    ...item,
+    workPair: pairMap.get(attendancePairKey(item)) || 0
+  }));
+}
+
+function attendancePairKey(item) {
+  return item.id || `${item.type || ""}|${item.at || ""}|${item.note || ""}`;
+}
+
+function workPairMapForDay(day) {
+  const pairMap = new Map();
+  const opened = [];
+  let pairIndex = 0;
+
+  pairedWorkLogsForDay(day).forEach((log) => {
+    if (log.type === "in") {
+      opened.push(log);
+      return;
+    }
+    const closeIndex = findOpenStartIndex(opened, log);
+    if (closeIndex < 0) return;
+    const start = opened.splice(closeIndex, 1)[0];
+    pairIndex += 1;
+    const visualPair = ((pairIndex - 1) % 6) + 1;
+    pairMap.set(attendancePairKey(start), visualPair);
+    pairMap.set(attendancePairKey(log), visualPair);
+  });
+
+  opened.forEach((start) => {
+    pairIndex += 1;
+    pairMap.set(attendancePairKey(start), ((pairIndex - 1) % 6) + 1);
+  });
+
+  return pairMap;
 }
 
 function formatDayTitle(day) {
@@ -2211,9 +2255,6 @@ function renderSettings() {
 }
 
 function renderCharts() {
-  if (activeSection === "rhythm") {
-    drawTrendChart($("#rhythmChart"), 7, { compact: true });
-  }
   if (activeSection === "dashboard") {
     drawTrendChart($("#mainChart"), dashboardRange);
     drawTaskDonut($("#taskDonut"));

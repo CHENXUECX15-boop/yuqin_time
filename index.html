@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>早日成为富婆 | work for tomorrow.</title>
-  <link rel="stylesheet" href="styles.css?v=50">
+  <link rel="stylesheet" href="styles.css?v=56">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-  <script src="app.js?v=50" defer></script>
+  <script src="app.js?v=56" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -26,9 +26,10 @@
 
       <nav class="nav-list">
         <button class="nav-btn is-active" data-section="home"><span>今日总览</span><i data-lucide="cat"></i></button>
-        <button class="nav-btn" data-section="rhythm"><span>工作节奏</span><i data-lucide="paw-print"></i></button>
-        <button class="nav-btn" data-section="tasks"><span>任务看板</span><i data-lucide="list-checks"></i></button>
         <button class="nav-btn" data-section="okr"><span>时间表</span><i data-lucide="calendar-clock"></i></button>
+        <button class="nav-btn" data-section="tasks"><span>任务看板</span><i data-lucide="list-checks"></i></button>
+        <button class="nav-btn" data-section="rhythm"><span>工作节奏</span><i data-lucide="paw-print"></i></button>
+        <button class="nav-btn" data-section="countdown"><span>倒计时</span><i data-lucide="timer"></i></button>
         <button class="nav-btn" data-section="meetings"><span>会议协作</span><i data-lucide="messages-square"></i></button>
         <button class="nav-btn" data-section="review"><span>每日复盘</span><i data-lucide="notebook-pen"></i></button>
         <button class="nav-btn" data-section="dashboard"><span>数据看板</span><i data-lucide="chart-no-axes-combined"></i></button>
@@ -44,19 +45,21 @@
     </aside>
 
     <main class="content">
-      <section id="home" class="view is-visible" aria-labelledby="homeTitle">
-        <div class="top-grid">
-          <article class="panel intro-panel">
-            <div class="intro-copy">
-              <div class="eyebrow">个人主理人版 · 首屏工作台</div>
-              <h1 id="homeTitle">把今天的推进、任务和复盘放在同一屏</h1>
-              <p>适合把自己当老板的人、项目主理人和自由职业者，在一天内完成开工、专注、任务、会议、复盘与数据沉淀。</p>
-              <div class="quick-actions">
-                <button class="primary-btn" id="heroStartWork"><i data-lucide="play"></i><span>开始工作</span></button>
-                <button class="ghost-btn" data-jump="tasks"><i data-lucide="plus"></i><span>新增任务</span></button>
-                <button class="ghost-btn" data-jump="review"><i data-lucide="square-pen"></i><span>写复盘</span></button>
+      <section id="home" class="view is-visible" aria-label="今日总览">
+        <div class="home-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>今日执行</h2>
+                <p>优先级、进行中和到期任务</p>
               </div>
+              <button class="icon-btn" data-jump="tasks" aria-label="打开任务看板" title="打开任务看板"><i data-lucide="arrow-up-right"></i></button>
             </div>
+            <form class="inline-form" id="quickTaskForm">
+              <input id="quickTaskInput" class="field" placeholder="临时任务，例如：补齐周报风险项">
+              <button class="primary-btn" type="submit"><i data-lucide="plus"></i><span>加入</span></button>
+            </form>
+            <div id="homeTaskList" class="stack-list"></div>
           </article>
 
           <article class="panel check-panel">
@@ -85,34 +88,6 @@
               <div><span>会议记录</span><strong id="todayMeetingCount">0</strong></div>
             </div>
           </article>
-        </div>
-
-        <div class="dashboard-grid">
-          <article class="panel">
-            <div class="panel-head">
-              <div>
-                <h2>今日执行</h2>
-                <p>优先级、进行中和到期任务</p>
-              </div>
-              <button class="icon-btn" data-jump="tasks" aria-label="打开任务看板" title="打开任务看板"><i data-lucide="arrow-up-right"></i></button>
-            </div>
-            <form class="inline-form" id="quickTaskForm">
-              <input id="quickTaskInput" class="field" placeholder="临时任务，例如：补齐周报风险项">
-              <button class="primary-btn" type="submit"><i data-lucide="plus"></i><span>加入</span></button>
-            </form>
-            <div id="homeTaskList" class="stack-list"></div>
-          </article>
-
-          <article class="panel">
-            <div class="panel-head">
-              <div>
-                <h2>日程时间块</h2>
-                <p>工作段、会议与专注片段</p>
-              </div>
-              <button class="icon-btn" data-jump="rhythm" aria-label="打开工作节奏" title="打开工作节奏"><i data-lucide="arrow-up-right"></i></button>
-            </div>
-            <div id="todayTimeline" class="timeline"></div>
-          </article>
 
         </div>
       </section>
@@ -130,52 +105,7 @@
         </div>
 
         <div class="dashboard-grid">
-          <article class="panel">
-            <div class="panel-head">
-              <div>
-                <h2>专注计时</h2>
-                <p>与任务、工作段一起进入数据看板</p>
-              </div>
-              <span id="focusState" class="status-pill neutral">未开始</span>
-            </div>
-            <input id="focusTitle" class="field full" placeholder="专注主题，例如：整理客户问题清单">
-            <div class="focus-goal-grid">
-              <label>
-                <span>目标分钟</span>
-                <input id="focusTargetMinutes" class="field" type="number" min="1" max="240" step="5" value="25">
-              </label>
-              <label>
-                <span>达成奖励</span>
-                <input id="focusReward" class="field" placeholder="例如：喝一杯喜欢的咖啡">
-              </label>
-            </div>
-            <div class="timer-face" id="focusTimer">00:00:00</div>
-            <div class="focus-progress">
-              <div class="focus-progress-meta">
-                <span id="focusGoalLabel">目标 25 分钟</span>
-                <strong id="focusGoalProgress">0%</strong>
-              </div>
-              <div class="focus-progress-track"><span id="focusGoalBar"></span></div>
-              <div id="focusRewardPreview" class="focus-reward-preview">达成后给自己一个奖励</div>
-            </div>
-            <div class="button-row">
-              <button class="primary-btn" id="btnFocusStart"><i data-lucide="play"></i><span>开始</span></button>
-              <button class="secondary-btn" id="btnFocusPause"><i data-lucide="pause"></i><span>暂停</span></button>
-              <button class="ghost-btn" id="btnFocusFinish"><i data-lucide="check"></i><span>完成</span></button>
-              <button class="danger-btn" id="btnFocusReset"><i data-lucide="rotate-ccw"></i><span>重置</span></button>
-            </div>
-            <div class="focus-history-block">
-              <div class="subsection-head">
-                <div>
-                  <h3>专注历史</h3>
-                  <p>按日期记录每次完成的专注</p>
-                </div>
-              </div>
-              <div id="focusHistoryList" class="stack-list"></div>
-            </div>
-          </article>
-
-          <article class="panel">
+          <article class="panel span-two">
             <div class="panel-head">
               <div>
                 <h2>行动记录</h2>
@@ -185,16 +115,61 @@
             <div id="attendanceList" class="stack-list"></div>
           </article>
 
-          <article class="panel span-two">
-            <div class="panel-head">
+        </div>
+      </section>
+
+      <section id="countdown" class="view" aria-labelledby="countdownTitle">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Countdown</div>
+            <h1 id="countdownTitle">倒计时</h1>
+          </div>
+        </div>
+
+        <article class="panel countdown-panel">
+          <div class="panel-head">
+            <div>
+              <h2>倒计时</h2>
+              <p>设置目标、奖励和专注历史</p>
+            </div>
+            <span id="focusState" class="status-pill neutral">未开始</span>
+          </div>
+          <input id="focusTitle" class="field full" placeholder="专注主题，例如：整理客户问题清单">
+          <div class="focus-goal-grid">
+            <label>
+              <span>目标分钟</span>
+              <input id="focusTargetMinutes" class="field" type="number" min="1" max="240" step="5" value="25">
+            </label>
+            <label>
+              <span>达成奖励</span>
+              <input id="focusReward" class="field" placeholder="例如：喝一杯喜欢的咖啡">
+            </label>
+          </div>
+          <div class="timer-face" id="focusTimer">00:00:00</div>
+          <div class="focus-progress">
+            <div class="focus-progress-meta">
+              <span id="focusGoalLabel">目标 25 分钟</span>
+              <strong id="focusGoalProgress">0%</strong>
+            </div>
+            <div class="focus-progress-track"><span id="focusGoalBar"></span></div>
+            <div id="focusRewardPreview" class="focus-reward-preview">达成后给自己一个奖励</div>
+          </div>
+          <div class="button-row">
+            <button class="primary-btn" id="btnFocusStart"><i data-lucide="play"></i><span>开始</span></button>
+            <button class="secondary-btn" id="btnFocusPause"><i data-lucide="pause"></i><span>暂停</span></button>
+            <button class="ghost-btn" id="btnFocusFinish"><i data-lucide="check"></i><span>完成</span></button>
+            <button class="danger-btn" id="btnFocusReset"><i data-lucide="rotate-ccw"></i><span>重置</span></button>
+          </div>
+          <div class="focus-history-block">
+            <div class="subsection-head">
               <div>
-                <h2>近 7 天节奏</h2>
-                <p>工作时长、专注时长与完成任务</p>
+                <h3>专注历史</h3>
+                <p>按日期记录每次完成的专注</p>
               </div>
             </div>
-            <canvas id="rhythmChart" height="180"></canvas>
-          </article>
-        </div>
+            <div id="focusHistoryList" class="stack-list"></div>
+          </div>
+        </article>
       </section>
 
       <section id="tasks" class="view" aria-labelledby="tasksTitle">
