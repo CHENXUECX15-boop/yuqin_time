@@ -181,6 +181,10 @@ const zhToEn = {
   "请先完成或重置当前计时": "Finish or reset the current timer first",
   "时间明细": "Time Details",
   "开始、结束、活动和时长": "Start, end, activity, and duration",
+  "历史时间表": "Timetable History",
+  "按日期保留之前记录": "Previous records grouped by date",
+  "暂无历史时间表": "No timetable history yet",
+  "段": "blocks",
   "时间轴": "Timeline",
   "时间": "Time",
   "活动": "Activity",
@@ -462,6 +466,7 @@ function createDefaultState() {
       { id: uid(), name: "流程模板库", role: "共建成员", health: "蓝", risk: "素材分散", next: "收集团队历史文档" }
     ],
     dayPlan: createBlankDayPlan(today),
+    dayPlanHistory: [],
     dayPlanTimer: createDefaultDayPlanTimer(),
     meetings: [
       {
@@ -500,7 +505,7 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return createDefaultState();
     const parsed = JSON.parse(raw);
-    return normalizeLegacyWording(mergeState(createDefaultState(), parsed));
+    return prepareLoadedDayPlans(normalizeLegacyWording(mergeState(createDefaultState(), parsed)));
   } catch (error) {
     console.warn("Failed to load state", error);
     return createDefaultState();
@@ -518,6 +523,7 @@ function mergeState(base, incoming) {
     ...cleanIncoming,
     appearance: mergeAppearance(base.appearance, cleanIncoming.appearance),
     focusTimer: { ...base.focusTimer, ...(cleanIncoming.focusTimer || {}) },
+    dayPlanHistory: normalizeDayPlanHistory(cleanIncoming.dayPlanHistory || base.dayPlanHistory || []),
     dayPlanTimer: { ...createDefaultDayPlanTimer(), ...(cleanIncoming.dayPlanTimer || {}) }
   };
 }
@@ -542,6 +548,8 @@ function normalizeLegacyWording(nextState) {
 
   nextState.attendanceLogs = (nextState.attendanceLogs || []).map((item) => ({
     ...item,
+    id: item.id || uid(),
+    closedInId: item.closedInId || item.closedBy || "",
     note: attendanceLabels[item.note] || item.note
   }));
 
@@ -553,7 +561,67 @@ function normalizeLegacyWording(nextState) {
   return nextState;
 }
 
+function prepareLoadedDayPlans(nextState) {
+  const today = todayKey();
+  nextState.dayPlanHistory = normalizeDayPlanHistory(nextState.dayPlanHistory || []);
+  const currentPlan = cloneDayPlan(nextState.dayPlan || createBlankDayPlan(today));
+
+  if (currentPlan.day && currentPlan.day !== today) {
+    archivePlanIntoState(nextState, currentPlan);
+    const todayPlan = findHistoryPlan(nextState.dayPlanHistory, today);
+    nextState.dayPlan = todayPlan ? cloneDayPlan(todayPlan) : createBlankDayPlan(today);
+  } else {
+    nextState.dayPlan = cloneDayPlan({ ...currentPlan, day: currentPlan.day || today });
+  }
+
+  archivePlanIntoState(nextState, nextState.dayPlan);
+  return nextState;
+}
+
+function cloneDayPlan(plan) {
+  const today = todayKey();
+  const source = plan || createBlankDayPlan(today);
+  return {
+    day: source.day || today,
+    mode: source.mode || "manual",
+    updatedAt: source.updatedAt || iso(new Date()),
+    segments: normalizeDaySegments(source.segments || []).map((segment) => ({ ...segment }))
+  };
+}
+
+function visibleSegmentsForPlan(plan) {
+  return normalizeDaySegments(plan?.segments || []).filter((segment) => segment.className !== "free");
+}
+
+function normalizeDayPlanHistory(history) {
+  const byDay = new Map();
+  (history || []).forEach((plan) => {
+    const snapshot = cloneDayPlan(plan);
+    if (!snapshot.day || visibleSegmentsForPlan(snapshot).length === 0) return;
+    byDay.set(snapshot.day, snapshot);
+  });
+  return Array.from(byDay.values()).sort((a, b) => b.day.localeCompare(a.day));
+}
+
+function findHistoryPlan(history, day) {
+  return (history || []).find((plan) => plan.day === day) || null;
+}
+
+function archivePlanIntoState(targetState, plan) {
+  if (!targetState || !plan?.day) return;
+  const snapshot = cloneDayPlan(plan);
+  const withoutSameDay = normalizeDayPlanHistory(targetState.dayPlanHistory || []).filter((item) => item.day !== snapshot.day);
+  targetState.dayPlanHistory = visibleSegmentsForPlan(snapshot).length
+    ? normalizeDayPlanHistory([...withoutSameDay, snapshot])
+    : withoutSameDay;
+}
+
+function archiveCurrentDayPlan() {
+  archivePlanIntoState(state, state.dayPlan);
+}
+
 function saveState() {
+  archiveCurrentDayPlan();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
@@ -726,7 +794,10 @@ function checkIn() {
 }
 
 function checkOut() {
-  state.attendanceLogs.push({ id: uid(), type: "out", at: iso(new Date()), note: "收工" });
+  const openStarts = unmatchedWorkStarts(todayKey());
+  const openStart = openStarts[openStarts.length - 1];
+  if (!openStart) return toast("今天没有未结束工作段");
+  state.attendanceLogs.push({ id: uid(), type: "out", at: iso(new Date()), note: "收工", closedInId: openStart.id });
   saveAndRender("已记录收工");
 }
 
@@ -736,8 +807,12 @@ function addLeave() {
 }
 
 function closeOpenLogs() {
-  if (openWorkSegmentCount() === 0) return toast("今天没有未结束工作段");
-  state.attendanceLogs.push({ id: uid(), type: "out", at: iso(new Date()), note: "自动关闭" });
+  const openStarts = unmatchedWorkStarts(todayKey());
+  if (openStarts.length === 0) return toast("今天没有未结束工作段");
+  const now = iso(new Date());
+  openStarts.forEach((openStart) => {
+    state.attendanceLogs.push({ id: uid(), type: "out", at: now, note: "自动关闭", closedInId: openStart.id });
+  });
   saveAndRender("已关闭未结束工作段");
 }
 
@@ -1311,7 +1386,7 @@ function importData(event) {
   reader.onload = () => {
     try {
       const imported = JSON.parse(reader.result);
-      state = mergeState(createDefaultState(), imported);
+      state = prepareLoadedDayPlans(mergeState(createDefaultState(), imported));
       saveAndRender("数据已导入");
     } catch (error) {
       toast("导入失败，请检查 JSON 文件");
@@ -1787,8 +1862,41 @@ function renderTimeTable() {
       </div>
     `).join("")}
   `;
+  renderDayPlanHistory();
   renderDayPlanTimer();
   setupDayPlanScroll();
+}
+
+function renderDayPlanHistory() {
+  const root = $("#dayPlanHistory");
+  if (!root) return;
+  const currentDay = state.dayPlan?.day || todayKey();
+  const plans = normalizeDayPlanHistory(state.dayPlanHistory || [])
+    .filter((plan) => plan.day !== currentDay)
+    .slice(0, 12);
+
+  root.innerHTML = plans.length ? plans.map((plan) => {
+    const segments = visibleSegmentsForPlan(plan);
+    const totalSlots = segments.reduce((sum, segment) => sum + Number(segment.slots || 0), 0);
+    return `
+      <section class="day-history-card">
+        <div class="day-history-head">
+          <strong>${escapeHtml(plan.day)}</strong>
+          <span>${escapeHtml(`${segments.length} ${t("段")} · ${formatSlotDuration(totalSlots)}`)}</span>
+        </div>
+        <div class="day-history-list">
+          ${segments.map((segment) => `
+            <div class="day-history-row">
+              <time>${escapeHtml(segmentTimeRange(segment))}</time>
+              <strong>${escapeHtml(t(segment.activity))}</strong>
+              <span><i class="plan-dot plan-${segment.className}"></i>${escapeHtml(t(segment.category))}</span>
+              <span>${escapeHtml(formatSlotDuration(segment.slots))}</span>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }).join("") : empty("暂无历史时间表");
 }
 
 function setupDayPlanScroll() {
@@ -2424,33 +2532,57 @@ function recentAttendance() {
 }
 
 function workMinutesForDay(day) {
-  const logs = state.attendanceLogs
-    .filter((item) => dateKey(new Date(item.at)) === day && (item.type === "in" || item.type === "out"))
-    .sort((a, b) => new Date(a.at) - new Date(b.at));
-  let opened = null;
+  const opened = [];
   let total = 0;
-  logs.forEach((log) => {
-    if (log.type === "in") opened = new Date(log.at);
-    if (log.type === "out" && opened) {
-      total += Math.max(0, new Date(log.at) - opened);
-      opened = null;
+
+  pairedWorkLogsForDay(day).forEach((log) => {
+    if (log.type === "in") {
+      opened.push(log);
+      return;
     }
+    const closeIndex = findOpenStartIndex(opened, log);
+    if (closeIndex < 0) return;
+    const start = opened.splice(closeIndex, 1)[0];
+    total += Math.max(0, new Date(log.at) - new Date(start.at));
   });
-  if (opened && day === todayKey()) total += Math.max(0, Date.now() - opened.getTime());
+  if (day === todayKey()) {
+    opened.forEach((start) => {
+      total += Math.max(0, Date.now() - new Date(start.at).getTime());
+    });
+  }
   return Math.round(total / 60000);
 }
 
 function openWorkSegmentCount() {
-  const today = todayKey();
-  const logs = state.attendanceLogs
-    .filter((item) => dateKey(new Date(item.at)) === today && (item.type === "in" || item.type === "out"))
+  return unmatchedWorkStarts(todayKey()).length;
+}
+
+function pairedWorkLogsForDay(day) {
+  return state.attendanceLogs
+    .filter((item) => dateKey(new Date(item.at)) === day && (item.type === "in" || item.type === "out"))
     .sort((a, b) => new Date(a.at) - new Date(b.at));
-  let open = 0;
-  logs.forEach((log) => {
-    if (log.type === "in") open += 1;
-    if (log.type === "out" && open > 0) open -= 1;
+}
+
+function findOpenStartIndex(opened, outLog) {
+  if (!opened.length) return -1;
+  if (outLog.closedInId) {
+    const exactIndex = opened.findIndex((item) => item.id === outLog.closedInId);
+    if (exactIndex >= 0) return exactIndex;
+  }
+  return opened.length - 1;
+}
+
+function unmatchedWorkStarts(day) {
+  const opened = [];
+  pairedWorkLogsForDay(day).forEach((log) => {
+    if (log.type === "in") {
+      opened.push(log);
+      return;
+    }
+    const closeIndex = findOpenStartIndex(opened, log);
+    if (closeIndex >= 0) opened.splice(closeIndex, 1);
   });
-  return open;
+  return opened;
 }
 
 function focusMinutesForDay(day) {

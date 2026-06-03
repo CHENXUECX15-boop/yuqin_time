@@ -1539,9 +1539,68 @@ h3 {
   margin: 2px 0 0;
 }
 
+.day-plan-history-head {
+  margin: 12px 0 0;
+}
+
 .day-plan-details {
   display: grid;
   gap: 8px;
+}
+
+.day-plan-history {
+  display: grid;
+  gap: 10px;
+}
+
+.day-history-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.day-history-head,
+.day-history-row {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) minmax(120px, 0.6fr) 96px;
+  gap: 12px;
+  align-items: center;
+}
+
+.day-history-head {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.day-history-head strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.day-history-list {
+  display: grid;
+  gap: 6px;
+}
+
+.day-history-row {
+  min-height: 38px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(105, 115, 134, 0.14);
+}
+
+.day-history-row time,
+.day-history-row strong {
+  font-weight: 850;
+}
+
+.day-history-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .time-detail-row {
@@ -2097,7 +2156,9 @@ canvas {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .time-detail-row {
+  .time-detail-row,
+  .day-history-head,
+  .day-history-row {
     grid-template-columns: 120px minmax(0, 1fr);
   }
 
@@ -2146,6 +2207,8 @@ canvas {
   .theme-grid,
   .language-grid,
   .day-plan-summary,
+  .day-history-head,
+  .day-history-row,
   .time-detail-row,
   .table-row {
     grid-template-columns: 1fr;
