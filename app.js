@@ -42,9 +42,16 @@ const DAY_PLAN_SLOT_MINUTES = 10;
 const LEGACY_DAY_PLAN_SLOT_MINUTES = 30;
 const DAY_PLAN_SLOTS_PER_HOUR = 60 / DAY_PLAN_SLOT_MINUTES;
 const DAY_PLAN_TOTAL_SLOTS = 24 * DAY_PLAN_SLOTS_PER_HOUR;
+const DAY_PLAN_ROW_HOURS = 8;
+const DAY_PLAN_ROW_SLOTS = DAY_PLAN_ROW_HOURS * DAY_PLAN_SLOTS_PER_HOUR;
+const DAY_PLAN_ROW_RANGES = Array.from({ length: 3 }, (_, index) => ({
+  index,
+  startSlot: index * DAY_PLAN_ROW_SLOTS,
+  endSlot: (index + 1) * DAY_PLAN_ROW_SLOTS
+}));
 const DEFAULT_DAY_PLAN_START_SLOT = 9 * DAY_PLAN_SLOTS_PER_HOUR;
 const DEFAULT_DAY_PLAN_END_SLOT = 10 * DAY_PLAN_SLOTS_PER_HOUR;
-const DAY_PLAN_AXIS_HOURS = Array.from({ length: 13 }, (_, index) => index * 2);
+const DAY_PLAN_ROW_AXIS_HOURS = Array.from({ length: DAY_PLAN_ROW_HOURS / 2 + 1 }, (_, index) => index * 2);
 
 const DEFAULT_THEME = "mono-black";
 
@@ -1949,7 +1956,6 @@ function renderTimeTable() {
   renderActivityNameHistory();
   const segments = plan.segments || [];
   const visibleSegments = segments.filter((segment) => segment.className !== "free");
-  const dayPlanLayout = layoutDayPlanSegments(visibleSegments);
   const timer = ensureDayPlanTimer();
   const categories = uniqueCategories(visibleSegments);
 
@@ -1964,30 +1970,8 @@ function renderTimeTable() {
       <span>${escapeHtml(t("时间轴"))}</span>
       <strong>${escapeHtml(plan.day || todayKey())}</strong>
     </div>
-    <div class="day-plan-scroll" data-day-plan-scroll>
-      <div class="day-plan-track" data-day-plan-track>
-        <div class="day-plan-axis">
-          ${DAY_PLAN_AXIS_HOURS.map((hour) => `
-            <span style="grid-column:${hour * DAY_PLAN_SLOTS_PER_HOUR + 1}">${hour === 24 ? "24:00" : `${String(hour).padStart(2, "0")}:00`}</span>
-          `).join("")}
-        </div>
-        <div class="day-plan-strip" role="img" aria-label="${escapeHtml(t("24 小时时间表"))}" style="--day-plan-lanes:${Math.max(1, dayPlanLayout.lanes)}">
-          ${dayPlanLayout.segments.map((segment) => `
-            <button
-              type="button"
-              class="day-plan-block plan-${segment.className} ${timer.segmentId === segment.id ? "is-timing" : ""} ${Number(segment.trackedMs || 0) > 0 ? "has-timed" : ""}"
-              data-day-segment-start="${segment.id}"
-              style="grid-column:${segment.startSlot + 1} / span ${segment.slots}; grid-row:${segment.lane + 1}"
-              title="${escapeHtml(segmentTitle(segment))}"
-            >
-              <strong>${escapeHtml(t(segment.activity))}</strong>
-              <span>${escapeHtml(segmentTimeRange(segment))}</span>
-              ${timer.segmentId === segment.id ? `<em data-day-timer-live>${escapeHtml(`${timer.running ? t("计时中") : t("本次")} ${formatDuration(currentDayPlanTimerMs(timer))}`)}</em>` : ""}
-              ${timer.segmentId !== segment.id && Number(segment.trackedMs || 0) > 0 ? `<em>${escapeHtml(`${t("累计计时")} ${formatDuration(segment.trackedMs)}`)}</em>` : ""}
-            </button>
-          `).join("")}
-        </div>
-      </div>
+    <div class="day-plan-stack">
+      ${DAY_PLAN_ROW_RANGES.map((range) => dayPlanRow(range, visibleSegments, timer)).join("")}
     </div>
   `;
 
@@ -2019,6 +2003,56 @@ function renderTimeTable() {
   renderDayPlanHistory();
   renderDayPlanTimer();
   setupDayPlanScroll();
+}
+
+function dayPlanRow(range, visibleSegments, timer) {
+  const rowSegments = visibleSegments.reduce((items, segment) => {
+    const startSlot = Number(segment.startSlot || 0);
+    const endSlot = startSlot + Number(segment.slots || 0);
+    const clippedStart = Math.max(startSlot, range.startSlot);
+    const clippedEnd = Math.min(endSlot, range.endSlot);
+    if (clippedEnd <= clippedStart) return items;
+    items.push({
+      ...segment,
+      gridStartSlot: clippedStart - range.startSlot,
+      gridSlots: clippedEnd - clippedStart
+    });
+    return items;
+  }, []);
+  const layout = layoutDayPlanSegments(rowSegments);
+  return `
+    <section class="day-plan-row">
+      <div class="day-plan-row-head">
+        <strong>${escapeHtml(`${formatSlotClock(range.startSlot)}-${formatSlotClock(range.endSlot)}`)}</strong>
+      </div>
+      <div class="day-plan-axis">
+        ${DAY_PLAN_ROW_AXIS_HOURS.map((hourOffset) => {
+          const absoluteHour = range.index * DAY_PLAN_ROW_HOURS + hourOffset;
+          return `
+            <span style="grid-column:${hourOffset * DAY_PLAN_SLOTS_PER_HOUR + 1}">
+              ${absoluteHour === 24 ? "24:00" : `${String(absoluteHour).padStart(2, "0")}:00`}
+            </span>
+          `;
+        }).join("")}
+      </div>
+      <div class="day-plan-strip" role="img" aria-label="${escapeHtml(`${t("24 小时时间表")} ${formatSlotClock(range.startSlot)}-${formatSlotClock(range.endSlot)}`)}" style="--day-plan-lanes:${Math.max(1, layout.lanes)}">
+        ${layout.segments.map((segment) => `
+          <button
+            type="button"
+            class="day-plan-block plan-${segment.className} ${timer.segmentId === segment.id ? "is-timing" : ""} ${Number(segment.trackedMs || 0) > 0 ? "has-timed" : ""}"
+            data-day-segment-start="${segment.id}"
+            style="grid-column:${segment.gridStartSlot + 1} / span ${segment.gridSlots}; grid-row:${segment.lane + 1}"
+            title="${escapeHtml(segmentTitle(segment))}"
+          >
+            <strong>${escapeHtml(t(segment.activity))}</strong>
+            <span>${escapeHtml(segmentTimeRange(segment))}</span>
+            ${timer.segmentId === segment.id ? `<em data-day-timer-live>${escapeHtml(`${timer.running ? t("计时中") : t("本次")} ${formatDuration(currentDayPlanTimerMs(timer))}`)}</em>` : ""}
+            ${timer.segmentId !== segment.id && Number(segment.trackedMs || 0) > 0 ? `<em>${escapeHtml(`${t("累计计时")} ${formatDuration(segment.trackedMs)}`)}</em>` : ""}
+          </button>
+        `).join("")}
+      </div>
+    </section>
+  `;
 }
 
 function renderActivityNameHistory() {
@@ -2061,20 +2095,7 @@ function renderDayPlanHistory() {
 }
 
 function setupDayPlanScroll() {
-  const scroll = $("[data-day-plan-scroll]");
-  const track = $("[data-day-plan-track]");
-  if (!scroll || !track) return;
-  if (scroll.clientWidth < 20) return;
-  const viewportWidth = scroll.clientWidth;
-  const trackWidth = Math.max(1800, viewportWidth * 3);
-  track.style.width = `${trackWidth}px`;
-  const maxScroll = Math.max(0, trackWidth - viewportWidth);
-  const coreHoursStart = (trackWidth / DAY_PLAN_TOTAL_SLOTS) * DEFAULT_DAY_PLAN_START_SLOT;
-  const nextScroll = dayPlanScrollLeft === null ? coreHoursStart : dayPlanScrollLeft;
-  scroll.scrollLeft = Math.max(0, Math.min(maxScroll, nextScroll));
-  scroll.addEventListener("scroll", () => {
-    dayPlanScrollLeft = scroll.scrollLeft;
-  }, { passive: true });
+  // The 24-hour board is split into three fixed 8-hour rows, so no horizontal scroll setup is needed.
 }
 
 function renderDayPlanTimer() {
@@ -2202,10 +2223,17 @@ function layoutDayPlanSegments(segments) {
   const lanes = [];
   const laidOut = segments
     .slice()
-    .sort((a, b) => a.startSlot - b.startSlot || (a.startSlot + a.slots) - (b.startSlot + b.slots))
+    .sort((a, b) => {
+      const aStart = Number(a.gridStartSlot ?? a.startSlot ?? 0);
+      const bStart = Number(b.gridStartSlot ?? b.startSlot ?? 0);
+      const aEnd = aStart + Number(a.gridSlots ?? a.slots ?? 0);
+      const bEnd = bStart + Number(b.gridSlots ?? b.slots ?? 0);
+      return aStart - bStart || aEnd - bEnd;
+    })
     .map((segment) => {
-      const start = Number(segment.startSlot || 0);
-      const end = start + Number(segment.slots || 0);
+      const start = Number(segment.gridStartSlot ?? segment.startSlot ?? 0);
+      const slots = Number(segment.gridSlots ?? segment.slots ?? 0);
+      const end = start + slots;
       let lane = lanes.findIndex((laneEnd) => laneEnd <= start);
       if (lane < 0) {
         lane = lanes.length;
@@ -2213,7 +2241,7 @@ function layoutDayPlanSegments(segments) {
       } else {
         lanes[lane] = end;
       }
-      return { ...segment, lane };
+      return { ...segment, gridStartSlot: start, gridSlots: slots, lane };
     });
   return { segments: laidOut, lanes: lanes.length || 1 };
 }
