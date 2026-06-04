@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>早日成为富婆 | work for tomorrow.</title>
-  <link rel="stylesheet" href="styles.css?v=63">
+  <link rel="stylesheet" href="styles.css?v=69">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-  <script src="app.js?v=63" defer></script>
+  <script src="app.js?v=69" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -51,7 +51,7 @@
             <div class="panel-head">
               <div>
                 <h2>今日执行</h2>
-                <p>优先级、进行中和到期任务</p>
+                <p>任务看板中的所有未完成任务</p>
               </div>
               <button class="icon-btn" data-jump="tasks" aria-label="打开任务看板" title="打开任务看板"><i data-lucide="arrow-up-right"></i></button>
             </div>
@@ -129,6 +129,7 @@
 
         <article class="panel">
           <form id="taskForm" class="task-form">
+            <input id="taskEditId" type="hidden">
             <input id="taskTitle" class="field" placeholder="任务名称">
             <select id="taskPriority" class="field">
               <option value="高">高优先级</option>
@@ -137,7 +138,8 @@
             </select>
             <input id="taskProject" class="field" placeholder="关联项目">
             <input id="taskDue" class="field" type="date">
-            <button class="primary-btn" type="submit"><i data-lucide="plus"></i><span>新增任务</span></button>
+            <button class="primary-btn" id="btnSaveTask" type="submit"><i data-lucide="plus"></i><span id="taskSubmitLabel">新增任务</span></button>
+            <button class="ghost-btn" id="btnCancelTaskEdit" type="button" hidden><i data-lucide="x"></i><span>取消编辑</span></button>
           </form>
         </article>
 
@@ -149,7 +151,7 @@
           <div>
             <div class="eyebrow">TIME TABLE</div>
             <h1 id="okrTitle">24 小时时间表</h1>
-            <p>最小刻度 0.5 小时，可以手动编辑一天的安排。</p>
+            <p>最小刻度 10 分钟，可以手动编辑一天的安排。</p>
           </div>
         </div>
 
@@ -174,14 +176,15 @@
             <div id="dayPlanLegend" class="day-plan-legend"></div>
             <form id="dayPlanEditor" class="day-plan-editor">
               <input id="daySegmentId" type="hidden">
-              <input id="daySegmentTitle" class="field" placeholder="活动名称">
+              <input id="daySegmentTitle" class="field" placeholder="活动名称" list="daySegmentTitleHistory">
+              <datalist id="daySegmentTitleHistory"></datalist>
               <select id="daySegmentCategory" class="field" aria-label="选择类别"></select>
               <select id="daySegmentStart" class="field" aria-label="开始时间"></select>
               <select id="daySegmentEnd" class="field" aria-label="结束时间"></select>
               <button class="primary-btn" id="btnSaveDaySegment" type="submit"><i data-lucide="save"></i><span>保存时间段</span></button>
               <button class="ghost-btn" id="btnCancelDaySegment" type="button" hidden><i data-lucide="x"></i><span>取消编辑</span></button>
             </form>
-            <p class="form-hint">用户可以新增、编辑、删除任意 0.5 小时倍数的时间段。重叠部分会自动分为上下行显示。</p>
+            <p class="form-hint">用户可以新增、编辑、删除任意 10 分钟倍数的时间段。重叠部分会自动分为上下行显示。</p>
             <div id="dayPlanBoard" class="day-plan-board" aria-label="24 小时时间表"></div>
             <div class="panel-head compact day-plan-detail-head">
               <div>

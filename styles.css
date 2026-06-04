@@ -873,7 +873,7 @@ h3 {
 
 .task-form {
   display: grid;
-  grid-template-columns: minmax(240px, 1.4fr) 150px minmax(180px, 0.9fr) 150px auto;
+  grid-template-columns: minmax(220px, 1.35fr) 150px minmax(160px, 0.85fr) 150px auto auto;
   gap: 10px;
 }
 
@@ -1540,7 +1540,7 @@ h3 {
 .day-plan-axis,
 .day-plan-strip {
   display: grid;
-  grid-template-columns: repeat(48, minmax(0, 1fr));
+  grid-template-columns: repeat(144, minmax(0, 1fr));
   width: 100%;
 }
 
@@ -1561,7 +1561,7 @@ h3 {
   grid-template-rows: repeat(var(--day-plan-lanes, 1), minmax(68px, auto));
   row-gap: 6px;
   background:
-    repeating-linear-gradient(to right, transparent 0, transparent calc((100% / 48) - 1px), rgba(105, 115, 134, 0.18) calc((100% / 48) - 1px), rgba(105, 115, 134, 0.18) calc(100% / 48)),
+    repeating-linear-gradient(to right, transparent 0, transparent calc((100% / 144) - 1px), rgba(105, 115, 134, 0.18) calc((100% / 144) - 1px), rgba(105, 115, 134, 0.18) calc(100% / 144)),
     linear-gradient(to bottom, rgba(105, 115, 134, 0.08), rgba(105, 115, 134, 0.08));
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -2262,6 +2262,10 @@ canvas {
     grid-column: span 2;
   }
 
+  .task-form .ghost-btn {
+    grid-column: span 2;
+  }
+
   .module-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -2308,6 +2312,10 @@ canvas {
   }
 
   .task-form .primary-btn {
+    grid-column: auto;
+  }
+
+  .task-form .ghost-btn {
     grid-column: auto;
   }
 

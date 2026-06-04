@@ -38,6 +38,14 @@ const dayPlanCategoryOptions = [
   ...dayActivityPools.map(({ category, className }) => ({ category, className }))
 ];
 
+const DAY_PLAN_SLOT_MINUTES = 10;
+const LEGACY_DAY_PLAN_SLOT_MINUTES = 30;
+const DAY_PLAN_SLOTS_PER_HOUR = 60 / DAY_PLAN_SLOT_MINUTES;
+const DAY_PLAN_TOTAL_SLOTS = 24 * DAY_PLAN_SLOTS_PER_HOUR;
+const DEFAULT_DAY_PLAN_START_SLOT = 9 * DAY_PLAN_SLOTS_PER_HOUR;
+const DEFAULT_DAY_PLAN_END_SLOT = 10 * DAY_PLAN_SLOTS_PER_HOUR;
+const DAY_PLAN_AXIS_HOURS = Array.from({ length: 13 }, (_, index) => index * 2);
+
 const DEFAULT_THEME = "mono-black";
 
 const themeOptions = [
@@ -109,6 +117,7 @@ const zhToEn = {
   "会议记录": "Meeting Logs",
   "今日执行": "Execution",
   "优先级、进行中和到期任务": "Priorities, active work, and due tasks",
+  "任务看板中的所有未完成任务": "All unfinished tasks from the task board",
   "打开任务看板": "Open tasks",
   "临时任务，例如：补齐周报风险项": "Quick task, e.g. add weekly report risks",
   "加入": "Add",
@@ -149,14 +158,14 @@ const zhToEn = {
   "低优先级": "Low priority",
   "关联项目": "Project",
   "24 小时时间表": "24-Hour Timetable",
-  "最小刻度 0.5 小时，可以手动编辑一天的安排。": "Minimum step is 0.5 hour. Edit a full day manually.",
+  "最小刻度 10 分钟，可以手动编辑一天的安排。": "Minimum step is 10 minutes. Edit a full day manually.",
   "活动名称": "Activity name",
   "选择类别": "Choose category",
   "开始时间": "Start time",
   "结束时间": "End time",
   "保存时间段": "Save Time Block",
   "取消编辑": "Cancel Edit",
-  "用户可以新增、编辑、删除任意 0.5 小时倍数的时间段。重叠部分会自动分为上下行显示。": "Add, edit, or delete time blocks in 0.5-hour increments. Overlaps are shown on separate rows.",
+  "用户可以新增、编辑、删除任意 10 分钟倍数的时间段。重叠部分会自动分为上下行显示。": "Add, edit, or delete time blocks in 10-minute increments. Overlaps are shown on separate rows.",
   "点击时间块或明细里的编辑按钮即可修改。": "Click a block or the edit button in details to modify it.",
   "正计时": "Count Up",
   "未选择时间段": "No time block selected",
@@ -292,6 +301,7 @@ const zhToEn = {
   "暂无复盘记录": "No review records",
   "暂无行动记录": "No activity records",
   "今天还没有重点任务": "No key tasks today",
+  "暂无未完成任务": "No unfinished tasks",
   "今天还没有时间块": "No timeline blocks today",
   "完成一次专注后会出现在这里": "Completed focus sessions will appear here",
   "待办": "To Do",
@@ -341,6 +351,7 @@ const zhToEn = {
   "常用联系人已删除": "Frequent contact deleted",
   "请先填写任务名称": "Please enter a task name",
   "任务已新增": "Task added",
+  "任务已更新": "Task updated",
   "任务已删除": "Task deleted",
   "任务状态已更新": "Task status updated",
   "已加入今日任务": "Added to today's tasks",
@@ -465,6 +476,7 @@ function createDefaultState() {
       { id: uid(), name: "数据看板升级", role: "需求接口人", health: "绿", risk: "暂无", next: "补齐字段口径" },
       { id: uid(), name: "流程模板库", role: "共建成员", health: "蓝", risk: "素材分散", next: "收集团队历史文档" }
     ],
+    activityHistory: [],
     dayPlan: createBlankDayPlan(today),
     dayPlanHistory: [],
     dayPlanTimer: createDefaultDayPlanTimer(),
@@ -523,6 +535,7 @@ function mergeState(base, incoming) {
     ...cleanIncoming,
     appearance: mergeAppearance(base.appearance, cleanIncoming.appearance),
     focusTimer: { ...base.focusTimer, ...(cleanIncoming.focusTimer || {}) },
+    activityHistory: normalizeActivityHistory(cleanIncoming.activityHistory || base.activityHistory || []),
     dayPlanHistory: normalizeDayPlanHistory(cleanIncoming.dayPlanHistory || base.dayPlanHistory || []),
     dayPlanTimer: { ...createDefaultDayPlanTimer(), ...(cleanIncoming.dayPlanTimer || {}) }
   };
@@ -575,22 +588,64 @@ function prepareLoadedDayPlans(nextState) {
   }
 
   archivePlanIntoState(nextState, nextState.dayPlan);
+  nextState.activityHistory = collectActivityHistory(nextState);
   return nextState;
+}
+
+function normalizeActivityHistory(history) {
+  const seen = new Set();
+  return (history || [])
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .filter((item) => {
+      const key = item.toLocaleLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 80);
+}
+
+function collectActivityHistory(targetState = state) {
+  const names = [];
+  [targetState.dayPlan, ...(targetState.dayPlanHistory || [])].forEach((plan) => {
+    visibleSegmentsForPlan(plan).forEach((segment) => names.push(segment.activity));
+  });
+  return normalizeActivityHistory([...(targetState.activityHistory || []), ...names]);
+}
+
+function rememberActivityName(activity) {
+  const clean = String(activity || "").trim();
+  if (!clean) return;
+  state.activityHistory = normalizeActivityHistory([clean, ...(state.activityHistory || [])]);
 }
 
 function cloneDayPlan(plan) {
   const today = todayKey();
   const source = plan || createBlankDayPlan(today);
+  const sourceSlotMinutes = inferDayPlanSlotMinutes(source);
   return {
     day: source.day || today,
     mode: source.mode || "manual",
     updatedAt: source.updatedAt || iso(new Date()),
-    segments: normalizeDaySegments(source.segments || []).map((segment) => ({ ...segment }))
+    slotMinutes: DAY_PLAN_SLOT_MINUTES,
+    segments: normalizeDaySegments(source.segments || [], sourceSlotMinutes).map((segment) => ({ ...segment }))
   };
 }
 
 function visibleSegmentsForPlan(plan) {
-  return normalizeDaySegments(plan?.segments || []).filter((segment) => segment.className !== "free");
+  return normalizeDaySegments(plan?.segments || [], inferDayPlanSlotMinutes(plan)).filter((segment) => segment.className !== "free");
+}
+
+function inferDayPlanSlotMinutes(plan) {
+  const explicit = Number(plan?.slotMinutes || 0);
+  if (explicit > 0) return explicit;
+  const maxEnd = Math.max(0, ...(plan?.segments || []).map((segment) => Number(segment.startSlot || 0) + Number(segment.slots || 0)));
+  return maxEnd <= 48 ? LEGACY_DAY_PLAN_SLOT_MINUTES : DAY_PLAN_SLOT_MINUTES;
+}
+
+function convertSlotValue(value, fromSlotMinutes = DAY_PLAN_SLOT_MINUTES) {
+  return Math.round((Number(value || 0) * fromSlotMinutes) / DAY_PLAN_SLOT_MINUTES);
 }
 
 function normalizeDayPlanHistory(history) {
@@ -641,15 +696,16 @@ function bindForms() {
   $("#quickTaskForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const input = $("#quickTaskInput");
-    addTask(input.value, "中", "", todayKey());
-    input.value = "";
+    if (addTask(input.value, "中", "", todayKey())) input.value = "";
   });
 
   $("#taskForm").addEventListener("submit", (event) => {
     event.preventDefault();
-    addTask($("#taskTitle").value, $("#taskPriority").value, $("#taskProject").value, $("#taskDue").value);
-    $("#taskForm").reset();
-    $("#taskPriority").value = "中";
+    const editId = $("#taskEditId").value;
+    const saved = editId
+      ? updateTask(editId, $("#taskTitle").value, $("#taskPriority").value, $("#taskProject").value, $("#taskDue").value)
+      : addTask($("#taskTitle").value, $("#taskPriority").value, $("#taskProject").value, $("#taskDue").value);
+    if (saved) resetTaskEditor();
   });
 
   $("#meetingForm").addEventListener("submit", (event) => {
@@ -733,6 +789,7 @@ function bindActions() {
   $$(".mood-btn").forEach((button) => {
     button.addEventListener("click", () => setReviewMood(Number(button.dataset.reviewScore)));
   });
+  $("#btnCancelTaskEdit").addEventListener("click", resetTaskEditor);
   $("#btnCancelReviewEdit").addEventListener("click", resetReviewEditor);
   $("#btnAddMeetingContact").addEventListener("click", addMeetingContact);
   $("#meetingContactList").addEventListener("click", handleMeetingContactAction);
@@ -1013,7 +1070,10 @@ function handleReviewListAction(event) {
 
 function addTask(title, priority = "中", project = "", due = "") {
   const cleanTitle = title.trim();
-  if (!cleanTitle) return toast("请先填写任务名称");
+  if (!cleanTitle) {
+    toast("请先填写任务名称");
+    return false;
+  }
   state.tasks.unshift({
     id: uid(),
     title: cleanTitle,
@@ -1025,6 +1085,59 @@ function addTask(title, priority = "中", project = "", due = "") {
     completedAt: null
   });
   saveAndRender("任务已新增");
+  return true;
+}
+
+function updateTask(id, title, priority = "中", project = "", due = "") {
+  const task = state.tasks.find((item) => item.id === id);
+  const cleanTitle = title.trim();
+  if (!task) {
+    resetTaskEditor();
+    return false;
+  }
+  if (!cleanTitle) {
+    toast("请先填写任务名称");
+    return false;
+  }
+  task.title = cleanTitle;
+  task.priority = priority;
+  task.project = project.trim();
+  task.due = due || "";
+  saveAndRender("任务已更新");
+  return true;
+}
+
+function editTask(task) {
+  showSection("tasks");
+  $("#taskEditId").value = task.id;
+  $("#taskTitle").value = task.title || "";
+  $("#taskPriority").value = task.priority || "中";
+  $("#taskProject").value = task.project || "";
+  $("#taskDue").value = task.due || "";
+  setTaskEditorMode(true);
+  $("#taskForm").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  $("#taskTitle").focus();
+  toast("已进入编辑模式");
+}
+
+function resetTaskEditor() {
+  const form = $("#taskForm");
+  if (!form) return;
+  form.reset();
+  $("#taskEditId").value = "";
+  $("#taskPriority").value = "中";
+  setTaskEditorMode(false);
+}
+
+function setTaskEditorMode(isEditing) {
+  const button = $("#btnSaveTask");
+  const cancelButton = $("#btnCancelTaskEdit");
+  if (!button || !cancelButton) return;
+  const label = isEditing ? t("保存修改") : t("新增任务");
+  const icon = isEditing ? "save" : "plus";
+  button.innerHTML = `<i data-lucide="${icon}"></i><span id="taskSubmitLabel">${escapeHtml(label)}</span>`;
+  cancelButton.hidden = !isEditing;
+  renderIcons();
 }
 
 function handleTaskAction(event) {
@@ -1034,6 +1147,10 @@ function handleTaskAction(event) {
   if (!task) return;
   const action = button.dataset.taskAction;
 
+  if (action === "edit") {
+    editTask(task);
+    return;
+  }
   if (action === "prev") {
     task.status = task.status === "done" ? "doing" : "todo";
     task.completedAt = null;
@@ -1051,6 +1168,7 @@ function handleTaskAction(event) {
   }
   if (action === "delete") {
     state.tasks = state.tasks.filter((item) => item.id !== task.id);
+    if ($("#taskEditId")?.value === task.id) resetTaskEditor();
   }
   saveAndRender(action === "delete" ? "任务已删除" : action === "today" ? "已加入今日任务" : "任务状态已更新");
 }
@@ -1075,6 +1193,7 @@ function saveDaySegment(event) {
     activity,
     trackedMs: Math.max(0, Number(existingSegment?.trackedMs || 0))
   }, id || null);
+  rememberActivityName(activity);
   resetDayPlanEditor(false);
   saveAndRender("时间段已保存");
 }
@@ -1114,7 +1233,7 @@ function editDaySegment(id) {
 function resetDayPlanEditor(shouldRenderIcons = true) {
   $("#daySegmentId").value = "";
   $("#daySegmentTitle").value = "";
-  renderDayPlanEditorOptions("work", 18, 20);
+  renderDayPlanEditorOptions("work", DEFAULT_DAY_PLAN_START_SLOT, DEFAULT_DAY_PLAN_END_SLOT);
   $("#btnCancelDaySegment").hidden = true;
   if (shouldRenderIcons) renderIcons();
 }
@@ -1163,14 +1282,14 @@ function slotFromDate(dateValue = new Date()) {
   const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
   if (Number.isNaN(date.getTime())) return slotFromDate(new Date());
   const minutes = date.getHours() * 60 + date.getMinutes();
-  return Math.max(0, Math.min(47, Math.floor(minutes / 30)));
+  return Math.max(0, Math.min(DAY_PLAN_TOTAL_SLOTS - 1, Math.floor(minutes / DAY_PLAN_SLOT_MINUTES)));
 }
 
 function insertTimerSegmentFromElapsed(timer, elapsedMs) {
   const category = categoryByClassName(timer.categoryClass || "work");
-  const slots = Math.max(1, Math.min(48, Math.ceil(elapsedMs / (30 * 60 * 1000))));
+  const slots = Math.max(1, Math.min(DAY_PLAN_TOTAL_SLOTS, Math.ceil(elapsedMs / (DAY_PLAN_SLOT_MINUTES * 60 * 1000))));
   let startSlot = slotFromDate(timer.firstStartedAt || timer.startedAt || new Date());
-  if (startSlot + slots > 48) startSlot = Math.max(0, 48 - slots);
+  if (startSlot + slots > DAY_PLAN_TOTAL_SLOTS) startSlot = Math.max(0, DAY_PLAN_TOTAL_SLOTS - slots);
   insertDaySegment({
     id: uid(),
     startSlot,
@@ -1180,6 +1299,7 @@ function insertTimerSegmentFromElapsed(timer, elapsedMs) {
     activity: timer.activity.trim(),
     trackedMs: elapsedMs
   }, null);
+  rememberActivityName(timer.activity);
 }
 
 function startDayPlanTimer(segmentId) {
@@ -1253,6 +1373,7 @@ function finishDayPlanTimer() {
   if (segment) {
     segment.trackedMs = Math.max(0, Number(segment.trackedMs || 0)) + elapsedMs;
     ensureDayPlan().updatedAt = iso(new Date());
+    rememberActivityName(segment.activity);
     Object.assign(timer, createDefaultDayPlanTimer());
     saveAndRender("计时已写入时间表");
     return;
@@ -1563,10 +1684,10 @@ function renderAll() {
 
 function renderHome() {
   const today = todayKey();
-  const todayTasks = state.tasks.filter((task) => task.due === today || task.status === "doing" || task.priority === "高");
+  const unfinishedTasks = state.tasks.filter((task) => task.status !== "done");
   const doneToday = state.tasks.filter((task) => task.completedAt && dateKey(new Date(task.completedAt)) === today).length;
-  const focus = focusMinutesForDay(today);
   const workMinutes = workMinutesForDay(today);
+  const focus = timetableMinutesForDay(today);
   const meetings = state.meetings.filter((item) => dateKey(new Date(item.when)) === today).length;
   const openCount = openWorkSegmentCount();
   const totalTasks = state.tasks.length;
@@ -1584,12 +1705,11 @@ function renderHome() {
   $("#openLogBadge").textContent = openCount > 0 ? `${t("进行中")} ${openCount}` : t("待开工");
   $("#openLogBadge").className = `status-pill ${openCount > 0 ? "good" : "neutral"}`;
 
-  $("#homeTaskList").innerHTML = todayTasks.length ? todayTasks
+  $("#homeTaskList").innerHTML = unfinishedTasks.length ? unfinishedTasks
     .slice()
     .sort(sortTasks)
-    .slice(0, 6)
     .map(taskCard)
-    .join("") : empty("今天还没有重点任务");
+    .join("") : empty("暂无未完成任务");
 
   const todayTimeline = $("#todayTimeline");
   if (todayTimeline) {
@@ -1816,6 +1936,7 @@ function taskCard(task, options = {}) {
         ${canPrev ? `<button data-task-action="prev" data-id="${task.id}">${isEnglish() ? "Previous" : "前一列"}</button>` : ""}
         ${canNext ? `<button data-task-action="next" data-id="${task.id}">${isEnglish() ? "Next" : "后一列"}</button>` : ""}
         ${task.status !== "done" ? `<button data-task-action="done" data-id="${task.id}">${t("完成")}</button>` : ""}
+        <button data-task-action="edit" data-id="${task.id}">${isEnglish() ? "Edit" : "编辑"}</button>
         <button data-task-action="delete" data-id="${task.id}">${isEnglish() ? "Delete" : "删除"}</button>
       </div>
     </div>
@@ -1823,8 +1944,9 @@ function taskCard(task, options = {}) {
 }
 
 function renderTimeTable() {
-  renderDayPlanEditorOptions();
   const plan = ensureDayPlan();
+  renderDayPlanEditorOptions();
+  renderActivityNameHistory();
   const segments = plan.segments || [];
   const visibleSegments = segments.filter((segment) => segment.className !== "free");
   const dayPlanLayout = layoutDayPlanSegments(visibleSegments);
@@ -1845,8 +1967,8 @@ function renderTimeTable() {
     <div class="day-plan-scroll" data-day-plan-scroll>
       <div class="day-plan-track" data-day-plan-track>
         <div class="day-plan-axis">
-          ${Array.from({ length: 13 }, (_, index) => index * 2).map((hour) => `
-            <span style="grid-column:${hour * 2 + 1}">${hour === 24 ? "24:00" : `${String(hour).padStart(2, "0")}:00`}</span>
+          ${DAY_PLAN_AXIS_HOURS.map((hour) => `
+            <span style="grid-column:${hour * DAY_PLAN_SLOTS_PER_HOUR + 1}">${hour === 24 ? "24:00" : `${String(hour).padStart(2, "0")}:00`}</span>
           `).join("")}
         </div>
         <div class="day-plan-strip" role="img" aria-label="${escapeHtml(t("24 小时时间表"))}" style="--day-plan-lanes:${Math.max(1, dayPlanLayout.lanes)}">
@@ -1899,6 +2021,13 @@ function renderTimeTable() {
   setupDayPlanScroll();
 }
 
+function renderActivityNameHistory() {
+  const list = $("#daySegmentTitleHistory");
+  if (!list) return;
+  state.activityHistory = collectActivityHistory(state);
+  list.innerHTML = state.activityHistory.map((name) => `<option value="${escapeHtml(name)}"></option>`).join("");
+}
+
 function renderDayPlanHistory() {
   const root = $("#dayPlanHistory");
   if (!root) return;
@@ -1940,7 +2069,7 @@ function setupDayPlanScroll() {
   const trackWidth = Math.max(1800, viewportWidth * 3);
   track.style.width = `${trackWidth}px`;
   const maxScroll = Math.max(0, trackWidth - viewportWidth);
-  const coreHoursStart = (trackWidth / 48) * 18;
+  const coreHoursStart = (trackWidth / DAY_PLAN_TOTAL_SLOTS) * DEFAULT_DAY_PLAN_START_SLOT;
   const nextScroll = dayPlanScrollLeft === null ? coreHoursStart : dayPlanScrollLeft;
   scroll.scrollLeft = Math.max(0, Math.min(maxScroll, nextScroll));
   scroll.addEventListener("scroll", () => {
@@ -1980,7 +2109,7 @@ function renderDayPlanTimer() {
   });
 }
 
-function renderDayPlanEditorOptions(categoryClass = $("#daySegmentCategory")?.value || "work", startSlot = Number($("#daySegmentStart")?.value || 18), endSlot = Number($("#daySegmentEnd")?.value || 20)) {
+function renderDayPlanEditorOptions(categoryClass = $("#daySegmentCategory")?.value || "work", startSlot = Number($("#daySegmentStart")?.value || DEFAULT_DAY_PLAN_START_SLOT), endSlot = Number($("#daySegmentEnd")?.value || DEFAULT_DAY_PLAN_END_SLOT)) {
   const categorySelect = $("#daySegmentCategory");
   const startSelect = $("#daySegmentStart");
   const endSelect = $("#daySegmentEnd");
@@ -1991,13 +2120,13 @@ function renderDayPlanEditorOptions(categoryClass = $("#daySegmentCategory")?.va
   `).join("");
   categorySelect.value = dayPlanCategoryOptions.some((item) => item.className === categoryClass) ? categoryClass : "work";
 
-  const slotOptions = Array.from({ length: 49 }, (_, slot) => `
+  const slotOptions = Array.from({ length: DAY_PLAN_TOTAL_SLOTS + 1 }, (_, slot) => `
     <option value="${slot}">${formatSlotClock(slot)}</option>
   `).join("");
   startSelect.innerHTML = slotOptions;
   endSelect.innerHTML = slotOptions;
-  startSelect.value = String(Math.max(0, Math.min(47, Number.isFinite(startSlot) ? startSlot : 18)));
-  endSelect.value = String(Math.max(1, Math.min(48, Number.isFinite(endSlot) ? endSlot : 20)));
+  startSelect.value = String(Math.max(0, Math.min(DAY_PLAN_TOTAL_SLOTS - 1, Number.isFinite(startSlot) ? startSlot : DEFAULT_DAY_PLAN_START_SLOT)));
+  endSelect.value = String(Math.max(1, Math.min(DAY_PLAN_TOTAL_SLOTS, Number.isFinite(endSlot) ? endSlot : DEFAULT_DAY_PLAN_END_SLOT)));
 }
 
 function ensureDayPlan() {
@@ -2007,7 +2136,11 @@ function ensureDayPlan() {
     state.dayPlan = createBlankDayPlan(todayKey());
     saveState();
   }
+  if (state.dayPlan.slotMinutes !== DAY_PLAN_SLOT_MINUTES) {
+    state.dayPlan = cloneDayPlan(state.dayPlan);
+  }
   state.dayPlan.segments = normalizeDaySegments(state.dayPlan.segments);
+  state.dayPlan.slotMinutes = DAY_PLAN_SLOT_MINUTES;
   return state.dayPlan;
 }
 
@@ -2015,16 +2148,17 @@ function createBlankDayPlan(day = todayKey()) {
   return {
     day,
     mode: "manual",
+    slotMinutes: DAY_PLAN_SLOT_MINUTES,
     updatedAt: iso(new Date()),
-    segments: [makeFreeSegment(0, 48)]
+    segments: [makeFreeSegment(0, DAY_PLAN_TOTAL_SLOTS)]
   };
 }
 
-function normalizeDaySegments(segments) {
+function normalizeDaySegments(segments, sourceSlotMinutes = DAY_PLAN_SLOT_MINUTES) {
   const clean = (segments || [])
     .map((segment) => {
-      const startSlot = Math.max(0, Math.min(48, Math.round(Number(segment.startSlot || 0))));
-      const slots = Math.max(0, Math.min(48 - startSlot, Math.round(Number(segment.slots || 0))));
+      const startSlot = Math.max(0, Math.min(DAY_PLAN_TOTAL_SLOTS, convertSlotValue(segment.startSlot, sourceSlotMinutes)));
+      const slots = Math.max(0, Math.min(DAY_PLAN_TOTAL_SLOTS - startSlot, convertSlotValue(segment.slots, sourceSlotMinutes)));
       const category = categoryByClassName(segment.className || "free");
       return {
         id: segment.id || uid(),
@@ -2046,19 +2180,19 @@ function normalizeDaySegments(segments) {
 }
 
 function buildFreeDaySegments(visibleSegments) {
-  const occupied = Array(48).fill(false);
+  const occupied = Array(DAY_PLAN_TOTAL_SLOTS).fill(false);
   visibleSegments.forEach((segment) => {
-    const start = Math.max(0, Math.min(48, Number(segment.startSlot || 0)));
-    const end = Math.max(start, Math.min(48, start + Number(segment.slots || 0)));
+    const start = Math.max(0, Math.min(DAY_PLAN_TOTAL_SLOTS, Number(segment.startSlot || 0)));
+    const end = Math.max(start, Math.min(DAY_PLAN_TOTAL_SLOTS, start + Number(segment.slots || 0)));
     for (let slot = start; slot < end; slot += 1) occupied[slot] = true;
   });
   const free = [];
   let cursor = 0;
-  while (cursor < 48) {
-    while (cursor < 48 && occupied[cursor]) cursor += 1;
-    if (cursor >= 48) break;
+  while (cursor < DAY_PLAN_TOTAL_SLOTS) {
+    while (cursor < DAY_PLAN_TOTAL_SLOTS && occupied[cursor]) cursor += 1;
+    if (cursor >= DAY_PLAN_TOTAL_SLOTS) break;
     const start = cursor;
-    while (cursor < 48 && !occupied[cursor]) cursor += 1;
+    while (cursor < DAY_PLAN_TOTAL_SLOTS && !occupied[cursor]) cursor += 1;
     free.push(makeFreeSegment(start, cursor - start));
   }
   return free;
@@ -2140,16 +2274,23 @@ function segmentTitle(segment) {
 }
 
 function formatSlotClock(slot) {
-  if (slot >= 48) return "24:00";
-  const hour = Math.floor(slot / 2);
-  const minute = slot % 2 === 0 ? "00" : "30";
-  return `${String(hour).padStart(2, "0")}:${minute}`;
+  if (slot >= DAY_PLAN_TOTAL_SLOTS) return "24:00";
+  const totalMinutes = Math.max(0, Math.round(Number(slot || 0))) * DAY_PLAN_SLOT_MINUTES;
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 function formatSlotDuration(slots) {
-  const hours = Number(slots || 0) / 2;
-  if (isEnglish()) return `${Number.isInteger(hours) ? hours : hours.toFixed(1)} hr`;
-  return `${Number.isInteger(hours) ? hours : hours.toFixed(1)} 小时`;
+  const minutes = Math.max(0, Math.round(Number(slots || 0))) * DAY_PLAN_SLOT_MINUTES;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (isEnglish()) {
+    if (minutes < 60) return `${minutes} min`;
+    return rest ? `${hours} hr ${rest} min` : `${hours} hr`;
+  }
+  if (minutes < 60) return `${minutes} 分钟`;
+  return rest ? `${hours} 小时 ${rest} 分钟` : `${hours} 小时`;
 }
 
 function renderMeetings() {
@@ -2288,7 +2429,7 @@ function drawTrendChart(canvas, range, options = {}) {
   const days = lastDays(range);
   const maxMinutes = niceMinuteCeil(Math.max(
     ...days.map((day) => workMinutesForDay(day)),
-    ...days.map((day) => focusMinutesForDay(day)),
+    ...days.map((day) => timetableMinutesForDay(day)),
     60
   ));
   const top = 24;
@@ -2308,7 +2449,7 @@ function drawTrendChart(canvas, range, options = {}) {
   days.forEach((day, index) => {
     const x = left + index * group + group / 2;
     const work = workMinutesForDay(day);
-    const focus = focusMinutesForDay(day);
+    const focus = timetableMinutesForDay(day);
     const workH = (work / maxMinutes) * plotH;
     const focusH = (focus / maxMinutes) * plotH;
     const workRect = { x: x - barW - 2, y: top + plotH - workH, width: barW, height: Math.max(2, workH) };
@@ -2602,6 +2743,14 @@ function workMinutesForDay(day) {
     });
   }
   return Math.round(total / 60000);
+}
+
+function timetableMinutesForDay(day) {
+  const plan = state.dayPlan?.day === day ? state.dayPlan : findHistoryPlan(state.dayPlanHistory, day);
+  if (!plan) return 0;
+  return visibleSegmentsForPlan(plan).reduce((sum, segment) => (
+    sum + Math.max(0, Number(segment.slots || 0)) * DAY_PLAN_SLOT_MINUTES
+  ), 0);
 }
 
 function openWorkSegmentCount() {
