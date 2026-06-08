@@ -48,7 +48,7 @@ const DAY_PLAN_ROW_RANGES = Array.from({ length: 3 }, (_, index) => ({
   index,
   startSlot: index * DAY_PLAN_ROW_SLOTS,
   endSlot: (index + 1) * DAY_PLAN_ROW_SLOTS
-}));
+})).filter((range) => range.index > 0);
 const DEFAULT_DAY_PLAN_START_SLOT = 9 * DAY_PLAN_SLOTS_PER_HOUR;
 const DEFAULT_DAY_PLAN_END_SLOT = 10 * DAY_PLAN_SLOTS_PER_HOUR;
 const DAY_PLAN_ROW_AXIS_HOURS = Array.from({ length: DAY_PLAN_ROW_HOURS / 2 + 1 }, (_, index) => index * 2);
