@@ -42,16 +42,17 @@ const DAY_PLAN_SLOT_MINUTES = 10;
 const LEGACY_DAY_PLAN_SLOT_MINUTES = 30;
 const DAY_PLAN_SLOTS_PER_HOUR = 60 / DAY_PLAN_SLOT_MINUTES;
 const DAY_PLAN_TOTAL_SLOTS = 24 * DAY_PLAN_SLOTS_PER_HOUR;
-const DAY_PLAN_ROW_HOURS = 8;
-const DAY_PLAN_ROW_SLOTS = DAY_PLAN_ROW_HOURS * DAY_PLAN_SLOTS_PER_HOUR;
-const DAY_PLAN_ROW_RANGES = Array.from({ length: 3 }, (_, index) => ({
-  index,
-  startSlot: index * DAY_PLAN_ROW_SLOTS,
-  endSlot: (index + 1) * DAY_PLAN_ROW_SLOTS
-})).filter((range) => range.index > 0);
+const DAY_PLAN_VISIBLE_START_HOUR = 8;
+const DAY_PLAN_VISIBLE_END_HOUR = 24;
+const DAY_PLAN_VISIBLE_START_SLOT = DAY_PLAN_VISIBLE_START_HOUR * DAY_PLAN_SLOTS_PER_HOUR;
+const DAY_PLAN_VISIBLE_END_SLOT = DAY_PLAN_VISIBLE_END_HOUR * DAY_PLAN_SLOTS_PER_HOUR;
+const DAY_PLAN_VISIBLE_SLOTS = DAY_PLAN_VISIBLE_END_SLOT - DAY_PLAN_VISIBLE_START_SLOT;
 const DEFAULT_DAY_PLAN_START_SLOT = 9 * DAY_PLAN_SLOTS_PER_HOUR;
 const DEFAULT_DAY_PLAN_END_SLOT = 10 * DAY_PLAN_SLOTS_PER_HOUR;
-const DAY_PLAN_ROW_AXIS_HOURS = Array.from({ length: DAY_PLAN_ROW_HOURS / 2 + 1 }, (_, index) => index * 2);
+const DAY_PLAN_AXIS_HOURS = Array.from(
+  { length: (DAY_PLAN_VISIBLE_END_HOUR - DAY_PLAN_VISIBLE_START_HOUR) / 2 + 1 },
+  (_, index) => DAY_PLAN_VISIBLE_START_HOUR + index * 2
+);
 
 const DEFAULT_THEME = "mono-black";
 
@@ -667,6 +668,11 @@ function normalizeDayPlanHistory(history) {
 
 function findHistoryPlan(history, day) {
   return (history || []).find((plan) => plan.day === day) || null;
+}
+
+function dayPlanForDay(day) {
+  if (state.dayPlan?.day === day) return state.dayPlan;
+  return findHistoryPlan(state.dayPlanHistory, day) || createBlankDayPlan(day);
 }
 
 function archivePlanIntoState(targetState, plan) {
@@ -1957,7 +1963,14 @@ function renderTimeTable() {
   const segments = plan.segments || [];
   const visibleSegments = segments.filter((segment) => segment.className !== "free");
   const timer = ensureDayPlanTimer();
-  const categories = uniqueCategories(visibleSegments);
+  const weekPlans = currentWeekDayKeys().map((day) => ({
+    day,
+    plan: dayPlanForDay(day)
+  }));
+  const weekVisibleSegments = weekPlans.flatMap((item) => visibleSegmentsForPlan(item.plan));
+  const categories = uniqueCategories(weekVisibleSegments.length ? weekVisibleSegments : visibleSegments);
+  const weekStart = weekPlans[0]?.day || todayKey();
+  const weekEnd = weekPlans[weekPlans.length - 1]?.day || todayKey();
 
   $("#dayPlanLegend").innerHTML = categories.map((category) => `
     <span class="day-plan-legend-item">
@@ -1968,10 +1981,10 @@ function renderTimeTable() {
   $("#dayPlanBoard").innerHTML = `
     <div class="day-plan-board-head">
       <span>${escapeHtml(t("时间轴"))}</span>
-      <strong>${escapeHtml(plan.day || todayKey())}</strong>
+      <strong>${escapeHtml(`${weekStart} - ${weekEnd}`)}</strong>
     </div>
     <div class="day-plan-stack">
-      ${DAY_PLAN_ROW_RANGES.map((range) => dayPlanRow(range, visibleSegments, timer)).join("")}
+      ${weekPlans.map(({ day, plan: weekPlan }) => dayPlanWeekRow(day, visibleSegmentsForPlan(weekPlan), timer, day === plan.day)).join("")}
     </div>
   `;
 
@@ -2005,16 +2018,16 @@ function renderTimeTable() {
   setupDayPlanScroll();
 }
 
-function dayPlanRow(range, visibleSegments, timer) {
+function dayPlanWeekRow(day, visibleSegments, timer, isCurrentDay = false) {
   const rowSegments = visibleSegments.reduce((items, segment) => {
     const startSlot = Number(segment.startSlot || 0);
     const endSlot = startSlot + Number(segment.slots || 0);
-    const clippedStart = Math.max(startSlot, range.startSlot);
-    const clippedEnd = Math.min(endSlot, range.endSlot);
+    const clippedStart = Math.max(startSlot, DAY_PLAN_VISIBLE_START_SLOT);
+    const clippedEnd = Math.min(endSlot, DAY_PLAN_VISIBLE_END_SLOT);
     if (clippedEnd <= clippedStart) return items;
     items.push({
       ...segment,
-      gridStartSlot: clippedStart - range.startSlot,
+      gridStartSlot: clippedStart - DAY_PLAN_VISIBLE_START_SLOT,
       gridSlots: clippedEnd - clippedStart
     });
     return items;
@@ -2023,24 +2036,24 @@ function dayPlanRow(range, visibleSegments, timer) {
   return `
     <section class="day-plan-row">
       <div class="day-plan-row-head">
-        <strong>${escapeHtml(`${formatSlotClock(range.startSlot)}-${formatSlotClock(range.endSlot)}`)}</strong>
+        <strong>${escapeHtml(weekDayLabel(day))}</strong>
+        ${day === todayKey() ? `<span>${escapeHtml(isEnglish() ? "Today" : "今天")}</span>` : ""}
       </div>
       <div class="day-plan-axis">
-        ${DAY_PLAN_ROW_AXIS_HOURS.map((hourOffset) => {
-          const absoluteHour = range.index * DAY_PLAN_ROW_HOURS + hourOffset;
+        ${DAY_PLAN_AXIS_HOURS.map((absoluteHour) => {
           return `
-            <span style="grid-column:${hourOffset * DAY_PLAN_SLOTS_PER_HOUR + 1}">
+            <span style="grid-column:${(absoluteHour - DAY_PLAN_VISIBLE_START_HOUR) * DAY_PLAN_SLOTS_PER_HOUR + 1}">
               ${absoluteHour === 24 ? "24:00" : `${String(absoluteHour).padStart(2, "0")}:00`}
             </span>
           `;
         }).join("")}
       </div>
-      <div class="day-plan-strip" role="img" aria-label="${escapeHtml(`${t("24 小时时间表")} ${formatSlotClock(range.startSlot)}-${formatSlotClock(range.endSlot)}`)}" style="--day-plan-lanes:${Math.max(1, layout.lanes)}">
+      <div class="day-plan-strip" role="img" aria-label="${escapeHtml(`${t("24 小时时间表")} ${day} ${formatSlotClock(DAY_PLAN_VISIBLE_START_SLOT)}-${formatSlotClock(DAY_PLAN_VISIBLE_END_SLOT)}`)}" style="--day-plan-lanes:${Math.max(1, layout.lanes)}">
         ${layout.segments.map((segment) => `
-          <button
-            type="button"
+          <${isCurrentDay ? "button" : "div"}
+            ${isCurrentDay ? 'type="button"' : ""}
             class="day-plan-block plan-${segment.className} ${timer.segmentId === segment.id ? "is-timing" : ""} ${Number(segment.trackedMs || 0) > 0 ? "has-timed" : ""}"
-            data-day-segment-start="${segment.id}"
+            ${isCurrentDay ? `data-day-segment-start="${segment.id}"` : ""}
             style="grid-column:${segment.gridStartSlot + 1} / span ${segment.gridSlots}; grid-row:${segment.lane + 1}"
             title="${escapeHtml(segmentTitle(segment))}"
           >
@@ -2048,7 +2061,7 @@ function dayPlanRow(range, visibleSegments, timer) {
             <span>${escapeHtml(segmentTimeRange(segment))}</span>
             ${timer.segmentId === segment.id ? `<em data-day-timer-live>${escapeHtml(`${timer.running ? t("计时中") : t("本次")} ${formatDuration(currentDayPlanTimerMs(timer))}`)}</em>` : ""}
             ${timer.segmentId !== segment.id && Number(segment.trackedMs || 0) > 0 ? `<em>${escapeHtml(`${t("累计计时")} ${formatDuration(segment.trackedMs)}`)}</em>` : ""}
-          </button>
+          </${isCurrentDay ? "button" : "div"}>
         `).join("")}
       </div>
     </section>
@@ -2878,6 +2891,25 @@ function addDays(date, days) {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+function startOfWeek(date = new Date()) {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const mondayOffset = (start.getDay() + 6) % 7;
+  start.setDate(start.getDate() - mondayOffset);
+  return start;
+}
+
+function currentWeekDayKeys(date = new Date()) {
+  const start = startOfWeek(date);
+  return Array.from({ length: 7 }, (_, index) => dateKey(addDays(start, index)));
+}
+
+function weekDayLabel(day) {
+  const date = new Date(`${day}T00:00:00`);
+  const locale = isEnglish() ? "en-US" : "zh-CN";
+  return `${date.toLocaleDateString(locale, { month: "2-digit", day: "2-digit" })} ${date.toLocaleDateString(locale, { weekday: "short" })}`;
 }
 
 function addHours(date, hours) {
