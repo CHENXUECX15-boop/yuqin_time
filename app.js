@@ -399,6 +399,7 @@ let activeSection = "home";
 let dashboardRange = 7;
 let timerTick = null;
 let dayPlanScrollLeft = null;
+let dayPlanDrag = null;
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -675,6 +676,11 @@ function dayPlanForDay(day) {
   return findHistoryPlan(state.dayPlanHistory, day) || createBlankDayPlan(day);
 }
 
+function normalizeDayKey(value, fallback = todayKey()) {
+  const text = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : fallback;
+}
+
 function archivePlanIntoState(targetState, plan) {
   if (!targetState || !plan?.day) return;
   const snapshot = cloneDayPlan(plan);
@@ -815,6 +821,10 @@ function bindActions() {
   $("#daySegmentTitle").addEventListener("input", renderDayPlanTimer);
   $("#daySegmentCategory").addEventListener("change", renderDayPlanTimer);
   $("#dayPlanBoard").addEventListener("click", handleDayPlanEditClick);
+  $("#dayPlanBoard").addEventListener("pointerdown", startDayPlanGridDrag);
+  document.addEventListener("pointermove", updateDayPlanGridDrag);
+  document.addEventListener("pointerup", finishDayPlanGridDrag);
+  document.addEventListener("pointercancel", cancelDayPlanGridDrag);
   $("#dayPlanDetails").addEventListener("click", handleDayPlanDetailAction);
 
   $("#btnExport").addEventListener("click", exportData);
@@ -1189,11 +1199,12 @@ function handleTaskAction(event) {
 function saveDaySegment(event) {
   event.preventDefault();
   const id = $("#daySegmentId").value;
+  const day = normalizeDayKey($("#daySegmentDay")?.value, state.dayPlan?.day || todayKey());
   const activity = $("#daySegmentTitle").value.trim();
   const startSlot = Number($("#daySegmentStart").value);
   const endSlot = Number($("#daySegmentEnd").value);
   const category = categoryByClassName($("#daySegmentCategory").value);
-  const existingSegment = id ? ensureDayPlan().segments.find((segment) => segment.id === id) : null;
+  const existingSegment = id ? dayPlanForDay(day).segments.find((segment) => segment.id === id) : null;
   if (!activity) return toast("请填写活动名称");
   if (!Number.isFinite(startSlot) || !Number.isFinite(endSlot) || endSlot <= startSlot) return toast("结束时间必须晚于开始时间");
 
@@ -1205,7 +1216,7 @@ function saveDaySegment(event) {
     className: category.className,
     activity,
     trackedMs: Math.max(0, Number(existingSegment?.trackedMs || 0))
-  }, id || null);
+  }, id || null, day);
   rememberActivityName(activity);
   resetDayPlanEditor(false);
   saveAndRender("时间段已保存");
@@ -1215,6 +1226,90 @@ function handleDayPlanEditClick(event) {
   const block = event.target.closest("[data-day-segment-start]");
   if (!block) return;
   startDayPlanTimer(block.dataset.daySegmentStart);
+}
+
+function startDayPlanGridDrag(event) {
+  const strip = event.target.closest("[data-day-plan-strip]");
+  if (!strip || event.target.closest(".day-plan-block")) return;
+  if (event.button !== undefined && event.button !== 0) return;
+  event.preventDefault();
+  const boundary = slotBoundaryFromPointer(strip, event.clientX);
+  dayPlanDrag = {
+    strip,
+    day: normalizeDayKey(strip.dataset.dayPlanDay),
+    pointerId: event.pointerId,
+    startBoundary: boundary,
+    currentBoundary: boundary
+  };
+  try {
+    strip.setPointerCapture(event.pointerId);
+  } catch {}
+  renderDayPlanDragPreview();
+}
+
+function updateDayPlanGridDrag(event) {
+  if (!dayPlanDrag) return;
+  if (dayPlanDrag.pointerId !== undefined && event.pointerId !== dayPlanDrag.pointerId) return;
+  event.preventDefault();
+  dayPlanDrag.currentBoundary = slotBoundaryFromPointer(dayPlanDrag.strip, event.clientX);
+  renderDayPlanDragPreview();
+}
+
+function finishDayPlanGridDrag(event) {
+  if (!dayPlanDrag) return;
+  if (dayPlanDrag.pointerId !== undefined && event.pointerId !== dayPlanDrag.pointerId) return;
+  event.preventDefault();
+  dayPlanDrag.currentBoundary = slotBoundaryFromPointer(dayPlanDrag.strip, event.clientX);
+  const range = selectedDayPlanDragRange();
+  const startSlot = DAY_PLAN_VISIBLE_START_SLOT + range.start;
+  const endSlot = DAY_PLAN_VISIBLE_START_SLOT + range.end;
+  $("#daySegmentId").value = "";
+  $("#daySegmentDay").value = dayPlanDrag.day;
+  renderDayPlanEditorOptions($("#daySegmentCategory")?.value || "work", startSlot, endSlot);
+  $("#btnCancelDaySegment").hidden = false;
+  clearDayPlanDragPreview();
+  const selectedDay = dayPlanDrag.day;
+  dayPlanDrag = null;
+  $("#daySegmentTitle").focus();
+  toast(`${weekDayLabel(selectedDay)} ${formatSlotClock(startSlot)}-${formatSlotClock(endSlot)}`);
+}
+
+function cancelDayPlanGridDrag() {
+  clearDayPlanDragPreview();
+  dayPlanDrag = null;
+}
+
+function slotBoundaryFromPointer(strip, clientX) {
+  const rect = strip.getBoundingClientRect();
+  const ratio = rect.width > 0 ? (clientX - rect.left) / rect.width : 0;
+  return Math.max(0, Math.min(DAY_PLAN_VISIBLE_SLOTS, Math.round(ratio * DAY_PLAN_VISIBLE_SLOTS)));
+}
+
+function selectedDayPlanDragRange() {
+  const start = Math.max(0, Math.min(DAY_PLAN_VISIBLE_SLOTS, Number(dayPlanDrag?.startBoundary || 0)));
+  const current = Math.max(0, Math.min(DAY_PLAN_VISIBLE_SLOTS, Number(dayPlanDrag?.currentBoundary ?? start)));
+  let rangeStart = Math.min(start, current);
+  let rangeEnd = Math.max(start, current);
+  if (rangeEnd <= rangeStart) {
+    rangeEnd = Math.min(DAY_PLAN_VISIBLE_SLOTS, rangeStart + 1);
+    rangeStart = Math.max(0, rangeEnd - 1);
+  }
+  return { start: rangeStart, end: rangeEnd, slots: rangeEnd - rangeStart };
+}
+
+function renderDayPlanDragPreview() {
+  if (!dayPlanDrag?.strip) return;
+  clearDayPlanDragPreview(dayPlanDrag.strip);
+  const range = selectedDayPlanDragRange();
+  const preview = document.createElement("div");
+  preview.className = "day-plan-drag-preview";
+  preview.style.gridColumn = `${range.start + 1} / span ${range.slots}`;
+  preview.innerHTML = `<span>${escapeHtml(`${formatSlotClock(DAY_PLAN_VISIBLE_START_SLOT + range.start)}-${formatSlotClock(DAY_PLAN_VISIBLE_START_SLOT + range.end)}`)}</span>`;
+  dayPlanDrag.strip.appendChild(preview);
+}
+
+function clearDayPlanDragPreview(strip = document) {
+  $$(".day-plan-drag-preview", strip).forEach((preview) => preview.remove());
 }
 
 function handleDayPlanDetailAction(event) {
@@ -1238,6 +1333,7 @@ function editDaySegment(id) {
   if (!segment) return;
   renderDayPlanEditorOptions(segment.className, segment.startSlot, segment.startSlot + segment.slots);
   $("#daySegmentId").value = segment.id;
+  $("#daySegmentDay").value = state.dayPlan?.day || todayKey();
   $("#daySegmentTitle").value = segment.activity;
   $("#btnCancelDaySegment").hidden = false;
   toast("已进入编辑模式");
@@ -1245,6 +1341,7 @@ function editDaySegment(id) {
 
 function resetDayPlanEditor(shouldRenderIcons = true) {
   $("#daySegmentId").value = "";
+  $("#daySegmentDay").value = state.dayPlan?.day || todayKey();
   $("#daySegmentTitle").value = "";
   renderDayPlanEditorOptions("work", DEFAULT_DAY_PLAN_START_SLOT, DEFAULT_DAY_PLAN_END_SLOT);
   $("#btnCancelDaySegment").hidden = true;
@@ -1405,19 +1502,22 @@ function resetDayPlanTimer() {
   toast("计时已重置");
 }
 
-function insertDaySegment(newSegment, replaceId = null) {
-  const plan = ensureDayPlan();
+function insertDaySegment(newSegment, replaceId = null, targetDay = state.dayPlan?.day || todayKey()) {
+  const day = normalizeDayKey(targetDay, state.dayPlan?.day || todayKey());
+  const isActivePlan = state.dayPlan?.day === day;
+  const plan = isActivePlan ? ensureDayPlan() : cloneDayPlan(findHistoryPlan(state.dayPlanHistory, day) || createBlankDayPlan(day));
   const kept = (plan.segments || [])
     .filter((segment) => !(replaceId && segment.id === replaceId))
     .map((segment) => ({ ...segment }));
   kept.push(newSegment);
-  plan.day = todayKey();
+  plan.day = day;
   plan.mode = "manual";
   plan.updatedAt = iso(new Date());
   plan.segments = normalizeDaySegments(kept);
-  if (state.dayPlanTimer?.segmentId && !plan.segments.some((segment) => segment.id === state.dayPlanTimer.segmentId)) {
+  if (isActivePlan && state.dayPlanTimer?.segmentId && !plan.segments.some((segment) => segment.id === state.dayPlanTimer.segmentId)) {
     Object.assign(state.dayPlanTimer, createDefaultDayPlanTimer());
   }
+  if (!isActivePlan) archivePlanIntoState(state, plan);
 }
 
 function addObjective() {
@@ -1960,6 +2060,7 @@ function renderTimeTable() {
   const plan = ensureDayPlan();
   renderDayPlanEditorOptions();
   renderActivityNameHistory();
+  if ($("#daySegmentDay") && !$("#daySegmentDay").value) $("#daySegmentDay").value = plan.day || todayKey();
   const segments = plan.segments || [];
   const visibleSegments = segments.filter((segment) => segment.className !== "free");
   const timer = ensureDayPlanTimer();
@@ -2034,7 +2135,7 @@ function dayPlanWeekRow(day, visibleSegments, timer, isCurrentDay = false) {
   }, []);
   const layout = layoutDayPlanSegments(rowSegments);
   return `
-    <section class="day-plan-row">
+    <section class="day-plan-row ${day === todayKey() ? "is-today" : ""}">
       <div class="day-plan-row-head">
         <strong>${escapeHtml(weekDayLabel(day))}</strong>
         ${day === todayKey() ? `<span>${escapeHtml(isEnglish() ? "Today" : "今天")}</span>` : ""}
@@ -2048,7 +2149,7 @@ function dayPlanWeekRow(day, visibleSegments, timer, isCurrentDay = false) {
           `;
         }).join("")}
       </div>
-      <div class="day-plan-strip" role="img" aria-label="${escapeHtml(`${t("24 小时时间表")} ${day} ${formatSlotClock(DAY_PLAN_VISIBLE_START_SLOT)}-${formatSlotClock(DAY_PLAN_VISIBLE_END_SLOT)}`)}" style="--day-plan-lanes:${Math.max(1, layout.lanes)}">
+      <div class="day-plan-strip" data-day-plan-strip data-day-plan-day="${escapeHtml(day)}" role="img" aria-label="${escapeHtml(`${t("24 小时时间表")} ${day} ${formatSlotClock(DAY_PLAN_VISIBLE_START_SLOT)}-${formatSlotClock(DAY_PLAN_VISIBLE_END_SLOT)}`)}" style="--day-plan-lanes:${Math.max(1, layout.lanes)}">
         ${layout.segments.map((segment) => `
           <${isCurrentDay ? "button" : "div"}
             ${isCurrentDay ? 'type="button"' : ""}
