@@ -1166,6 +1166,18 @@ h3 {
   background: var(--green-soft);
 }
 
+.tag.task-time {
+  color: var(--teal);
+  background: var(--teal-soft);
+  border: 1px solid rgba(8, 117, 111, 0.18);
+  font-variant-numeric: tabular-nums;
+}
+
+.tag.task-time.is-running {
+  color: #fff;
+  background: var(--teal);
+}
+
 .tiny-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1181,6 +1193,18 @@ h3 {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
+}
+
+.tiny-actions button.task-timer-action {
+  color: var(--teal);
+  background: var(--teal-soft);
+  border-color: rgba(8, 117, 111, 0.20);
+}
+
+.tiny-actions button.task-timer-action.is-running {
+  color: #fff;
+  background: var(--teal);
+  border-color: var(--teal);
 }
 
 .timeline {

@@ -1,4 +1,4 @@
-﻿const STORAGE_KEY = "yuqin.employee.workspace.v1";
+const STORAGE_KEY = "yuqin.employee.workspace.v1";
 
 const statusMap = {
   todo: "待办",
@@ -414,6 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
   timerTick = setInterval(() => {
     renderFocusTimer();
     renderDayPlanTimer();
+    renderTaskTimers();
   }, 500);
   renderAll();
 });
@@ -573,6 +574,13 @@ function normalizeLegacyWording(nextState) {
     id: item.id || uid(),
     closedInId: item.closedInId || item.closedBy || "",
     note: attendanceLabels[item.note] || item.note
+  }));
+
+  nextState.tasks = (nextState.tasks || []).map((item) => normalizeTaskTiming({
+    ...item,
+    id: item.id || uid(),
+    status: item.status || "todo",
+    priority: item.priority || "中"
   }));
 
   nextState.reviews = (nextState.reviews || []).map((item) => ({
@@ -1105,7 +1113,9 @@ function addTask(title, priority = "中", project = "", due = "") {
     project: project.trim(),
     due: due || "",
     createdAt: iso(new Date()),
-    completedAt: null
+    completedAt: null,
+    elapsedMs: 0,
+    timerStartedAt: null
   });
   saveAndRender("任务已新增");
   return true;
@@ -1174,15 +1184,34 @@ function handleTaskAction(event) {
     editTask(task);
     return;
   }
+  if (action === "timer") {
+    if (task.status === "done") return;
+    if (task.timerStartedAt) {
+      settleTaskTimer(task);
+      saveAndRender("任务计时已暂停");
+      return;
+    }
+    pauseOtherTaskTimers(task.id);
+    task.status = "doing";
+    task.completedAt = null;
+    task.elapsedMs = Math.max(0, Number(task.elapsedMs || 0));
+    task.timerStartedAt = iso(new Date());
+    saveAndRender("任务计时已开始");
+    return;
+  }
   if (action === "prev") {
+    settleTaskTimer(task);
     task.status = task.status === "done" ? "doing" : "todo";
     task.completedAt = null;
   }
   if (action === "next") {
-    task.status = task.status === "todo" ? "doing" : "done";
+    const nextStatus = task.status === "todo" ? "doing" : "done";
+    if (nextStatus === "done") settleTaskTimer(task);
+    task.status = nextStatus;
     task.completedAt = task.status === "done" ? iso(new Date()) : null;
   }
   if (action === "done") {
+    settleTaskTimer(task);
     task.status = "done";
     task.completedAt = iso(new Date());
   }
@@ -1190,6 +1219,7 @@ function handleTaskAction(event) {
     task.due = todayKey();
   }
   if (action === "delete") {
+    settleTaskTimer(task);
     state.tasks = state.tasks.filter((item) => item.id !== task.id);
     if ($("#taskEditId")?.value === task.id) resetTaskEditor();
   }
@@ -2026,11 +2056,61 @@ function isDailyTask(task, today = todayKey()) {
   return task.createdAt ? dateKey(new Date(task.createdAt)) === today : true;
 }
 
+function normalizeTaskTiming(task) {
+  const elapsedMs = Math.max(0, Number(task.elapsedMs || 0));
+  const startedAt = task.timerStartedAt ? new Date(task.timerStartedAt) : null;
+  const timerStartedAt = task.status !== "done" && startedAt && !Number.isNaN(startedAt.getTime()) ? task.timerStartedAt : null;
+  return { ...task, elapsedMs, timerStartedAt };
+}
+
+function taskElapsedMs(task) {
+  const base = Math.max(0, Number(task.elapsedMs || 0));
+  if (!task.timerStartedAt || task.status === "done") return base;
+  return base + Math.max(0, Date.now() - new Date(task.timerStartedAt).getTime());
+}
+
+function settleTaskTimer(task) {
+  if (!task) return;
+  task.elapsedMs = taskElapsedMs(task);
+  task.timerStartedAt = null;
+}
+
+function pauseOtherTaskTimers(activeTaskId = "") {
+  state.tasks.forEach((item) => {
+    if (item.id !== activeTaskId) settleTaskTimer(item);
+  });
+}
+
+function taskTimerLabel(task) {
+  if (task.timerStartedAt) return isEnglish() ? "Pause timer" : "暂停计时";
+  if (Number(task.elapsedMs || 0) > 0) return isEnglish() ? "Resume timer" : "继续计时";
+  return isEnglish() ? "Start timer" : "计时";
+}
+
+function taskElapsedLabel(task) {
+  return `${isEnglish() ? "Time" : "耗时"} ${formatDuration(taskElapsedMs(task))}`;
+}
+
+function renderTaskTimers() {
+  $$('[data-task-elapsed]').forEach((node) => {
+    const task = state.tasks.find((item) => item.id === node.dataset.taskElapsed);
+    if (!task) return;
+    node.textContent = taskElapsedLabel(task);
+    node.classList.toggle("is-running", Boolean(task.timerStartedAt));
+  });
+  $$('[data-task-action="timer"]').forEach((button) => {
+    const task = state.tasks.find((item) => item.id === button.dataset.id);
+    if (!task) return;
+    button.textContent = taskTimerLabel(task);
+    button.classList.toggle("is-running", Boolean(task.timerStartedAt));
+  });
+}
 function taskCard(task, options = {}) {
   const priority = priorityClass[task.priority] || "medium";
   const dueLabel = task.due ? (isEnglish() ? `Due ${task.due}` : `截止 ${task.due}`) : (isEnglish() ? "No due date" : "未设截止");
   const canPrev = task.status !== "todo";
   const canNext = task.status !== "done";
+  const elapsedLabel = taskElapsedLabel(task);
   return `
     <div class="stack-item">
       <div class="stack-item-head">
@@ -2040,6 +2120,7 @@ function taskCard(task, options = {}) {
             <span class="tag ${priority}">${escapeHtml(priorityLabel(task.priority))}</span>
             <span class="tag">${escapeHtml(statusText(task.status))}</span>
             <span class="tag">${escapeHtml(dueLabel)}</span>
+            <span class="tag task-time ${task.timerStartedAt ? "is-running" : ""}" data-task-elapsed="${task.id}">${escapeHtml(elapsedLabel)}</span>
             ${task.project ? `<span class="tag">${escapeHtml(task.project)}</span>` : ""}
           </div>
         </div>
@@ -2048,6 +2129,7 @@ function taskCard(task, options = {}) {
         ${options.showTodayAction && task.status !== "done" ? `<button data-task-action="today" data-id="${task.id}">${escapeHtml(t("加入今日"))}</button>` : ""}
         ${canPrev ? `<button data-task-action="prev" data-id="${task.id}">${isEnglish() ? "Previous" : "前一列"}</button>` : ""}
         ${canNext ? `<button data-task-action="next" data-id="${task.id}">${isEnglish() ? "Next" : "后一列"}</button>` : ""}
+        ${task.status !== "done" ? `<button class="task-timer-action ${task.timerStartedAt ? "is-running" : ""}" data-task-action="timer" data-id="${task.id}">${escapeHtml(taskTimerLabel(task))}</button>` : ""}
         ${task.status !== "done" ? `<button data-task-action="done" data-id="${task.id}">${t("完成")}</button>` : ""}
         <button data-task-action="edit" data-id="${task.id}">${isEnglish() ? "Edit" : "编辑"}</button>
         <button data-task-action="delete" data-id="${task.id}">${isEnglish() ? "Delete" : "删除"}</button>
