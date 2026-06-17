@@ -1,12 +1,12 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>早日成为富婆 | work for tomorrow.</title>
-  <link rel="stylesheet" href="styles.css?v=75">
+  <link rel="stylesheet" href="styles.css?v=87">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-  <script src="app.js?v=75" defer></script>
+  <script src="app.js?v=87" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -30,7 +30,7 @@
         <button class="nav-btn" data-section="tasks"><span>任务看板</span><i data-lucide="list-checks"></i></button>
         <button class="nav-btn" data-section="rhythm"><span>工作节奏</span><i data-lucide="paw-print"></i></button>
         <button class="nav-btn" data-section="meetings"><span>会议协作</span><i data-lucide="messages-square"></i></button>
-        <button class="nav-btn" data-section="review"><span>每日复盘</span><i data-lucide="notebook-pen"></i></button>
+        <button class="nav-btn" data-section="review"><span>月度清单</span><i data-lucide="list-checks"></i></button>
         <button class="nav-btn" data-section="dashboard"><span>数据看板</span><i data-lucide="chart-no-axes-combined"></i></button>
         <button class="nav-btn" data-section="settings"><span>数据管理</span><i data-lucide="database"></i></button>
       </nav>
@@ -250,70 +250,48 @@
         </div>
       </section>
 
-      <section id="review" class="view" aria-labelledby="reviewTitle">
+                  <section id="review" class="view" aria-labelledby="reviewTitle">
         <div class="section-head">
           <div>
-            <div class="eyebrow">Reflection</div>
-            <h1 id="reviewTitle">每日复盘</h1>
+            <div class="eyebrow">MONTHLY PLAN</div>
+            <h1 id="reviewTitle">月度清单</h1>
           </div>
         </div>
 
-        <div class="dashboard-grid">
-          <article class="panel">
+        <div class="review-layout">
+          <article class="panel checklist-main-panel">
             <div class="panel-head">
               <div>
-                <h2>今天的闭环</h2>
-                <p>成果、风险、明日优先级</p>
+                <h2>项目打卡</h2>
+                <p>项目按月循环，完成情况按月保存，并同步显示近三个月</p>
               </div>
+              <button class="icon-btn history-trigger" id="btnOpenChecklistHistory" type="button" aria-label="查看历史" title="查看历史"><i data-lucide="history"></i></button>
             </div>
-            <form id="reviewForm" class="stack-form">
-              <textarea id="reviewWins" class="field textarea tall" placeholder="今天完成了什么"></textarea>
-              <textarea id="reviewRisks" class="field textarea" placeholder="哪些事情需要预警"></textarea>
-              <textarea id="reviewTomorrow" class="field textarea" placeholder="明天最重要的 1-3 件事"></textarea>
-              <input id="reviewScore" type="hidden" value="4">
+            <form id="reviewForm" class="stack-form checklist-form">
+              <input id="reviewItemInput" class="field" placeholder="项目名称，例如：每日运动 / 英语阅读 / 早睡">
               <input id="reviewEditId" type="hidden">
               <input id="reviewEditDay" type="hidden">
-              <div class="mood-picker" role="group" aria-label="今日满意度">
-                <button class="mood-btn mood-1" type="button" data-review-score="1" aria-label="非常不高兴">
-                  <i data-lucide="angry"></i>
-                  <span>非常不高兴</span>
-                </button>
-                <button class="mood-btn mood-2" type="button" data-review-score="2" aria-label="不太高兴">
-                  <i data-lucide="frown"></i>
-                  <span>不太高兴</span>
-                </button>
-                <button class="mood-btn mood-3" type="button" data-review-score="3" aria-label="一般">
-                  <i data-lucide="meh"></i>
-                  <span>一般</span>
-                </button>
-                <button class="mood-btn mood-4 is-selected" type="button" data-review-score="4" aria-label="挺高兴">
-                  <i data-lucide="smile"></i>
-                  <span>挺高兴</span>
-                </button>
-                <button class="mood-btn mood-5" type="button" data-review-score="5" aria-label="非常高兴">
-                  <i data-lucide="laugh"></i>
-                  <span>非常高兴</span>
-                </button>
-              </div>
-              <div id="reviewMoodReasonWrap" class="mood-reason" hidden>
-                <label id="reviewMoodReasonLabel" for="reviewMoodReason">原因</label>
-                <textarea id="reviewMoodReason" class="field textarea" placeholder="写下原因，方便以后回看触发点"></textarea>
-              </div>
+              <input id="reviewItemEditId" type="hidden">
               <div class="button-row">
-                <button class="primary-btn" type="submit"><i data-lucide="save"></i><span id="reviewSubmitLabel">保存复盘</span></button>
+                <button class="primary-btn" type="submit"><i data-lucide="plus"></i><span id="reviewSubmitLabel">添加项目</span></button>
                 <button class="ghost-btn" id="btnCancelReviewEdit" type="button" hidden><i data-lucide="x"></i><span>取消编辑</span></button>
               </div>
             </form>
+            <div id="checklistProjectTabs" class="project-tabs"></div>
+            <div id="todayChecklist" class="checklist-table-shell"></div>
           </article>
+        </div>
 
-          <article class="panel">
-            <div class="panel-head">
+        <div id="checklistHistoryModal" class="modal-backdrop" hidden>
+          <article class="panel history-modal" role="dialog" aria-modal="true" aria-labelledby="checklistHistoryTitle">
+            <div class="panel-head compact">
               <div>
-                <h2>复盘记录</h2>
-                <p>保留每日可回看的工作轨迹</p>
+                <h2 id="checklistHistoryTitle">项目打卡历史</h2>
+                <p>切换项目查看每月完成情况</p>
               </div>
+              <button class="icon-btn" id="btnCloseChecklistHistory" type="button" aria-label="关闭历史" title="关闭历史"><i data-lucide="x"></i></button>
             </div>
-            <div id="reviewList" class="stack-list"></div>
+            <div id="reviewList" class="stack-list history-modal-list"></div>
           </article>
         </div>
       </section>

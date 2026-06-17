@@ -1,4 +1,4 @@
-const STORAGE_KEY = "yuqin.employee.workspace.v1";
+﻿const STORAGE_KEY = "yuqin.employee.workspace.v1";
 
 const statusMap = {
   todo: "待办",
@@ -392,11 +392,100 @@ const zhToEn = {
   "语言已切换为中文": "Language switched to Chinese"
 };
 
+Object.assign(zhToEn, {
+  "清单打卡": "Checklist",
+  "月度清单": "Monthly Checklist",
+  "今日清单": "Today Checklist",
+  "勾选今天要完成的固定/临时清单": "Check off fixed or temporary items for today",
+  "打卡事项，例如：喝水 / 学习 / 整理桌面": "Checklist item, e.g. drink water / study / tidy desk",
+  "添加事项": "Add Item",
+  "保存事项": "Save Item",
+  "打卡记录": "Check-in Log",
+  "按日期保留每日清单完成情况": "Daily checklist completion by date",
+  "今天还没有打卡事项": "No checklist items today",
+  "暂无打卡记录": "No check-in records",
+  "请先填写打卡事项": "Enter a checklist item first",
+  "打卡事项已添加": "Checklist item added",
+  "打卡事项已更新": "Checklist item updated",
+  "打卡已更新": "Checklist updated",
+  "打卡事项已删除": "Checklist item deleted",
+  "清单已删除": "Checklist deleted",
+  "已进入清单编辑模式": "Checklist edit mode enabled",
+  "待打卡": "To check",
+  "已打卡": "Checked",
+  "编辑事项": "Edit item",
+  "删除事项": "Delete item",
+  "删除清单": "Delete checklist"
+});
+Object.assign(zhToEn, {
+  "月计划清单": "Monthly Checklist",
+  "本月计划": "Monthly Plan",
+  "月计划": "Monthly Plan",
+  "设置后每月循环，勾选状态按月保存": "Set once, repeat monthly, and save check-ins by month",
+  "月计划事项，例如：喝水 / 学习 / 整理桌面": "Monthly item, e.g. drink water / study / tidy desk",
+  "添加计划": "Add Plan",
+  "保存计划": "Save Plan",
+  "月打卡历史": "Monthly Check-in History",
+  "按月保留清单完成情况": "Completion history saved by month",
+  "本月还没有月计划事项": "No monthly plan items yet",
+  "暂无月打卡历史": "No monthly check-in history",
+  "请先填写月计划事项": "Enter a monthly plan item first",
+  "月计划已添加": "Monthly plan item added",
+  "月计划已更新": "Monthly plan item updated",
+  "月计划已删除": "Monthly plan item deleted",
+  "本月打卡已更新": "This month's check-in updated",
+  "已进入月计划编辑模式": "Monthly plan edit mode enabled",
+  "删除本月记录": "Delete this month record",
+  "本周": "This week",
+  "循环计划": "Repeating plan",
+  "历史快照": "History snapshot"
+});
+Object.assign(zhToEn, {
+  "项目打卡": "Project Check-in",
+  "项目按月循环，完成情况按月保存，并同步显示近三个月": "Projects repeat monthly, completion is saved by month, and the latest 3 months stay in sync",
+  "项目名称，例如：每日运动 / 英语阅读 / 早睡": "Project name, e.g. daily workout / English reading / early sleep",
+  "添加项目": "Add Project",
+  "保存项目": "Save Project",
+  "项目打卡历史": "Project Check-in History",
+  "切换项目查看每月完成情况": "Switch projects to view monthly completion",
+  "还没有打卡项目": "No check-in projects yet",
+  "请选择一个打卡项目": "Choose a check-in project",
+  "暂无项目打卡历史": "No project check-in history",
+  "请先填写项目名称": "Enter a project name first",
+  "项目已添加": "Project added",
+  "项目已更新": "Project updated",
+  "项目已删除": "Project deleted",
+  "本月项目打卡已更新": "This month's project check-in updated",
+  "已进入项目编辑模式": "Project edit mode enabled",
+  "打卡": "Check-in",
+  "完成天数": "Completed days",
+  "周完成": "Week complete",
+  "月完成": "Month complete",
+  "项目": "Project",
+  "完成率": "Completion rate",
+  "已打卡": "Checked in",
+  "未打卡": "Not checked",
+  "本周全勤": "Perfect week",
+  "本月全勤": "Perfect month",
+  "这一周还没有打卡": "No check-ins this week yet",
+  "这个月还没有打卡": "No check-ins this month yet",
+  "保持全勤": "Keep the streak",
+  "打卡率": "Check-in rate",
+  "本月": "This month",
+  "上月": "Last month",
+  "上上月": "Two months ago",
+  "近三个月": "Last 3 months",
+  "项目打卡已更新": "Project check-in updated",
+  "删除本月记录": "Delete this month record",
+  "查看历史": "View history",
+  "关闭历史": "Close history"
+});
 const enToZh = Object.fromEntries(Object.entries(zhToEn).map(([zh, en]) => [en, zh]));
 
 let state = loadState();
 let activeSection = "home";
 let dashboardRange = 7;
+let selectedChecklistTemplateId = "";
 let timerTick = null;
 let dayPlanScrollLeft = null;
 let dayPlanDrag = null;
@@ -507,18 +596,9 @@ function createDefaultState() {
       theme: DEFAULT_THEME,
       language: DEFAULT_LANGUAGE
     },
-    reviews: [
-      {
-        id: uid(),
-        day: yesterday,
-        wins: "完成客户问题清单整理，推动验收口径进入确认。",
-      risks: "新增需求仍需排期判断。",
-      tomorrow: "先确认验收标准，再写周报。",
-      score: 4,
-      moodReason: "",
-      createdAt: iso(addDays(now, -1))
-    }
-  ]
+    checklistTemplates: [],
+    checklistWeeks: [],
+    reviews: []
   };
 }
 
@@ -558,6 +638,268 @@ function mergeAppearance(base, incoming = {}) {
   return { ...base, ...incoming, theme, language };
 }
 
+function weekStartDate(value = new Date()) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return weekStartDate(new Date());
+  date.setHours(0, 0, 0, 0);
+  const offset = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - offset);
+  return date;
+}
+
+function weekKeyForDate(value = new Date()) {
+  return dateKey(weekStartDate(value));
+}
+
+function weekEndKeyForDate(value = new Date()) {
+  return dateKey(addDays(weekStartDate(value), 6));
+}
+
+function normalizeChecklistTemplate(template = {}) {
+  const now = iso(new Date());
+  const text = String(template.text || template.title || template.name || template.project || "").trim();
+  return {
+    id: template.id || uid(),
+    text,
+    active: template.active !== false,
+    createdAt: template.createdAt || now,
+    updatedAt: template.updatedAt || ""
+  };
+}
+
+function normalizeDayKey(value, fallback = todayKey()) {
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const date = value ? new Date(value) : new Date(`${fallback}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return dateKey(date);
+}
+
+function weekDateFromKey(value = todayKey()) {
+  const key = typeof value === "string" ? value : dateKey(value);
+  return new Date(`${key}T00:00:00`);
+}
+
+function weekDaysForWeek(week = {}) {
+  const key = week.weekKey || week.startDay || weekKeyForDate(todayKey());
+  return currentWeekDayKeys(weekDateFromKey(key));
+}
+
+function monthDayKeysForDate(value = todayKey()) {
+  const key = normalizeDayKey(value);
+  const date = new Date(`${key}T00:00:00`);
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return Array.from({ length: daysInMonth }, (_, index) => dateKey(addDays(start, index)));
+}
+
+function monthRangeLabel(value = todayKey()) {
+  const days = monthDayKeysForDate(value);
+  return days.length ? `${days[0]} - ${days[days.length - 1]}` : "";
+}
+
+function monthKeyForDate(value = todayKey()) {
+  return normalizeDayKey(value).slice(0, 7);
+}
+
+function monthStartKey(monthKey = monthKeyForDate(todayKey())) {
+  return /^\d{4}-\d{2}$/.test(monthKey) ? `${monthKey}-01` : normalizeDayKey(monthKey);
+}
+function shiftedMonthStartKey(value = todayKey(), offset = 0) {
+  const key = normalizeDayKey(value);
+  const date = new Date(`${key}T00:00:00`);
+  return dateKey(new Date(date.getFullYear(), date.getMonth() + offset, 1));
+}
+
+function checklistDisplayMonths(value = todayKey()) {
+  return ["本月", "上月", "上上月"].map((label, index) => {
+    const startKey = shiftedMonthStartKey(value, -index);
+    return { monthKey: monthKeyForDate(startKey), startKey, label };
+  });
+}
+function dayOfMonthLabel(day) {
+  const date = new Date(`${day}T00:00:00`);
+  return String(date.getDate()).padStart(2, "0");
+}
+
+function normalizeChecklistChecks(source = {}, weekKey = weekKeyForDate(todayKey())) {
+  const days = new Set(currentWeekDayKeys(weekDateFromKey(weekKey)));
+  const checks = {};
+  const remember = (value, checked = true) => {
+    let day = normalizeDayKey(value, weekKey);
+    if (!days.has(day)) day = weekKey;
+    if (checked) checks[day] = true;
+  };
+
+  if (source.checks && typeof source.checks === "object") {
+    Object.entries(source.checks).forEach(([day, checked]) => remember(day, Boolean(checked)));
+  }
+
+  if (Array.isArray(source.checkedDays)) {
+    source.checkedDays.forEach((day) => remember(day, true));
+  }
+
+  if (!Object.keys(checks).length && (source.done || source.checked)) {
+    remember(source.day || source.completedAt || source.updatedAt || source.createdAt || weekKey, true);
+  }
+
+  return checks;
+}
+
+function normalizeChecklistWeek(week = {}) {
+  const now = iso(new Date());
+  const weekKey = week.weekKey || week.startDay || weekKeyForDate(week.day || new Date());
+  const startDay = week.startDay || weekKey;
+  const endDay = week.endDay || weekEndKeyForDate(startDay);
+  const rawItems = Array.isArray(week.items) ? week.items : [];
+  const items = rawItems
+    .map((item) => {
+      const source = typeof item === "string" ? { text: item } : (item || {});
+      const text = String(source.text || source.title || source.name || source.project || "").trim();
+      const checks = normalizeChecklistChecks(source, weekKey);
+      return {
+        id: source.id || uid(),
+        templateId: source.templateId || source.planId || "",
+        text,
+        checks,
+        checkedDays: Object.keys(checks).sort(),
+        done: Object.values(checks).some(Boolean),
+        createdAt: source.createdAt || week.createdAt || now,
+        updatedAt: source.updatedAt || week.updatedAt || ""
+      };
+    })
+    .filter((item) => item.text);
+  return {
+    id: week.id || uid(),
+    weekKey,
+    startDay,
+    endDay,
+    items,
+    createdAt: week.createdAt || now,
+    updatedAt: week.updatedAt || week.createdAt || now
+  };
+}
+
+function normalizeChecklistReview(review = {}) {
+  const now = iso(new Date());
+  const day = review.day || todayKey();
+  const rawItems = Array.isArray(review.checklist) ? review.checklist : legacyReviewChecklist(review);
+  const checklist = rawItems
+    .map((item) => {
+      const source = typeof item === "string" ? { text: item } : (item || {});
+      const text = String(source.text || source.title || source.name || "").trim();
+      return {
+        id: source.id || uid(),
+        text,
+        done: Boolean(source.done || source.checked),
+        day,
+        createdAt: source.createdAt || review.createdAt || now,
+        updatedAt: source.updatedAt || review.updatedAt || ""
+      };
+    })
+    .filter((item) => item.text);
+
+  return {
+    ...review,
+    id: review.id || uid(),
+    day,
+    checklist,
+    createdAt: review.createdAt || now,
+    updatedAt: review.updatedAt || review.createdAt || now
+  };
+}
+
+function legacyReviewChecklist(review = {}) {
+  const createdAt = review.createdAt || iso(new Date());
+  const items = [];
+  const pushLines = (value, prefix, done = false) => {
+    String(value || "")
+      .split(/\n|[；;]/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .forEach((line) => items.push({ id: uid(), text: `${prefix}：${line}`, done, createdAt }));
+  };
+  pushLines(review.wins, "成果", true);
+  pushLines(review.risks, "风险", false);
+  pushLines(review.tomorrow, "明日", false);
+  if (review.moodReason) pushLines(review.moodReason, "原因", false);
+  return items;
+}
+
+function normalizeChecklistState(nextState) {
+  const now = iso(new Date());
+  const currentWeekKey = weekKeyForDate(todayKey());
+  const templates = [];
+  const templateByText = new Map();
+  const weeksByKey = new Map();
+
+  const rememberTemplate = (item, active = true) => {
+    const text = String(item?.text || item?.title || item?.name || item?.project || "").trim();
+    if (!text) return null;
+    const key = text.toLocaleLowerCase();
+    let template = templateByText.get(key);
+    if (!template) {
+      template = normalizeChecklistTemplate({ ...item, text, active });
+      templates.push(template);
+      templateByText.set(key, template);
+    } else if (active) {
+      template.active = template.active !== false;
+    }
+    return template;
+  };
+
+  (nextState.checklistTemplates || []).forEach((item) => rememberTemplate(item, item.active !== false));
+  (nextState.checklistWeeks || []).forEach((item) => {
+    const week = normalizeChecklistWeek(item);
+    weeksByKey.set(week.weekKey, week);
+    week.items.forEach((weekItem) => {
+      const template = weekItem.templateId
+        ? templates.find((item) => item.id === weekItem.templateId) || rememberTemplate(weekItem, false)
+        : rememberTemplate(weekItem, false);
+      if (template) weekItem.templateId = template.id;
+    });
+  });
+
+  (nextState.reviews || []).forEach((review) => {
+    const legacy = normalizeChecklistReview(review);
+    const weekKey = weekKeyForDate(legacy.day);
+    let week = weeksByKey.get(weekKey);
+    if (!week) {
+      week = normalizeChecklistWeek({ id: uid(), weekKey, startDay: weekKey, endDay: weekEndKeyForDate(weekKey), items: [], createdAt: legacy.createdAt || now, updatedAt: legacy.updatedAt || now });
+      weeksByKey.set(weekKey, week);
+    }
+    legacy.checklist.forEach((item) => {
+      const template = weekKey === currentWeekKey ? rememberTemplate(item, true) : rememberTemplate(item, false);
+      const itemChecks = normalizeChecklistChecks({ ...item, day: legacy.day }, weekKey);
+      const existing = week.items.find((entry) => (template?.id && entry.templateId === template.id) || entry.text === item.text);
+      if (existing) {
+        existing.templateId = template?.id || existing.templateId;
+        existing.checks = { ...(existing.checks || {}), ...itemChecks };
+        existing.checkedDays = Object.keys(existing.checks).sort();
+        existing.done = Object.values(existing.checks).some(Boolean);
+        existing.updatedAt = item.updatedAt || legacy.updatedAt || existing.updatedAt;
+      } else {
+        week.items.push({
+          id: uid(),
+          templateId: template?.id || "",
+          text: item.text,
+          checks: itemChecks,
+          checkedDays: Object.keys(itemChecks).sort(),
+          done: Object.values(itemChecks).some(Boolean),
+          createdAt: item.createdAt || legacy.createdAt || now,
+          updatedAt: item.updatedAt || legacy.updatedAt || ""
+        });
+      }
+    });
+    week.updatedAt = legacy.updatedAt || week.updatedAt || now;
+  });
+
+  nextState.checklistTemplates = templates.filter((item) => item.text);
+  nextState.checklistWeeks = Array.from(weeksByKey.values())
+    .map((week) => normalizeChecklistWeek(week))
+    .sort((a, b) => b.weekKey.localeCompare(a.weekKey));
+  nextState.reviews = [];
+  return nextState;
+}
 function normalizeLegacyWording(nextState) {
   const attendanceLabels = {
     "到位": "开工",
@@ -583,10 +925,7 @@ function normalizeLegacyWording(nextState) {
     priority: item.priority || "中"
   }));
 
-  nextState.reviews = (nextState.reviews || []).map((item) => ({
-    ...item,
-    id: item.id || uid()
-  }));
+  normalizeChecklistState(nextState);
 
   return nextState;
 }
@@ -707,6 +1046,23 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function openChecklistHistory() {
+  const modal = $("#checklistHistoryModal");
+  if (!modal) return;
+  modal.hidden = false;
+  modal.classList.add("is-open");
+  renderReview();
+  renderIcons();
+  window.setTimeout(() => $("#btnCloseChecklistHistory")?.focus(), 0);
+}
+
+function closeChecklistHistory() {
+  const modal = $("#checklistHistoryModal");
+  if (!modal) return;
+  modal.classList.remove("is-open");
+  modal.hidden = true;
+  $("#btnOpenChecklistHistory")?.focus();
+}
 function bindNavigation() {
   $$(".nav-btn").forEach((button) => {
     button.addEventListener("click", () => showSection(button.dataset.section));
@@ -765,39 +1121,40 @@ function bindForms() {
 
   $("#reviewForm").addEventListener("submit", (event) => {
     event.preventDefault();
+    const text = $("#reviewItemInput").value.trim();
+    if (!text) return toast("请先填写项目名称");
+
     const editingId = $("#reviewEditId").value;
-    const editingDay = $("#reviewEditDay").value;
-    const day = todayKey();
     const now = iso(new Date());
-    const payload = {
-      wins: $("#reviewWins").value.trim(),
-      risks: $("#reviewRisks").value.trim(),
-      tomorrow: $("#reviewTomorrow").value.trim(),
-      score: Number($("#reviewScore").value),
-      moodReason: shouldCollectMoodReason(Number($("#reviewScore").value)) ? $("#reviewMoodReason").value.trim() : "",
-      updatedAt: now
-    };
+    const currentWeek = ensureChecklistWeek(todayKey(), true);
 
     if (editingId) {
-      const editing = state.reviews.find((item) => item.id === editingId);
-      if (editing) {
-        Object.assign(editing, {
-          ...payload,
-          day: editing.day || editingDay || day,
-          createdAt: editing.createdAt || now
+      const template = state.checklistTemplates.find((item) => item.id === editingId);
+      if (template) {
+        template.text = text;
+        template.updatedAt = now;
+        currentWeek.items.forEach((item) => {
+          if (item.templateId === template.id) {
+            item.text = text;
+            item.updatedAt = now;
+          }
         });
+        selectedChecklistTemplateId = template.id;
       }
+      currentWeek.updatedAt = now;
       clearReviewEditState();
-      saveAndRender("复盘已更新");
+      saveAndRender("项目已更新");
       return;
     }
 
-    const existing = state.reviews.find((item) => item.day === day);
-    if (existing) Object.assign(existing, { ...payload, day, createdAt: existing.createdAt || now });
-    else state.reviews.unshift({ id: uid(), day, createdAt: now, ...payload });
-    saveAndRender("复盘已保存");
+    const template = normalizeChecklistTemplate({ id: uid(), text, active: true, createdAt: now });
+    state.checklistTemplates.push(template);
+    currentWeek.items.push({ id: uid(), templateId: template.id, text, checks: {}, checkedDays: [], done: false, createdAt: now, updatedAt: "" });
+    currentWeek.updatedAt = now;
+    selectedChecklistTemplateId = template.id;
+    clearReviewEditState();
+    saveAndRender("项目已添加");
   });
-
   $("#dayPlanEditor").addEventListener("submit", saveDaySegment);
 }
 
@@ -813,11 +1170,14 @@ function bindActions() {
   $("#btnFocusPause")?.addEventListener("click", pauseFocus);
   $("#btnFocusFinish")?.addEventListener("click", finishFocus);
   $("#btnFocusReset")?.addEventListener("click", resetFocus);
-  $$(".mood-btn").forEach((button) => {
-    button.addEventListener("click", () => setReviewMood(Number(button.dataset.reviewScore)));
-  });
+
   $("#btnCancelTaskEdit").addEventListener("click", resetTaskEditor);
   $("#btnCancelReviewEdit").addEventListener("click", resetReviewEditor);
+  $("#btnOpenChecklistHistory")?.addEventListener("click", openChecklistHistory);
+  $("#btnCloseChecklistHistory")?.addEventListener("click", closeChecklistHistory);
+  $("#checklistHistoryModal")?.addEventListener("click", (event) => {
+    if (event.target.id === "checklistHistoryModal") closeChecklistHistory();
+  });
   $("#btnAddMeetingContact").addEventListener("click", addMeetingContact);
   $("#meetingContactList").addEventListener("click", handleMeetingContactAction);
 
@@ -848,6 +1208,8 @@ function bindActions() {
   $("#attendanceList").addEventListener("click", handleDeleteFromList("attendanceLogs", "行动记录已删除"));
   $("#focusHistoryList")?.addEventListener("click", handleDeleteFromList("focusSessions", "专注记录已删除"));
   $("#meetingList").addEventListener("click", handleDeleteFromList("meetings", "会议已删除"));
+  $("#checklistProjectTabs")?.addEventListener("click", handleReviewListAction);
+  $("#todayChecklist").addEventListener("click", handleReviewListAction);
   $("#reviewList").addEventListener("click", handleReviewListAction);
 
   $$(".segmented button").forEach((button) => {
@@ -856,6 +1218,10 @@ function bindActions() {
       $$(".segmented button").forEach((item) => item.classList.toggle("is-active", item === button));
       renderCharts();
     });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !$("#checklistHistoryModal")?.hidden) closeChecklistHistory();
   });
 
   window.addEventListener("resize", () => {
@@ -1011,94 +1377,375 @@ function getSelectedMeetingContacts() {
   return $$("[data-meeting-contact]:checked").map((input) => input.value);
 }
 
-function setReviewMood(score, reason = null) {
-  const safeScore = Math.max(1, Math.min(5, Number(score) || 3));
-  $("#reviewScore").value = safeScore;
-  $$(".mood-btn").forEach((button) => {
-    button.classList.toggle("is-selected", Number(button.dataset.reviewScore) === safeScore);
-  });
+function activeChecklistTemplates() {
+  state.checklistTemplates = (state.checklistTemplates || []).map((item) => normalizeChecklistTemplate(item)).filter((item) => item.text);
+  return state.checklistTemplates.filter((item) => item.active !== false);
+}
 
-  const reasonWrap = $("#reviewMoodReasonWrap");
-  const reasonInput = $("#reviewMoodReason");
-  const reasonLabel = $("#reviewMoodReasonLabel");
-  const needsReason = shouldCollectMoodReason(safeScore);
-  reasonWrap.hidden = !needsReason;
-
-  if (needsReason) {
-    reasonLabel.textContent = safeScore === 5
-      ? (isEnglish() ? "Why are you especially happy today?" : "为什么今天特别高兴？")
-      : (isEnglish() ? "Why are you especially unhappy today?" : "为什么今天特别不高兴？");
-    reasonInput.placeholder = safeScore === 5
-      ? (isEnglish() ? "Record the trigger that made you happy" : "记录让你很开心的触发点")
-      : (isEnglish() ? "Record the trigger that felt uncomfortable" : "记录让你不舒服的触发点");
-    if (reason !== null) reasonInput.value = reason;
-  } else {
-    reasonInput.value = "";
+function selectedChecklistProject(templates = activeChecklistTemplates()) {
+  if (!templates.length) {
+    selectedChecklistTemplateId = "";
+    return null;
   }
+  if (!templates.some((item) => item.id === selectedChecklistTemplateId)) selectedChecklistTemplateId = templates[0].id;
+  return templates.find((item) => item.id === selectedChecklistTemplateId) || templates[0];
 }
 
-function shouldCollectMoodReason(score) {
-  return Number(score) === 1 || Number(score) === 5;
+function ensureChecklistWeek(value = todayKey(), create = false) {
+  const key = weekKeyForDate(value);
+  state.checklistWeeks = (state.checklistWeeks || []).map((item) => normalizeChecklistWeek(item));
+  let week = state.checklistWeeks.find((item) => item.weekKey === key);
+  if (!week && create) {
+    week = normalizeChecklistWeek({ id: uid(), weekKey: key, startDay: key, endDay: weekEndKeyForDate(key), items: [], createdAt: iso(new Date()) });
+    state.checklistWeeks.unshift(week);
+  }
+  if (week) syncWeekWithTemplates(week);
+  return week;
 }
 
-function fillReviewForm(review) {
-  $("#reviewWins").value = review?.wins || "";
-  $("#reviewRisks").value = review?.risks || "";
-  $("#reviewTomorrow").value = review?.tomorrow || "";
-  setReviewMood(Number(review?.score || 4), review?.moodReason || "");
+function syncWeekWithTemplates(week) {
+  const now = iso(new Date());
+  const templates = activeChecklistTemplates();
+  const templateMap = new Map(templates.map((template) => [template.id, template]));
+  templates.forEach((template) => {
+    if (!week.items.some((item) => item.templateId === template.id)) {
+      week.items.push({ id: uid(), templateId: template.id, text: template.text, checks: {}, checkedDays: [], done: false, createdAt: now, updatedAt: "" });
+    }
+  });
+  week.items = (week.items || []).map((item) => {
+    const template = templateMap.get(item.templateId);
+    const checks = normalizeChecklistChecks(item, week.weekKey);
+    return {
+      id: item.id || uid(),
+      templateId: item.templateId || "",
+      text: template?.text || item.text || "",
+      checks,
+      checkedDays: Object.keys(checks).sort(),
+      done: Object.values(checks).some(Boolean),
+      createdAt: item.createdAt || week.createdAt || now,
+      updatedAt: item.updatedAt || ""
+    };
+  }).filter((item) => item.text);
+  return week;
+}
+
+function findChecklistWeek(weekId) {
+  return state.checklistWeeks.find((week) => week.id === weekId || week.weekKey === weekId);
+}
+
+function findChecklistWeekItem(weekId, itemId) {
+  const week = findChecklistWeek(weekId);
+  const item = week?.items?.find((entry) => entry.id === itemId || entry.templateId === itemId);
+  return { week, item };
+}
+
+function findChecklistProjectItem(week, template) {
+  if (!week || !template) return null;
+  return (week.items || []).find((item) => item.templateId === template.id || item.text === template.text) || null;
+}
+
+function checklistProjectProgress(week, template) {
+  const days = week ? weekDaysForWeek(week) : [];
+  const item = findChecklistProjectItem(week, template);
+  const done = days.filter((day) => item?.checks?.[day]).length;
+  return { total: days.length, done, label: `${done}/${days.length}` };
+}
+
+function checklistProjectMonthProgress(value = todayKey(), template) {
+  const days = monthDayKeysForDate(value);
+  const done = days.filter((day) => {
+    const week = findChecklistWeek(weekKeyForDate(day));
+    const item = findChecklistProjectItem(week, template);
+    return Boolean(item?.checks?.[day]);
+  }).length;
+  const total = days.length;
+  const percent = total ? Math.round((done / total) * 100) : 0;
+  return { total, done, percent, label: `${done}/${total}` };
+}
+
+function checklistProjectMonthRecords(template) {
+  if (!template) return [];
+  const monthKeys = new Set();
+  (state.checklistWeeks || []).forEach((entry) => {
+    const week = normalizeChecklistWeek(entry);
+    const item = findChecklistProjectItem(week, template);
+    if (!item) return;
+    const checkedDays = Object.keys(item.checks || {}).filter((day) => item.checks?.[day]);
+    if (checkedDays.length) checkedDays.forEach((day) => monthKeys.add(monthKeyForDate(day)));
+    else if (week.weekKey === weekKeyForDate(todayKey())) monthKeys.add(monthKeyForDate(week.weekKey));
+  });
+  if (state.checklistTemplates?.some((item) => item.id === template.id && item.active !== false)) monthKeys.add(monthKeyForDate(todayKey()));
+  return Array.from(monthKeys).sort((a, b) => b.localeCompare(a));
+}
+function checklistProgress(week) {
+  const days = weekDaysForWeek(week);
+  const total = (week?.items?.length || 0) * days.length;
+  const done = (week?.items || []).reduce((sum, item) => sum + days.filter((day) => item.checks?.[day]).length, 0);
+  return { total, done, label: `${done}/${total}` };
+}
+
+function weekRangeLabel(week) {
+  return week ? `${week.startDay} - ${week.endDay}` : "";
+}
+
+function fillReviewForm(template) {
+  $("#reviewItemInput").value = template?.text || "";
+  setReviewEditState(template);
 }
 
 function clearReviewForm() {
-  $("#reviewWins").value = "";
-  $("#reviewRisks").value = "";
-  $("#reviewTomorrow").value = "";
-  $("#reviewMoodReason").value = "";
-  setReviewMood(4, "");
+  $("#reviewItemInput").value = "";
 }
 
-function setReviewEditState(review = null) {
-  $("#reviewEditId").value = review?.id || "";
-  $("#reviewEditDay").value = review?.day || "";
-  $("#btnCancelReviewEdit").hidden = !review;
-  $("#reviewSubmitLabel").textContent = review ? t("保存修改") : t("保存复盘");
+function setReviewEditState(template = null) {
+  $("#reviewEditId").value = template?.id || "";
+  $("#reviewEditDay").value = "";
+  $("#reviewItemEditId").value = "";
+  $("#btnCancelReviewEdit").hidden = !template;
+  $("#reviewSubmitLabel").textContent = template ? t("保存项目") : t("添加项目");
 }
 
 function clearReviewEditState() {
   setReviewEditState(null);
+  clearReviewForm();
 }
 
 function resetReviewEditor() {
   clearReviewEditState();
-  const today = state.reviews.find((item) => item.day === todayKey());
-  if (today) fillReviewForm(today);
-  else clearReviewForm();
   renderIcons();
 }
 
-function editReview(id) {
-  const review = state.reviews.find((item) => item.id === id);
-  if (!review) return;
-  fillReviewForm(review);
-  setReviewEditState(review);
+function editChecklistTemplate(templateId) {
+  const template = state.checklistTemplates.find((item) => item.id === templateId);
+  if (!template) return;
+  selectedChecklistTemplateId = template.id;
+  showSection("review");
+  fillReviewForm(template);
+  $("#reviewForm").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  $("#reviewItemInput").focus();
+  renderReview();
   renderIcons();
-  toast("已进入复盘编辑模式");
+  toast("已进入项目编辑模式");
 }
 
 function handleReviewListAction(event) {
-  const editButton = event.target.closest("[data-review-edit]");
-  if (editButton) {
-    editReview(editButton.dataset.reviewEdit);
+  const projectButton = event.target.closest("[data-check-project]");
+  if (projectButton) {
+    selectedChecklistTemplateId = projectButton.dataset.checkProject;
+    clearReviewEditState();
+    renderReview();
+    renderIcons();
     return;
   }
 
+  const dayButton = event.target.closest("[data-check-day]");
+  if (dayButton) {
+    let week = findChecklistWeek(dayButton.dataset.weekId);
+    const template = state.checklistTemplates.find((item) => item.id === dayButton.dataset.templateId);
+    if (!template) return;
+    if (!week) week = ensureChecklistWeek(dayButton.dataset.day, true);
+    if (!week) return;
+    let item = findChecklistProjectItem(week, template);
+    if (!item) {
+      item = { id: uid(), templateId: template.id, text: template.text, checks: {}, checkedDays: [], done: false, createdAt: iso(new Date()), updatedAt: "" };
+      week.items.push(item);
+    }
+    const day = dayButton.dataset.day;
+    if (item.checks?.[day]) delete item.checks[day];
+    else item.checks = { ...(item.checks || {}), [day]: true };
+    item.checkedDays = Object.keys(item.checks || {}).sort();
+    item.done = item.checkedDays.length > 0;
+    item.updatedAt = iso(new Date());
+    week.updatedAt = item.updatedAt;
+    saveAndRender("本月项目打卡已更新");
+    return;
+  }
+
+  const editButton = event.target.closest("[data-check-edit]");
+  if (editButton) {
+    editChecklistTemplate(editButton.dataset.templateId);
+    return;
+  }
+
+  const itemDeleteButton = event.target.closest("[data-check-delete]");
+  if (itemDeleteButton) {
+    const template = state.checklistTemplates.find((item) => item.id === itemDeleteButton.dataset.templateId);
+    if (template) {
+      template.active = false;
+      template.updatedAt = iso(new Date());
+    }
+    const currentWeek = ensureChecklistWeek(todayKey(), false);
+    if (currentWeek) {
+      currentWeek.items = currentWeek.items.filter((item) => item.templateId !== itemDeleteButton.dataset.templateId);
+      currentWeek.updatedAt = iso(new Date());
+    }
+    if (selectedChecklistTemplateId === itemDeleteButton.dataset.templateId) selectedChecklistTemplateId = "";
+    if ($("#reviewEditId")?.value === itemDeleteButton.dataset.templateId) clearReviewEditState();
+    saveAndRender("项目已删除");
+    return;
+  }
+
+  const deleteMonthButton = event.target.closest("[data-delete-month]");
+  if (deleteMonthButton) {
+    const template = state.checklistTemplates.find((item) => item.id === selectedChecklistTemplateId);
+    const monthKey = deleteMonthButton.dataset.deleteMonth;
+    if (!template || !monthKey) return;
+    const monthDays = new Set(monthDayKeysForDate(monthStartKey(monthKey)));
+    const now = iso(new Date());
+    state.checklistWeeks = (state.checklistWeeks || []).map((week) => {
+      const normalized = normalizeChecklistWeek(week);
+      normalized.items = (normalized.items || []).map((item) => {
+        if (item.templateId !== template.id && item.text !== template.text) return item;
+        const nextChecks = { ...(item.checks || {}) };
+        monthDays.forEach((day) => delete nextChecks[day]);
+        return {
+          ...item,
+          checks: nextChecks,
+          checkedDays: Object.keys(nextChecks).sort(),
+          done: Object.values(nextChecks).some(Boolean),
+          updatedAt: now
+        };
+      }).filter((item) => {
+        if (item.templateId !== template.id && item.text !== template.text) return true;
+        return Object.keys(item.checks || {}).length || normalized.weekKey === weekKeyForDate(todayKey());
+      });
+      normalized.updatedAt = now;
+      return normalized;
+    }).filter((week) => week.items.length || week.weekKey === weekKeyForDate(todayKey()));
+    saveAndRender("删除本月记录");
+    return;
+  }
   const deleteButton = event.target.closest("[data-delete-id]");
   if (!deleteButton) return;
   const deletedId = deleteButton.dataset.deleteId;
-  state.reviews = state.reviews.filter((item) => item.id !== deletedId);
-  if ($("#reviewEditId").value === deletedId) clearReviewEditState();
-  saveAndRender("复盘已删除");
+  state.checklistWeeks = state.checklistWeeks.filter((item) => item.id !== deletedId);
+  saveAndRender("删除本月记录");
 }
 
+function checklistProjectTabs(templates, week) {
+  if (!templates.length) return "";
+  return templates.map((template) => {
+    const progress = checklistProjectMonthProgress(todayKey(), template);
+    const selected = template.id === selectedChecklistTemplateId;
+    return `
+      <button class="project-tab ${selected ? "is-active" : ""}" type="button" data-check-project="${template.id}" aria-pressed="${selected}">
+        <span>${escapeHtml(template.text)}</span>
+        <strong>${escapeHtml(progress.label)}</strong>
+      </button>
+    `;
+  }).join("");
+}
+
+function checklistWeekTable(week, template, options = {}) {
+  if (!week || !template) return empty("请选择一个打卡项目");
+  const editable = Boolean(options.editable);
+  const showActions = Boolean(options.showActions);
+  const months = checklistDisplayMonths(todayKey());
+  const totalProgress = months.reduce((total, month) => {
+    const progress = checklistProjectMonthProgress(month.startKey, template);
+    return { done: total.done + progress.done, total: total.total + progress.total };
+  }, { done: 0, total: 0 });
+
+  const renderMonthTable = (month) => {
+    const days = monthDayKeysForDate(month.startKey);
+    const progress = checklistProjectMonthProgress(month.startKey, template);
+    const cells = days.map((day) => {
+      const dayWeekKey = weekKeyForDate(day);
+      const dayWeek = findChecklistWeek(dayWeekKey);
+      const item = findChecklistProjectItem(dayWeek, template);
+      const checked = Boolean(item?.checks?.[day]);
+      return `
+        <button class="check-day-cell ${checked ? "is-checked" : ""}" type="button" data-check-day data-week-id="${escapeHtml(dayWeek?.id || dayWeekKey)}" data-template-id="${template.id}" data-day="${day}" ${editable ? "" : "disabled"} aria-pressed="${checked}">
+          <span>${escapeHtml(dayOfMonthLabel(day))}</span>
+          <strong>${checked ? "✓" : ""}</strong>
+        </button>
+      `;
+    }).join("");
+
+    return `
+      <section class="check-month-block" aria-label="${escapeHtml(monthRangeLabel(month.startKey))}">
+        <div class="check-month-head">
+          <div>
+            <strong>${escapeHtml(monthRangeLabel(month.startKey))}</strong>
+            <span>${escapeHtml(t(month.label))}</span>
+          </div>
+          <span class="tag low">${escapeHtml(t("月完成"))} ${escapeHtml(progress.label)}</span>
+        </div>
+        <div class="check-grid-table" style="--day-count:${days.length}">
+          <div class="check-row-label">${escapeHtml(t("打卡"))}</div>
+          <div class="check-rate-cell"><span>${escapeHtml(t("打卡率"))}</span><strong>${escapeHtml(progress.percent)}%</strong></div>
+          ${cells}
+        </div>
+      </section>
+    `;
+  };
+
+  return `
+    <div class="check-matrix">
+      <div class="check-matrix-head">
+        <div>
+          <h3>${escapeHtml(template.text)}</h3>
+          <p>${escapeHtml(t("近三个月"))}</p>
+        </div>
+        <div class="check-matrix-summary">
+          <span>${escapeHtml(t("完成天数"))}</span>
+          <strong>${escapeHtml(totalProgress.done)}/${escapeHtml(totalProgress.total)}</strong>
+        </div>
+        ${showActions ? `<div class="tiny-actions">
+          <button data-check-edit data-template-id="${template.id}">${escapeHtml(isEnglish() ? "Edit" : "编辑")}</button>
+          <button data-check-delete data-template-id="${template.id}">${escapeHtml(isEnglish() ? "Delete" : "删除")}</button>
+        </div>` : ""}
+      </div>
+      <div class="check-month-stack">
+        ${months.map(renderMonthTable).join("")}
+      </div>
+    </div>
+  `;
+}
+function checklistHistorySummary(monthKey, template) {
+  if (!monthKey || !template) return "";
+  const days = monthDayKeysForDate(monthStartKey(monthKey));
+  const checkedDays = days.filter((day) => {
+    const week = findChecklistWeek(weekKeyForDate(day));
+    const item = findChecklistProjectItem(week, template);
+    return Boolean(item?.checks?.[day]);
+  });
+  const missedDays = days.filter((day) => !checkedDays.includes(day));
+  const total = days.length || 30;
+  const done = checkedDays.length;
+  const percent = Math.round((done / total) * 100);
+  const joiner = isEnglish() ? ", " : "、";
+  const checkedText = done
+    ? `${t("已打卡")}：${checkedDays.map(weekDayLabel).join(joiner)}`
+    : t("这个月还没有打卡");
+  const missedText = missedDays.length
+    ? `${t("未打卡")}：${missedDays.map(weekDayLabel).join(joiner)}`
+    : t("本月全勤");
+  const remaining = Math.max(total - done, 0);
+  const moodText = percent === 100
+    ? t("保持全勤")
+    : isEnglish()
+      ? `${remaining} day${remaining === 1 ? "" : "s"} left to complete the month.`
+      : `还差 ${remaining} 天完成本月打卡。`;
+
+  return `
+    <div class="history-summary-card">
+      <div class="history-summary-main">
+        <span>${escapeHtml(t("完成率"))}</span>
+        <strong>${escapeHtml(percent)}%</strong>
+        <small>${escapeHtml(done)}/${escapeHtml(total)} ${escapeHtml(isEnglish() ? "days" : "天")}</small>
+      </div>
+      <div class="history-summary-copy">
+        <p>${escapeHtml(moodText)}</p>
+        <div class="history-summary-meter" aria-hidden="true"><span style="width:${percent}%"></span></div>
+        <ul>
+          <li>${escapeHtml(checkedText)}</li>
+          <li>${escapeHtml(missedText)}</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
 function addTask(title, priority = "中", project = "", due = "") {
   const cleanTitle = title.trim();
   if (!cleanTitle) {
@@ -2551,47 +3198,41 @@ function renderMeetingContacts(selected = getSelectedMeetingContacts()) {
 }
 
 function renderReview() {
-  const editing = state.reviews.find((item) => item.id === $("#reviewEditId")?.value);
-  const today = state.reviews.find((item) => item.day === todayKey());
-  if (editing) {
-    fillReviewForm(editing);
-    setReviewEditState(editing);
-  } else if (today) {
-    fillReviewForm(today);
-    setReviewEditState(null);
-  } else {
-    clearReviewForm();
-    setReviewEditState(null);
-  }
+  const templates = activeChecklistTemplates();
+  const selected = selectedChecklistProject(templates);
+  const editingTemplate = state.checklistTemplates.find((item) => item.id === $("#reviewEditId")?.value);
+  if (editingTemplate) setReviewEditState(editingTemplate);
+  else if ($("#reviewEditId")?.value) clearReviewEditState();
 
-  $("#reviewList").innerHTML = state.reviews
-    .slice()
-    .sort((a, b) => b.day.localeCompare(a.day))
-    .map((review) => `
-      <div class="stack-item">
-        <div class="stack-item-head">
-          <div>
-            <h3>${escapeHtml(review.day)}</h3>
-            <div class="item-meta"><span class="tag low">${escapeHtml(moodText(review.score))} · ${review.score}/5</span></div>
+  const currentWeek = ensureChecklistWeek(todayKey(), templates.length > 0);
+  $("#checklistProjectTabs").innerHTML = checklistProjectTabs(templates, currentWeek);
+  $("#todayChecklist").innerHTML = selected && currentWeek
+    ? checklistWeekTable(currentWeek, selected, { editable: true, showActions: true })
+    : empty("还没有打卡项目");
+
+  const records = selected ? checklistProjectMonthRecords(selected) : [];
+
+  $("#reviewList").innerHTML = selected
+    ? (records.map((monthKey) => {
+      const progress = checklistProjectMonthProgress(monthStartKey(monthKey), selected);
+      const isCurrentMonth = monthKey === monthKeyForDate(todayKey());
+      return `
+        <div class="stack-item checklist-record">
+          <div class="stack-item-head">
+            <div>
+              <h3>${escapeHtml(monthRangeLabel(monthStartKey(monthKey)))}${isCurrentMonth ? ` <span class="week-current">${escapeHtml(t("本月"))}</span>` : ""}</h3>
+              <div class="item-meta"><span class="tag low">${escapeHtml(t("月完成"))} ${escapeHtml(progress.label)}</span></div>
+            </div>
+            <div class="stack-actions">
+              <button class="icon-btn" data-delete-month="${escapeHtml(monthKey)}" aria-label="${escapeHtml(t("删除本月记录"))}" title="${escapeHtml(t("删除本月记录"))}"><i data-lucide="trash-2"></i></button>
+            </div>
           </div>
-          <div class="stack-actions">
-            <button class="icon-btn" data-review-edit="${review.id}" aria-label="${isEnglish() ? "Edit review" : "编辑复盘"}" title="${isEnglish() ? "Edit review" : "编辑复盘"}"><i data-lucide="square-pen"></i></button>
-            <button class="icon-btn" data-delete-id="${review.id}" aria-label="${isEnglish() ? "Delete review" : "删除复盘"}" title="${isEnglish() ? "Delete review" : "删除复盘"}"><i data-lucide="trash-2"></i></button>
-          </div>
+          ${checklistHistorySummary(monthKey, selected)}
         </div>
-        <p><strong>${isEnglish() ? "Wins: " : "成果："}</strong>${escapeHtml(review.wins || (isEnglish() ? "None" : "暂无"))}</p>
-        <p><strong>${isEnglish() ? "Risks: " : "风险："}</strong>${escapeHtml(review.risks || (isEnglish() ? "None" : "暂无"))}</p>
-        <p><strong>${isEnglish() ? "Tomorrow: " : "明日："}</strong>${escapeHtml(review.tomorrow || (isEnglish() ? "None" : "暂无"))}</p>
-        ${review.moodReason ? `<p><strong>${isEnglish() ? "Reason: " : "原因："}</strong>${escapeHtml(review.moodReason)}</p>` : ""}
-      </div>
-    `).join("") || empty("暂无复盘记录");
+      `;
+    }).join("") || empty("暂无项目打卡历史"))
+    : empty("请选择一个打卡项目");
 }
-
-function moodText(score) {
-  const zh = moodLabels[score] || "满意度";
-  return t(zh);
-}
-
 function renderThemeSettings() {
   const currentTheme = validThemeIds.has(state.appearance?.theme) ? state.appearance.theme : DEFAULT_THEME;
   $("#currentThemeName").textContent = themeName(currentTheme);
