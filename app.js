@@ -1,4 +1,4 @@
-﻿const STORAGE_KEY = "yuqin.employee.workspace.v1";
+const STORAGE_KEY = "yuqin.employee.workspace.v1";
 
 const statusMap = {
   todo: "待办",
@@ -68,6 +68,7 @@ const themeOptions = [
 
 const validThemeIds = new Set(themeOptions.map((theme) => theme.id));
 const DEFAULT_LANGUAGE = "zh";
+const DONE_VISIBLE_LIMIT = 5;
 const languageOptions = [
   { id: "zh", name: "中文", nameEn: "Chinese", note: "简体中文", noteEn: "Simplified Chinese" },
   { id: "en", name: "English", nameEn: "English", note: "英文界面", noteEn: "English UI" }
@@ -441,6 +442,14 @@ Object.assign(zhToEn, {
   "历史快照": "History snapshot"
 });
 Object.assign(zhToEn, {
+  "已完成历史": "Done History",
+  "更早完成的任务": "Older completed tasks",
+  "最近完成": "Recent Done",
+  "更早完成": "Older Done",
+  "查看已完成历史": "View done history",
+  "关闭已完成历史": "Close done history",
+  "暂无已完成历史": "No older completed tasks"
+});Object.assign(zhToEn, {
   "项目打卡": "Project Check-in",
   "项目按月循环，完成情况按月保存，并同步显示近三个月": "Projects repeat monthly, completion is saved by month, and the latest 3 months stay in sync",
   "项目名称，例如：每日运动 / 英语阅读 / 早睡": "Project name, e.g. daily workout / English reading / early sleep",
@@ -1178,6 +1187,10 @@ function bindActions() {
   $("#checklistHistoryModal")?.addEventListener("click", (event) => {
     if (event.target.id === "checklistHistoryModal") closeChecklistHistory();
   });
+  $("#btnCloseTaskDoneHistory")?.addEventListener("click", closeTaskDoneHistory);
+  $("#taskDoneHistoryModal")?.addEventListener("click", (event) => {
+    if (event.target.id === "taskDoneHistoryModal") closeTaskDoneHistory();
+  });
   $("#btnAddMeetingContact").addEventListener("click", addMeetingContact);
   $("#meetingContactList").addEventListener("click", handleMeetingContactAction);
 
@@ -1205,6 +1218,7 @@ function bindActions() {
 
   $("#kanbanBoard").addEventListener("click", handleTaskAction);
   $("#homeTaskList").addEventListener("click", handleTaskAction);
+  $("#taskDoneHistoryList")?.addEventListener("click", handleTaskAction);
   $("#attendanceList").addEventListener("click", handleDeleteFromList("attendanceLogs", "行动记录已删除"));
   $("#focusHistoryList")?.addEventListener("click", handleDeleteFromList("focusSessions", "专注记录已删除"));
   $("#meetingList").addEventListener("click", handleDeleteFromList("meetings", "会议已删除"));
@@ -1221,7 +1235,9 @@ function bindActions() {
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !$("#checklistHistoryModal")?.hidden) closeChecklistHistory();
+    if (event.key !== "Escape") return;
+    if (!$("#checklistHistoryModal")?.hidden) closeChecklistHistory();
+    if (!$("#taskDoneHistoryModal")?.hidden) closeTaskDoneHistory();
   });
 
   window.addEventListener("resize", () => {
@@ -1705,28 +1721,30 @@ function checklistWeekTable(week, template, options = {}) {
 function checklistHistorySummary(monthKey, template) {
   if (!monthKey || !template) return "";
   const days = monthDayKeysForDate(monthStartKey(monthKey));
-  const checkedDays = days.filter((day) => {
+  const checkedDaySet = new Set(days.filter((day) => {
     const week = findChecklistWeek(weekKeyForDate(day));
     const item = findChecklistProjectItem(week, template);
     return Boolean(item?.checks?.[day]);
-  });
-  const missedDays = days.filter((day) => !checkedDays.includes(day));
+  }));
   const total = days.length || 30;
-  const done = checkedDays.length;
+  const done = checkedDaySet.size;
   const percent = Math.round((done / total) * 100);
-  const joiner = isEnglish() ? ", " : "、";
-  const checkedText = done
-    ? `${t("已打卡")}：${checkedDays.map(weekDayLabel).join(joiner)}`
-    : t("这个月还没有打卡");
-  const missedText = missedDays.length
-    ? `${t("未打卡")}：${missedDays.map(weekDayLabel).join(joiner)}`
-    : t("本月全勤");
   const remaining = Math.max(total - done, 0);
   const moodText = percent === 100
     ? t("保持全勤")
     : isEnglish()
       ? `${remaining} day${remaining === 1 ? "" : "s"} left to complete the month.`
       : `还差 ${remaining} 天完成本月打卡。`;
+  const miniCells = days.map((day) => {
+    const checked = checkedDaySet.has(day);
+    const label = `${weekDayLabel(day)} · ${t(checked ? "已打卡" : "未打卡")}`;
+    return `
+      <span class="history-mini-day ${checked ? "is-checked" : ""}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+        <span>${escapeHtml(dayOfMonthLabel(day))}</span>
+        <strong>${checked ? "✓" : ""}</strong>
+      </span>
+    `;
+  }).join("");
 
   return `
     <div class="history-summary-card">
@@ -1738,10 +1756,9 @@ function checklistHistorySummary(monthKey, template) {
       <div class="history-summary-copy">
         <p>${escapeHtml(moodText)}</p>
         <div class="history-summary-meter" aria-hidden="true"><span style="width:${percent}%"></span></div>
-        <ul>
-          <li>${escapeHtml(checkedText)}</li>
-          <li>${escapeHtml(missedText)}</li>
-        </ul>
+        <div class="history-mini-grid" style="--mini-day-count:${total}" aria-label="${escapeHtml(t("项目打卡历史"))}">
+          ${miniCells}
+        </div>
       </div>
     </div>
   `;
@@ -1821,6 +1838,11 @@ function setTaskEditorMode(isEditing) {
 }
 
 function handleTaskAction(event) {
+  const historyButton = event.target.closest("[data-task-history]");
+  if (historyButton) {
+    if (!historyButton.disabled) openTaskDoneHistory();
+    return;
+  }
   const button = event.target.closest("[data-task-action]");
   if (!button) return;
   const task = state.tasks.find((item) => item.id === button.dataset.id);
@@ -2671,7 +2693,25 @@ function renderTasks() {
 
   $("#taskSummaryPill").textContent = countLabel(state.tasks.length, "个任务", "task");
   $("#kanbanBoard").innerHTML = columns.map((column) => {
-    const tasks = state.tasks.filter((task) => task.status === column.key).sort(sortTasks);
+    const tasks = state.tasks.filter((task) => task.status === column.key).sort(column.key === "done" ? sortDoneTasks : sortTasks);
+    if (column.key === "done") {
+      const visibleDone = tasks.slice(0, DONE_VISIBLE_LIMIT);
+      const archivedDone = tasks.slice(DONE_VISIBLE_LIMIT);
+      return `
+        <div class="kanban-column">
+          <h2>
+            <span>${column.title}</span>
+            <span class="kanban-title-tools">
+              <button class="icon-btn done-history-btn" type="button" data-task-history="done" ${archivedDone.length ? "" : "disabled"} aria-label="${escapeHtml(t("查看已完成历史"))}" title="${escapeHtml(t("查看已完成历史"))}">
+                <i data-lucide="history"></i>
+              </button>
+              <span class="kanban-count">${tasks.length}</span>
+            </span>
+          </h2>
+          ${taskLane("最近完成", visibleDone, false)}
+        </div>
+      `;
+    }
     const todayTasks = tasks.filter((task) => isDailyTask(task, today));
     const previousTasks = tasks.filter((task) => !isDailyTask(task, today));
     return `
@@ -2682,8 +2722,8 @@ function renderTasks() {
       </div>
     `;
   }).join("");
+  if (!$("#taskDoneHistoryModal")?.hidden) renderTaskDoneHistory();
 }
-
 function taskLane(title, tasks, showTodayAction) {
   return `
     <div class="task-lane ${showTodayAction ? "is-previous" : "is-daily"}">
@@ -2696,6 +2736,70 @@ function taskLane(title, tasks, showTodayAction) {
   `;
 }
 
+function doneTaskTimestamp(task) {
+  return [task.completedAt, task.updatedAt, task.createdAt]
+    .map((value) => value ? new Date(value).getTime() : 0)
+    .find((time) => Number.isFinite(time) && time > 0) || 0;
+}
+
+function sortDoneTasks(a, b) {
+  return doneTaskTimestamp(b) - doneTaskTimestamp(a) || sortTasks(a, b);
+}
+
+function archivedDoneTasks() {
+  return state.tasks
+    .filter((task) => task.status === "done")
+    .sort(sortDoneTasks)
+    .slice(DONE_VISIBLE_LIMIT);
+}
+
+function taskDoneDay(task) {
+  const source = task.completedAt || task.updatedAt || task.createdAt;
+  return source ? dateKey(new Date(source)) : t("未记录");
+}
+
+function renderTaskDoneHistory() {
+  const root = $("#taskDoneHistoryList");
+  if (!root) return;
+  const tasks = archivedDoneTasks();
+  if (!tasks.length) {
+    root.innerHTML = empty("暂无已完成历史");
+    return;
+  }
+  const groups = tasks.reduce((map, task) => {
+    const day = taskDoneDay(task);
+    if (!map.has(day)) map.set(day, []);
+    map.get(day).push(task);
+    return map;
+  }, new Map());
+  root.innerHTML = Array.from(groups.entries()).map(([day, items]) => `
+    <section class="done-history-group">
+      <div class="done-history-head">
+        <strong>${escapeHtml(day)}</strong>
+        <span>${escapeHtml(countLabel(items.length, "个项目", "project"))}</span>
+      </div>
+      <div class="stack-list">
+        ${items.map((task) => taskCard(task, { showCompletedAt: true })).join("")}
+      </div>
+    </section>
+  `).join("");
+}
+
+function openTaskDoneHistory() {
+  renderTaskDoneHistory();
+  const modal = $("#taskDoneHistoryModal");
+  if (!modal) return;
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+  window.setTimeout(() => $("#btnCloseTaskDoneHistory")?.focus(), 0);
+}
+
+function closeTaskDoneHistory() {
+  const modal = $("#taskDoneHistoryModal");
+  if (!modal) return;
+  modal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
 function isDailyTask(task, today = todayKey()) {
   if (task.completedAt && dateKey(new Date(task.completedAt)) === today) return true;
   if (task.due === today) return true;
@@ -2926,9 +3030,8 @@ function renderDayPlanHistory() {
           ${segments.map((segment) => `
             <div class="day-history-row">
               <time>${escapeHtml(segmentTimeRange(segment))}</time>
-              <strong>${escapeHtml(t(segment.activity))}</strong>
-              <span><i class="plan-dot plan-${segment.className}"></i>${escapeHtml(t(segment.category))}</span>
-              <span>${escapeHtml(formatSlotDuration(segment.slots))}</span>
+              <strong title="${escapeHtml(t(segment.activity))}">${escapeHtml(t(segment.activity))}</strong>
+              <span class="day-history-duration">${escapeHtml(formatSlotDuration(segment.slots))}</span>
             </div>
           `).join("")}
         </div>

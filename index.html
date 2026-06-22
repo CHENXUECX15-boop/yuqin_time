@@ -1,12 +1,12 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>早日成为富婆 | work for tomorrow.</title>
-  <link rel="stylesheet" href="styles.css?v=87">
+  <link rel="stylesheet" href="styles.css?v=91">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-  <script src="app.js?v=87" defer></script>
+  <script src="app.js?v=91" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -144,6 +144,19 @@
         </article>
 
         <div class="kanban" id="kanbanBoard"></div>
+
+        <div id="taskDoneHistoryModal" class="modal-backdrop" hidden>
+          <article class="panel history-modal" role="dialog" aria-modal="true" aria-labelledby="taskDoneHistoryTitle">
+            <div class="panel-head compact">
+              <div>
+                <h2 id="taskDoneHistoryTitle">已完成历史</h2>
+                <p>更早完成的任务</p>
+              </div>
+              <button class="icon-btn" id="btnCloseTaskDoneHistory" type="button" aria-label="关闭已完成历史" title="关闭已完成历史"><i data-lucide="x"></i></button>
+            </div>
+            <div id="taskDoneHistoryList" class="stack-list history-modal-list"></div>
+          </article>
+        </div>
       </section>
 
       <section id="okr" class="view" aria-label="24 小时时间表">
