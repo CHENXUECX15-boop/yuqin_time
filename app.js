@@ -1,4 +1,4 @@
-const STORAGE_KEY = "yuqin.employee.workspace.v1";
+﻿const STORAGE_KEY = "yuqin.employee.workspace.v1";
 
 const statusMap = {
   todo: "待办",
@@ -370,6 +370,9 @@ const zhToEn = {
   "项目已删除": "Project deleted",
   "行动记录已删除": "Activity deleted",
   "专注记录已删除": "Focus record deleted",
+  "会议已更新": "Meeting updated",
+  "已进入会议编辑模式": "Meeting edit mode enabled",
+  "编辑会议": "Edit meeting",
   "会议已删除": "Meeting deleted",
   "复盘已删除": "Review deleted",
   "复盘已更新": "Review updated",
@@ -1102,26 +1105,40 @@ function bindForms() {
 
   $("#meetingForm").addEventListener("submit", (event) => {
     event.preventDefault();
+    const editId = $("#meetingEditId")?.value || "";
     const title = $("#meetingTitle").value.trim();
     if (!title) return toast("请先填写会议主题");
     const actions = $("#meetingActions").value
-      .split(/[，,]/)
+      .split(/[,，]/)
       .map((item) => item.trim())
       .filter(Boolean);
-    state.meetings.unshift({
-      id: uid(),
+    const payload = {
       title,
       when: $("#meetingWhen").value ? iso(new Date($("#meetingWhen").value)) : iso(new Date()),
       type: $("#meetingType").value,
       decision: $("#meetingDecision").value.trim(),
       actions,
-      contacts: getSelectedMeetingContacts(),
+      contacts: getSelectedMeetingContacts()
+    };
+    if (editId) {
+      const meeting = state.meetings.find((item) => item.id === editId);
+      if (!meeting) {
+        resetMeetingEditor();
+        return toast("会议已删除");
+      }
+      Object.assign(meeting, payload, { updatedAt: iso(new Date()) });
+      saveAndRender("会议已更新");
+      resetMeetingEditor();
+      return;
+    }
+    state.meetings.unshift({
+      id: uid(),
+      ...payload,
       createdAt: iso(new Date())
     });
     saveAndRender("会议已保存");
-    $("#meetingForm").reset();
+    resetMeetingEditor();
   });
-
   $("#meetingContactInput").addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
@@ -1181,6 +1198,7 @@ function bindActions() {
   $("#btnFocusReset")?.addEventListener("click", resetFocus);
 
   $("#btnCancelTaskEdit").addEventListener("click", resetTaskEditor);
+  $("#btnCancelMeetingEdit")?.addEventListener("click", resetMeetingEditor);
   $("#btnCancelReviewEdit").addEventListener("click", resetReviewEditor);
   $("#btnOpenChecklistHistory")?.addEventListener("click", openChecklistHistory);
   $("#btnCloseChecklistHistory")?.addEventListener("click", closeChecklistHistory);
@@ -1207,6 +1225,7 @@ function bindActions() {
   document.addEventListener("pointerup", finishDayPlanGridDrag);
   document.addEventListener("pointercancel", cancelDayPlanGridDrag);
   $("#dayPlanDetails").addEventListener("click", handleDayPlanDetailAction);
+  $("#dayPlanHistory").addEventListener("click", handleDayPlanDetailAction);
 
   $("#btnExport").addEventListener("click", exportData);
   $("#importFile").addEventListener("change", importData);
@@ -1221,7 +1240,7 @@ function bindActions() {
   $("#taskDoneHistoryList")?.addEventListener("click", handleTaskAction);
   $("#attendanceList").addEventListener("click", handleDeleteFromList("attendanceLogs", "行动记录已删除"));
   $("#focusHistoryList")?.addEventListener("click", handleDeleteFromList("focusSessions", "专注记录已删除"));
-  $("#meetingList").addEventListener("click", handleDeleteFromList("meetings", "会议已删除"));
+  $("#meetingList").addEventListener("click", handleMeetingListAction);
   $("#checklistProjectTabs")?.addEventListener("click", handleReviewListAction);
   $("#todayChecklist").addEventListener("click", handleReviewListAction);
   $("#reviewList").addEventListener("click", handleReviewListAction);
@@ -1362,6 +1381,60 @@ function clampFocusTarget(value) {
   return Math.max(1, Math.min(240, Math.round(number)));
 }
 
+function meetingDateTimeInputValue(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function setMeetingEditorMode(isEditing) {
+  const button = $("#btnSaveMeeting");
+  const cancelButton = $("#btnCancelMeetingEdit");
+  if (!button || !cancelButton) return;
+  button.innerHTML = `<i data-lucide="save"></i><span id="meetingSubmitLabel">${escapeHtml(isEditing ? t("保存修改") : t("保存会议"))}</span>`;
+  cancelButton.hidden = !isEditing;
+  renderIcons();
+}
+
+function resetMeetingEditor() {
+  const form = $("#meetingForm");
+  if (!form) return;
+  form.reset();
+  $("#meetingEditId").value = "";
+  renderMeetingContacts([]);
+  setMeetingEditorMode(false);
+}
+
+function editMeeting(meeting) {
+  showSection("meetings");
+  $("#meetingEditId").value = meeting.id;
+  $("#meetingTitle").value = meeting.title || "";
+  $("#meetingWhen").value = meetingDateTimeInputValue(meeting.when);
+  $("#meetingType").value = meeting.type || "项目会";
+  $("#meetingDecision").value = meeting.decision || "";
+  $("#meetingActions").value = (meeting.actions || []).join("，");
+  renderMeetingContacts(meeting.contacts || []);
+  setMeetingEditorMode(true);
+  $("#meetingForm").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  $("#meetingTitle").focus();
+  toast("已进入会议编辑模式");
+}
+
+function handleMeetingListAction(event) {
+  const editButton = event.target.closest("[data-meeting-action='edit']");
+  if (editButton) {
+    const meeting = state.meetings.find((item) => item.id === editButton.dataset.id);
+    if (meeting) editMeeting(meeting);
+    return;
+  }
+  const deleteButton = event.target.closest("[data-delete-id]");
+  if (!deleteButton) return;
+  state.meetings = state.meetings.filter((item) => item.id !== deleteButton.dataset.deleteId);
+  if ($("#meetingEditId")?.value === deleteButton.dataset.deleteId) resetMeetingEditor();
+  saveAndRender("会议已删除");
+}
 function addMeetingContact() {
   const input = $("#meetingContactInput");
   const name = input.value.trim();
@@ -2019,7 +2092,7 @@ function handleDayPlanDetailAction(event) {
   }
   const editButton = event.target.closest("[data-day-segment-edit]");
   if (editButton) {
-    editDaySegment(editButton.dataset.daySegmentEdit);
+    editDaySegment(editButton.dataset.daySegmentEdit, editButton.dataset.daySegmentDay);
     return;
   }
   const deleteButton = event.target.closest("[data-day-segment-delete]");
@@ -2027,15 +2100,19 @@ function handleDayPlanDetailAction(event) {
   deleteDaySegment(deleteButton.dataset.daySegmentDelete);
 }
 
-function editDaySegment(id) {
-  const segment = ensureDayPlan().segments.find((item) => item.id === id);
+function editDaySegment(id, day = state.dayPlan?.day || todayKey()) {
+  const segmentDay = normalizeDayKey(day, state.dayPlan?.day || todayKey());
+  const plan = dayPlanForDay(segmentDay);
+  const segment = (plan.segments || []).find((item) => item.id === id);
   if (!segment) return;
   renderDayPlanEditorOptions(segment.className, segment.startSlot, segment.startSlot + segment.slots);
   $("#daySegmentId").value = segment.id;
-  $("#daySegmentDay").value = state.dayPlan?.day || todayKey();
+  $("#daySegmentDay").value = segmentDay;
   $("#daySegmentTitle").value = segment.activity;
   $("#btnCancelDaySegment").hidden = false;
-  toast("已进入编辑模式");
+  $("#dayPlanEditor").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  $("#daySegmentTitle").focus();
+  toast(segmentDay === state.dayPlan?.day ? "已进入编辑模式" : "已进入历史时间段编辑模式");
 }
 
 function resetDayPlanEditor(shouldRenderIcons = true) {
@@ -3032,6 +3109,9 @@ function renderDayPlanHistory() {
               <time>${escapeHtml(segmentTimeRange(segment))}</time>
               <strong title="${escapeHtml(t(segment.activity))}">${escapeHtml(t(segment.activity))}</strong>
               <span class="day-history-duration">${escapeHtml(formatSlotDuration(segment.slots))}</span>
+              <span class="tiny-actions day-history-actions">
+                <button type="button" data-day-segment-edit="${segment.id}" data-day-segment-day="${escapeHtml(plan.day)}" aria-label="${escapeHtml(t("编辑"))}">${escapeHtml(t("编辑"))}</button>
+              </span>
             </div>
           `).join("")}
         </div>
@@ -3279,7 +3359,10 @@ function renderMeetings() {
             <span class="tag">${formatDateTime(meeting.when)}</span>
           </div>
         </div>
-        <button class="icon-btn" data-delete-id="${meeting.id}" aria-label="${isEnglish() ? "Delete meeting" : "删除会议"}" title="${isEnglish() ? "Delete meeting" : "删除会议"}"><i data-lucide="trash-2"></i></button>
+        <div class="meeting-card-actions">
+          <button class="icon-btn" data-meeting-action="edit" data-id="${meeting.id}" aria-label="${escapeHtml(t("编辑会议"))}" title="${escapeHtml(t("编辑会议"))}"><i data-lucide="pencil"></i></button>
+          <button class="icon-btn" data-delete-id="${meeting.id}" aria-label="${isEnglish() ? "Delete meeting" : "删除会议"}" title="${isEnglish() ? "Delete meeting" : "删除会议"}"><i data-lucide="trash-2"></i></button>
+        </div>
       </div>
       <p>${escapeHtml(meeting.decision || (isEnglish() ? "No decision" : "暂无结论"))}</p>
       ${(meeting.contacts || []).length ? `<div class="item-meta">${meeting.contacts.map((contact) => `<span class="tag">${isEnglish() ? "Contact: " : "联系人："}${escapeHtml(contact)}</span>`).join("")}</div>` : ""}
@@ -3287,7 +3370,6 @@ function renderMeetings() {
     </div>
   `).join("") || empty("暂无会议记录");
 }
-
 function renderMeetingContacts(selected = getSelectedMeetingContacts()) {
   const contacts = state.meetingContacts || [];
   const selectedSet = new Set(selected);

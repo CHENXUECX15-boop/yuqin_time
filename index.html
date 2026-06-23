@@ -1,12 +1,12 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>早日成为富婆 | work for tomorrow.</title>
-  <link rel="stylesheet" href="styles.css?v=91">
+  <link rel="stylesheet" href="styles.css?v=93">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-  <script src="app.js?v=91" defer></script>
+  <script src="app.js?v=93" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -228,6 +228,7 @@
               </div>
             </div>
             <form id="meetingForm" class="stack-form">
+              <input id="meetingEditId" type="hidden">
               <input id="meetingTitle" class="field full" placeholder="会议主题">
               <div class="two-col">
                 <input id="meetingWhen" class="field" type="datetime-local">
@@ -247,7 +248,8 @@
               </div>
               <textarea id="meetingDecision" class="field textarea" placeholder="关键结论"></textarea>
               <textarea id="meetingActions" class="field textarea" placeholder="行动项，用逗号分隔"></textarea>
-              <button class="primary-btn" type="submit"><i data-lucide="save"></i><span>保存会议</span></button>
+              <button class="primary-btn" id="btnSaveMeeting" type="submit"><i data-lucide="save"></i><span id="meetingSubmitLabel">保存会议</span></button>
+              <button class="ghost-btn" id="btnCancelMeetingEdit" type="button" hidden><i data-lucide="x"></i><span>取消编辑</span></button>
             </form>
           </article>
 

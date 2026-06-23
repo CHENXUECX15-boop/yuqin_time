@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #f6f6f3;
   --surface: #ffffff;
   --surface-soft: #eeeeeb;
@@ -902,6 +902,12 @@ h3 {
   gap: 10px;
 }
 
+.meeting-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .contact-check-grid {
   display: flex;
   flex-wrap: wrap;
@@ -1747,7 +1753,7 @@ h3 {
 
 .day-history-row {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr) auto;
+  grid-template-columns: 96px minmax(0, 1fr) auto auto;
   gap: 8px;
   align-items: center;
   min-width: 0;
@@ -1773,6 +1779,15 @@ h3 {
   color: var(--muted);
   font-size: 12px;
   font-weight: 850;
+  white-space: nowrap;
+}
+
+.day-history-actions {
+  justify-self: end;
+  flex-wrap: nowrap;
+}
+
+.day-history-actions button {
   white-space: nowrap;
 }
 
@@ -2948,7 +2963,7 @@ canvas {
 }
 
 .day-history-row {
-  grid-template-columns: 96px minmax(0, 1fr) auto;
+  grid-template-columns: 96px minmax(0, 1fr) auto auto;
 }
 
 .time-detail-row > *,
@@ -2986,6 +3001,6 @@ canvas {
   }
 
   .day-history-row {
-    grid-template-columns: 92px minmax(0, 1fr) auto;
+    grid-template-columns: 92px minmax(0, 1fr) auto auto;
   }
 }
